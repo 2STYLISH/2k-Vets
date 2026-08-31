@@ -27,7 +27,8 @@ export default function Navbar() {
   const searchRef = useRef<HTMLDivElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const desktopProfileRef = useRef<HTMLDivElement>(null);
+  const mobileProfileBtnRef = useRef<HTMLDivElement>(null);
   const mobileProfilePanelRef = useRef<HTMLDivElement>(null);
 
   // Close menus on route change
@@ -70,9 +71,10 @@ export default function Navbar() {
     function handleClick(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
       const target = e.target as Node;
-      const inProfileBtn = profileRef.current && profileRef.current.contains(target);
+      const inDesktopProfile = desktopProfileRef.current && desktopProfileRef.current.contains(target);
+      const inMobileProfileBtn = mobileProfileBtnRef.current && mobileProfileBtnRef.current.contains(target);
       const inMobilePanel = mobileProfilePanelRef.current && mobileProfilePanelRef.current.contains(target);
-      if (!inProfileBtn && !inMobilePanel) setProfileOpen(false);
+      if (!inDesktopProfile && !inMobileProfileBtn && !inMobilePanel) setProfileOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('touchstart', handleClick as any);
@@ -193,7 +195,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Profile Button + Dropdown */}
-          <div ref={profileRef} className="relative">
+          <div ref={desktopProfileRef} className="relative">
             <button onClick={() => setProfileOpen(!profileOpen)}
               className="w-9 h-9 rounded-xl border-2 border-white/10 bg-white/[0.04] hover:border-flag-red/40 hover:bg-white/[0.08] transition-all duration-200 flex items-center justify-center shadow-sm"
               title={username ?? 'Account'}>
@@ -210,7 +212,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Right Buttons */}
-        <div className="flex items-center gap-3 md:hidden" ref={profileRef}>
+        <div className="flex items-center gap-3 md:hidden" ref={mobileProfileBtnRef}>
           <button onClick={() => { setProfileOpen(!profileOpen); setMobileMenuOpen(false); }}
             className="relative w-10 h-10 rounded-xl border-2 border-white/10 bg-white/[0.04] active:bg-white/[0.10] transition-colors flex items-center justify-center shadow-sm"
             aria-label={username ? 'Profile menu' : 'Login'}>

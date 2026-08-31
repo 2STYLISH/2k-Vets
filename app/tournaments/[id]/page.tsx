@@ -5,18 +5,26 @@ import BracketTree from '@/components/BracketTree';
 import MatchesFilter from '@/components/MatchesFilter';
 import BackButton from '@/components/BackButton';
 import { notFound } from 'next/navigation';
-import { formatDate } from '@/lib/format';
+import { formatDate, slugify } from '@/lib/format';
 import { averageStats } from '@/lib/stats';
 import type { PlayerGameStats } from '@/lib/types';
 
 export default async function TournamentDashboard({ params }: { params: { id: string } }) {
   const supabase = createClient();
+  let tournamentId = params.id;
+  let tournament = null;
 
-  const { data: tournament } = await supabase
-    .from('tournaments')
-    .select('*')
-    .eq('id', params.id)
-    .maybeSingle();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)) {
+    const { data: allTournaments } = await supabase.from('tournaments').select('*');
+    const matched = allTournaments?.find(t => slugify(t.name) === params.id);
+    if (matched) {
+      tournamentId = matched.id;
+      tournament = matched;
+    }
+  } else {
+    const { data } = await supabase.from('tournaments').select('*').eq('id', params.id).maybeSingle();
+    tournament = data;
+  }
 
   if (!tournament) notFound();
 

@@ -26,10 +26,10 @@ export default function ScheduleAccordion({
     <div className="card overflow-hidden transition-all">
       <button 
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-5 md:p-6 hover:bg-white/[0.03] transition-colors text-left"
+        className="w-full flex items-center justify-between p-5 md:p-6 hover:bg-white/[0.03] transition-colors text-left gap-4"
       >
-        <h2 className="text-xl md:text-2xl font-display text-white uppercase tracking-[0.1em]">{tournamentName}</h2>
-        <div className="flex items-center gap-3">
+        <h2 className="text-xl md:text-2xl font-display text-white uppercase tracking-[0.1em] flex-1 min-w-0 truncate pr-2">{tournamentName}</h2>
+        <div className="flex items-center gap-3 shrink-0">
           <span className="text-[10px] font-mono bg-flag-gold/10 border border-flag-gold/20 text-flag-gold px-3 py-1 rounded-lg uppercase tracking-widest font-bold">
             {games.length} {games.length === 1 ? 'GAME' : 'GAMES'}
           </span>
@@ -63,9 +63,9 @@ export default function ScheduleAccordion({
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-base">
-                        <p className="text-white/90 font-display tracking-[0.1em] uppercase truncate flex-1 group-hover/card:text-white transition-colors font-bold">{g.home?.name ?? 'TBD'}</p>
-                        <span className="text-white/20 font-mono text-[10px] mx-3 font-bold">VS</span>
-                        <p className="text-white/90 font-display tracking-[0.1em] uppercase truncate flex-1 text-right group-hover/card:text-white transition-colors font-bold">{g.away?.name ?? 'TBD'}</p>
+                        <p className="text-white/90 font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 group-hover/card:text-white transition-colors font-bold">{g.home?.name ?? 'TBD'}</p>
+                        <span className="text-white/20 font-mono text-[10px] mx-3 shrink-0 font-bold">VS</span>
+                        <p className="text-white/90 font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 text-right group-hover/card:text-white transition-colors font-bold">{g.away?.name ?? 'TBD'}</p>
                       </div>
                       {g.round_label && <p className="text-[10px] text-flag-red mt-4 uppercase font-mono tracking-[0.15em] font-semibold">{g.round_label}</p>}
                     </>

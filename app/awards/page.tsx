@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import TournamentSelect from '@/components/TournamentSelect';
 import Link from '@/components/HiddenLink';
+import { slugify } from '@/lib/format';
 
 const TROPHY: Record<string, string> = {
   BEST_PG: '🏆',
@@ -17,7 +18,12 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
   const supabase = createClient();
 
   const { data: tournaments } = await supabase.from('tournaments').select('id, name').order('created_at', { ascending: false });
-  const activeTournamentId = searchParams.tournament_id || tournaments?.[0]?.id;
+  const activeParam = searchParams.tournament_id;
+
+  // Resolve slug or ID to the actual tournament ID
+  const activeTournament = tournaments?.find(t => t.id === activeParam || slugify(t.name) === activeParam) ?? tournaments?.[0];
+  const activeTournamentId = activeTournament?.id;
+  const activeTournamentSlug = activeTournament ? slugify(activeTournament.name) : '';
 
   const { data: awards } = await supabase
     .from('awards')
@@ -58,11 +64,13 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
         </div>
 
         <div className="mt-6">
-          <TournamentSelect
-            tournaments={tournaments ?? []}
-            activeId={activeTournamentId}
-            basePath="/awards"
-          />
+          {tournaments && tournaments.length > 0 && (
+            <TournamentSelect
+              tournaments={tournaments}
+              activeId={activeTournamentSlug}
+              basePath="/awards"
+            />
+          )}
         </div>
       </div>
 

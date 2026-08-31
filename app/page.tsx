@@ -31,10 +31,10 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Fixed sponsor rails at viewport edges */}
-      <SponsorRails />
+      <div className="min-h-[calc(100dvh-8rem)] flex flex-col gap-4 md:gap-6 pb-8">
+        {/* Fixed sponsor rails at viewport edges (desktop) / Inline sponsors (mobile) */}
+        <SponsorRails />
 
-      <div className="h-[calc(100dvh-8rem)] flex flex-col gap-4 md:gap-6 overflow-y-auto overflow-x-hidden">
         {/* Match Center */}
         {sortedGames && sortedGames.length > 0 && (
           <section className="animate-fade-in">
@@ -45,22 +45,22 @@ export default async function HomePage() {
         {/* Hero Banner */}
         <section className="animate-slide-up flex-1 relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-navy-900/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
           <div
-            className="w-full flex-1 bg-cover bg-center bg-no-repeat min-h-[80px]"
+            className="w-full flex-1 bg-cover bg-center bg-no-repeat min-h-[120px] md:min-h-[80px]"
             style={{ backgroundImage: "url('/bg-container.png')" }}
           />
           <div className="relative p-4 md:p-6 bg-navy-900/80 backdrop-blur-md border-t border-white/[0.06]">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-display text-white tracking-[0.15em] uppercase title-glow">
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-display text-white tracking-[0.15em] uppercase title-glow">
                   2K VETERANS LEAGUE
                 </h2>
-                <p className="text-xs font-mono text-white/40 uppercase tracking-[0.2em] mt-1">
+                <p className="text-[10px] sm:text-xs font-mono text-white/40 uppercase tracking-[0.2em] mt-1">
                   Philippine NBA 2K Pro-Am Competition
                 </p>
               </div>
-              <div className="flex flex-wrap justify-center sm:justify-end gap-3">
-                <Link href="/schedule" className="btn-primary">VIEW SCHEDULE</Link>
-                <Link href="/tournaments" className="btn-secondary">TOURNAMENTS</Link>
+              <div className="flex flex-wrap justify-center sm:justify-end gap-3 w-full sm:w-auto">
+                <Link href="/schedule" className="btn-primary flex-1 sm:flex-none text-center justify-center">VIEW SCHEDULE</Link>
+                <Link href="/tournaments" className="btn-secondary flex-1 sm:flex-none text-center justify-center">TOURNAMENTS</Link>
               </div>
             </div>
           </div>

@@ -2,13 +2,15 @@ import Link from '@/components/HiddenLink';
 import { createClient } from '@/lib/supabase/server';
 import { averageStats } from '@/lib/stats';
 import type { PlayerGameStats } from '@/lib/types';
+import TournamentDropdown from '@/components/TournamentDropdown';
+import { slugify } from '@/lib/format';
 
 export const metadata = {
   title: 'Player Stats — 2K Veterans League',
   description: 'Player statistics for every tournament and overall in the 2K Veterans League Pro-Am league.',
 };
 
-function TabHeader({ activeTab, activeTournamentId }: { activeTab: string; activeTournamentId: string }) {
+function TabHeader({ activeTab, activeTournamentSlug }: { activeTab: string; activeTournamentSlug: string }) {
   return (
     <div className="mb-6">
       <div className="section-header">
@@ -17,7 +19,7 @@ function TabHeader({ activeTab, activeTournamentId }: { activeTab: string; activ
       </div>
       <div className="inline-flex flex-wrap gap-1 bg-white/[0.04] rounded-xl p-1 border border-white/[0.06] mt-6">
         <Link
-          href={`/playerstats?tab=tournaments${activeTournamentId ? `&t=${activeTournamentId}` : ''}`}
+          href={`/playerstats?tab=tournaments${activeTournamentSlug ? `&t=${activeTournamentSlug}` : ''}`}
           className={`px-5 py-2.5 text-xs font-body font-medium uppercase tracking-[0.12em] rounded-lg transition-all duration-200 ${activeTab === 'tournaments' ? 'bg-flag-red text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-navy-900/50'
             }`}
         >
@@ -44,8 +46,10 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     .select('id, name, status, format')
     .order('created_at', { ascending: false });
 
-  const activeTournamentId = searchParams.t || '';
-  const activeTournament = tournaments?.find(t => t.id === activeTournamentId) ?? null;
+  const activeParam = searchParams.t || '';
+  const activeTournament = tournaments?.find(t => t.id === activeParam || slugify(t.name) === activeParam) ?? null;
+  const activeTournamentId = activeTournament?.id ?? '';
+  const activeTournamentSlug = activeTournament ? slugify(activeTournament.name) : '';
 
   const { data: players } = await supabase
     .from('players')
@@ -91,14 +95,14 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
 
     return (
       <div className="max-w-5xl mx-auto space-y-8">
-        <TabHeader activeTab="all" activeTournamentId={activeTournamentId} />
+        <TabHeader activeTab="all" activeTournamentSlug={activeTournamentSlug} />
         <section>
           <div className="relative card overflow-hidden">
             <div className="accent-stripe" />
             <div className="overflow-x-auto">
               <table className="w-full text-xs font-mono stat-mono">
                 <thead>
-                  <tr className="bg-navy text-[9px] text-navy/80 uppercase tracking-widest">
+                  <tr className="bg-navy text-[9px] text-white/80 uppercase tracking-widest">
                     <th className="text-left px-6 py-4 w-10 font-medium">#</th>
                     <th className="text-left px-4 py-4 font-medium">Player</th>
                     <th className="text-left px-4 py-4 font-medium">Team</th>
@@ -154,11 +158,11 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
   if (!activeTournamentId) {
     return (
       <div className="max-w-5xl mx-auto space-y-8">
-        <TabHeader activeTab="tournaments" activeTournamentId="" />
+        <TabHeader activeTab="tournaments" activeTournamentSlug="" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-8">
           {(tournaments ?? []).length === 0 && <p className="text-white/40 font-mono text-sm uppercase">No tournaments yet.</p>}
           {(tournaments ?? []).map(t => (
-            <Link key={t.id} href={`/playerstats?tab=tournaments&t=${t.id}`}
+            <Link key={t.id} href={`/playerstats?tab=tournaments&t=${slugify(t.name)}`}
               className="block card-hover p-6 group">
               <div className="flex justify-between items-start mb-4">
                 <p className="text-lg font-display text-white tracking-[0.1em] uppercase group-hover:text-flag-red transition-colors truncate">{t.name}</p>
@@ -226,17 +230,11 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      <TabHeader activeTab="tournaments" activeTournamentId={activeTournamentId} />
+      <TabHeader activeTab="tournaments" activeTournamentSlug={activeTournamentSlug} />
 
-      {/* Tournament pills */}
-      <div className="flex flex-wrap gap-2">
-        {(tournaments ?? []).map(t => (
-          <Link key={t.id} href={`/playerstats?tab=tournaments&t=${t.id}`}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono uppercase border transition-all ${t.id === activeTournamentId
-              ? 'border-flag-gold text-flag-gold bg-flag-gold/10 font-bold'
-              : 'border-white/[0.06] text-white/50 hover:text-white hover:border-navy'
-              }`}>{t.name}</Link>
-        ))}
+      {/* Tournament Dropdown */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <TournamentDropdown tournaments={tournaments ?? []} activeTournamentSlug={activeTournamentSlug} />
       </div>
 
       {activeTournament && (
@@ -263,7 +261,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
               <div className="overflow-x-auto">
                 <table className="w-full text-xs font-mono stat-mono">
                   <thead>
-                    <tr className="bg-navy text-[9px] text-navy/80 uppercase tracking-widest">
+                    <tr className="bg-navy text-[9px] text-white/80 uppercase tracking-widest">
                       <th className="text-left px-6 py-4 font-medium">Player</th>
                       <th className="px-4 py-4 text-right font-medium">GP</th>
                       <th className="px-4 py-4 text-right font-medium">PPG</th>

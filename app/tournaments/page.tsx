@@ -1,5 +1,6 @@
 import Link from '@/components/HiddenLink';
 import { createClient } from '@/lib/supabase/server';
+import { slugify } from '@/lib/format';
 
 export default async function TournamentsPage() {
   const supabase = createClient();
@@ -45,7 +46,7 @@ export default async function TournamentsPage() {
         <div className="grid gap-6 md:grid-cols-2">
           {activeLeagues.length === 0 && <p className="text-white/40 font-mono text-sm uppercase">No active leagues right now.</p>}
           {activeLeagues.map((t) => (
-            <Link key={t.id} href={`/tournaments/${t.id}`} className="block relative group card p-8 hover:border-flag-red/30 hover:shadow-[0_12px_40px_rgba(206,17,38,0.08)] hover:-translate-y-1 transition-all duration-500 overflow-hidden">
+            <Link key={t.id} href={`/tournaments/${slugify(t.name)}`} className="block relative group card p-8 hover:border-flag-red/30 hover:shadow-[0_12px_40px_rgba(206,17,38,0.08)] hover:-translate-y-1 transition-all duration-500 overflow-hidden">
               {/* Accent stripe top */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-flag-red opacity-60 group-hover:opacity-100 transition-opacity" />
               
@@ -80,12 +81,12 @@ export default async function TournamentsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {archivedLeagues.length === 0 && <p className="text-white/40 font-mono text-sm uppercase">No archived leagues.</p>}
           {archivedLeagues.map((t) => (
-            <Link key={t.id} href={`/tournaments/${t.id}`} className="flex justify-between items-center card p-5 hover:border-white/15 hover:-translate-y-0.5 transition-all group">
-              <div>
-                <p className="text-sm font-display text-white group-hover:text-flag-gold transition-colors tracking-[0.1em] uppercase truncate max-w-[180px]">{t.name}</p>
-                <p className="text-[10px] font-mono text-white/40 uppercase mt-1 tracking-wide">{t.format.replace(/_/g, ' ')}</p>
+            <Link key={t.id} href={`/tournaments/${slugify(t.name)}`} className="flex justify-between items-center card p-5 hover:border-white/15 hover:-translate-y-0.5 transition-all group">
+              <div className="flex-1 min-w-0 pr-3">
+                <p className="text-sm font-display text-white group-hover:text-flag-gold transition-colors tracking-[0.1em] uppercase truncate">{t.name}</p>
+                <p className="text-[10px] font-mono text-white/40 uppercase mt-1 tracking-wide truncate">{t.format.replace(/_/g, ' ')}</p>
               </div>
-              <div>
+              <div className="shrink-0">
                 {getStatusBadge(t.status)}
               </div>
             </Link>

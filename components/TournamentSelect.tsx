@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { slugify } from '@/lib/format';
 
 export default function TournamentSelect({
   tournaments,
@@ -31,7 +32,7 @@ export default function TournamentSelect({
           className="w-full appearance-none bg-navy-900 border border-white/[0.08] rounded-xl px-4 py-2.5 pr-10 text-white text-xs font-mono uppercase tracking-widest focus:outline-none focus:border-flag-red focus:ring-2 focus:ring-flag-red/25 transition-all shadow-sm hover:border-white/15 cursor-pointer"
         >
           {tournaments.map((t) => (
-            <option key={t.id} value={t.id} className="bg-navy-900 text-white">
+            <option key={t.id} value={slugify(t.name)} className="bg-navy-900 text-white">
               {t.name}
             </option>
           ))}
