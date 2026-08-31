@@ -28,6 +28,7 @@ export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const mobileProfilePanelRef = useRef<HTMLDivElement>(null);
 
   // Close menus on route change
   useEffect(() => {
@@ -68,7 +69,10 @@ export default function Navbar() {
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+      const target = e.target as Node;
+      const inProfileBtn = profileRef.current && profileRef.current.contains(target);
+      const inMobilePanel = mobileProfilePanelRef.current && mobileProfilePanelRef.current.contains(target);
+      if (!inProfileBtn && !inMobilePanel) setProfileOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('touchstart', handleClick as any);
@@ -226,7 +230,7 @@ export default function Navbar() {
 
       {/* Mobile Profile Dropdown — positioned below header */}
       {profileOpen && (
-        <div className="md:hidden border-t border-white/[0.06] bg-navy-900/95 backdrop-blur-2xl animate-fade-in">
+        <div ref={mobileProfilePanelRef} className="md:hidden border-t border-white/[0.06] bg-navy-900/95 backdrop-blur-2xl animate-fade-in">
           <div className="p-4">
             {username ? (
               <div className="space-y-1">
