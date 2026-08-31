@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment variables (keep .env.example, ignore real secrets)
+.env
+.env.local
+.env*.local
+
+# Vercel
+.vercel
+
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scratch / generated files
+extracted_text.txt
+extracted_text_utf8.txt
+
+# Internal agent task tracking
+task.md
+
+# Database Dumps and Helper Scripts (local dev only)
+kingpins_data_dump.json
+kingpins_backup.sql
+dump_data.js
+delete_demo_data*.js
+full_database_dump.sql
+kingpins_data.sql
+kingpins_extracted.sql
+kingpins_schema.sql
+check_constraints.js
+extract_db.js
+validate_dump.js
+update_db_dump.ps1
+
+# OpenAPI / generated specs (large, not needed in repo)
+kingpins_openapi.json

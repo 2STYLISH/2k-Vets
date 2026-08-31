@@ -1,0 +1,104 @@
+import Link from '@/components/HiddenLink';
+import { createClient } from '@/lib/supabase/server';
+import BackButton from '@/components/BackButton';
+import { formatDate, formatTime } from '@/lib/format';
+
+export const maxDuration = 60;
+
+const STATUS_STYLES: Record<string, string> = {
+  SCHEDULED: 'text-white/40 bg-white/[0.03]',
+  LIVE: 'text-white bg-navy-50',
+  AWAITING_STATS: 'text-white/30 bg-white/[0.03]',
+  STATS_UNDER_REVIEW: 'text-white/50 bg-navy-50',
+  VERIFIED: 'text-white bg-navy-50',
+  COMPLETED: 'text-white/30 bg-white/[0.03]',
+};
+
+export default async function AdminGamesPage() {
+  const supabase = createClient();
+
+  const { data: schedules } = await supabase
+    .from('schedules')
+    .select(
+      'id, scheduled_date, scheduled_time, game_type, round_label, status, home:teams!schedules_home_team_id_fkey(id,name), away:teams!schedules_away_team_id_fkey(id,name)'
+    )
+    .eq('is_archived', false)
+    .order('scheduled_date', { ascending: false })
+    .limit(50);
+
+  const { data: games } = await supabase
+    .from('games')
+    .select('id, schedule_id, status');
+  const gameBySchedule = new Map((games ?? []).map((g) => [g.schedule_id, g]));
+
+  return (
+    <div className="space-y-4">
+      <BackButton />
+      <div className="mb-8 pb-6 border-b border-white/[0.06]">
+        <h1 className="text-4xl text-white mb-1">GAMES & SCREENSHOTS</h1>
+        <p className="text-white/40 text-sm">
+          Upload the final box-score screenshot, run AI extraction, then review and mark players
+          as DNP before verifying. Stats and award rankings update automatically on verify.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {(schedules ?? []).length === 0 && (
+          <div className="card p-8 text-center">
+            <p className="text-white/40 text-sm">No games scheduled yet — create one in Schedule.</p>
+          </div>
+        )}
+        {(() => {
+          const combined = (schedules ?? []).map((s: any) => {
+            const game = gameBySchedule.get(s.id);
+            return { ...s, gameStatus: game?.status ?? 'SCHEDULED' };
+          });
+
+          const sortOrder: Record<string, number> = {
+            SCHEDULED: 1,
+            LIVE: 2,
+            AWAITING_STATS: 3,
+            STATS_UNDER_REVIEW: 4,
+            VERIFIED: 9,
+            COMPLETED: 10,
+          };
+
+          combined.sort((a, b) => {
+            const orderA = sortOrder[a.gameStatus] ?? 5;
+            const orderB = sortOrder[b.gameStatus] ?? 5;
+            if (orderA !== orderB) return orderA - orderB;
+            // Tie-breaker: date descending
+            const dateA = new Date(a.scheduled_date + 'T' + a.scheduled_time).getTime();
+            const dateB = new Date(b.scheduled_date + 'T' + b.scheduled_time).getTime();
+            return dateB - dateA;
+          });
+
+          return combined.map((s) => {
+            const statusStyle = STATUS_STYLES[s.gameStatus] ?? 'text-white/40';
+            return (
+              <Link
+                key={s.id}
+                href={`/admin/games/${s.id}`}
+                className="relative group p-5 rounded-2xl border border-white/[0.06] bg-gradient-to-br from-surface-900/80 to-surface-950/80 backdrop-blur-xl shadow-lg hover:shadow-[0_0_25px_rgba(220,38,38,0.15)] hover:border-red-500/40 transition-all duration-300 overflow-hidden flex items-center justify-between"
+              >
+                <div className="absolute top-0 left-0 w-full h-full bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div className="relative z-10">
+                  <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest group-hover:text-white/30 transition-colors">
+                    {s.game_type}
+                    {s.round_label ? ` · ${s.round_label}` : ''} · {formatDate(s.scheduled_date)} {formatTime(s.scheduled_time)}
+                  </p>
+                  <p className="text-white font-display text-lg mt-1 group-hover:text-red-400 transition-colors">
+                    {s.home?.name ?? 'TBD'} <span className="text-white/40">vs</span> {s.away?.name ?? 'TBD'}
+                  </p>
+                </div>
+                <span className={`relative z-10 text-[10px] font-mono uppercase px-3 py-1 rounded-full border border-white/[0.06]/50 shadow-sm ${statusStyle}`}>
+                  {s.gameStatus.replace(/_/g, ' ')}
+                </span>
+              </Link>
+            );
+          });
+        })()}
+      </div>
+    </div>
+  );
+}
