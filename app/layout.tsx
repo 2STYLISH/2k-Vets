@@ -3,6 +3,7 @@ import { Bebas_Neue, Inter, JetBrains_Mono } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import UrlHider from '@/components/UrlHider';
 import BackgroundManager from '@/components/BackgroundManager';
+import SponsorRails from '@/components/SponsorRails';
 import './globals.css';
 
 const display = Bebas_Neue({ subsets: ['latin'], weight: '400', variable: '--font-display' });
@@ -32,7 +33,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BackgroundManager />
         <UrlHider />
         <Navbar />
-        <main className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-8 relative z-0">{children}</main>
+        <main className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-8 relative z-0">
+          {children}
+          <SponsorRails />
+        </main>
       </body>
     </html>
   );

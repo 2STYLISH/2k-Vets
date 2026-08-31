@@ -1,7 +1,6 @@
 import Link from '@/components/HiddenLink';
 import { createClient } from '@/lib/supabase/server';
 import MatchCenter from '@/components/MatchCenter';
-import SponsorRails from '@/components/SponsorRails';
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -32,8 +31,6 @@ export default async function HomePage() {
   return (
     <>
       <div className="min-h-[calc(100dvh-8rem)] flex flex-col gap-4 md:gap-6 pb-8">
-        {/* Fixed sponsor rails at viewport edges (desktop) / Inline sponsors (mobile) */}
-        <SponsorRails />
 
         {/* Match Center */}
         {sortedGames && sortedGames.length > 0 && (
