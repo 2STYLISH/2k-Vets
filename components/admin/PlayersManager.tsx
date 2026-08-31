@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { createPlayer, deletePlayer, updatePlayerTier, updatePlayerName } from '@/lib/actions/teams';
+import { createPlayer, deletePlayer, updatePlayerName } from '@/lib/actions/teams';
 import { updatePlayerPhoto } from '@/lib/actions/players';
 import { uploadFileBypassingRLS } from '@/lib/actions/upload';
 
@@ -12,7 +11,6 @@ interface Player {
   id: string;
   gamertag: string;
   position: string | null;
-  tier: number | null;
   photo_path?: string | null;
   slug?: string;
 }
@@ -20,21 +18,18 @@ interface Player {
 export default function PlayersManager({ players }: { players: Player[] }) {
   const router = useRouter();
   const [gamertag, setGamertag] = useState('');
-  const [tier, setTier] = useState<number | ''>('');
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  
+
   // Filtering state
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTier, setFilterTier] = useState<number | 'ALL'>('ALL');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
   const filteredPlayers = players.filter(p => {
-    if (filterTier !== 'ALL' && p.tier !== filterTier) return false;
     if (searchQuery.trim() && !p.gamertag.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
@@ -46,9 +41,8 @@ export default function PlayersManager({ players }: { players: Player[] }) {
     if (!gamertag.trim()) return;
     setBusy(true);
     try {
-      await createPlayer({ gamertag: gamertag.trim(), tier: tier === '' ? undefined : tier });
+      await createPlayer({ gamertag: gamertag.trim() });
       setGamertag('');
-      setTier('');
       router.refresh();
     } finally {
       setBusy(false);
@@ -60,16 +54,6 @@ export default function PlayersManager({ players }: { players: Player[] }) {
     setBusy(true);
     try {
       await deletePlayer(playerId);
-      router.refresh();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleUpdateTier(playerId: string, newTier: number | null) {
-    setBusy(true);
-    try {
-      await updatePlayerTier(playerId, newTier);
       router.refresh();
     } finally {
       setBusy(false);
@@ -121,14 +105,6 @@ export default function PlayersManager({ players }: { players: Player[] }) {
             placeholder="Gamertag"
             className="input-field"
           />
-          <select
-            value={tier}
-            onChange={(e) => setTier(e.target.value ? parseInt(e.target.value) : '')}
-            className="input-field w-32"
-          >
-            <option value="">No Tier</option>
-            {[1, 2, 3, 4, 5, 6].map(t => <option key={t} value={t}>Tier {t}</option>)}
-          </select>
           <button onClick={handleCreatePlayer} disabled={busy || !gamertag.trim()} className="btn-primary whitespace-nowrap">
             REGISTER
           </button>
@@ -144,19 +120,6 @@ export default function PlayersManager({ players }: { players: Player[] }) {
           onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
           className="input-field max-w-xs"
         />
-        <select
-          value={filterTier}
-          onChange={e => { setFilterTier(e.target.value === 'ALL' ? 'ALL' : parseInt(e.target.value)); setCurrentPage(1); }}
-          className="input-field w-32"
-        >
-          <option value="ALL">All Tiers</option>
-          <option value="1">Tier 1</option>
-          <option value="2">Tier 2</option>
-          <option value="3">Tier 3</option>
-          <option value="4">Tier 4</option>
-          <option value="5">Tier 5</option>
-          <option value="6">Tier 6</option>
-        </select>
       </div>
 
       <div className="card overflow-hidden">
@@ -165,14 +128,13 @@ export default function PlayersManager({ players }: { players: Player[] }) {
             <tr>
               <th className="px-5 py-3 w-16">Photo</th>
               <th className="px-5 py-3">Gamertag</th>
-              <th className="px-5 py-3 w-40">Tier</th>
               <th className="px-5 py-3 w-24 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-800">
             {displayedPlayers.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-8 text-center text-silver-600">
+                <td colSpan={3} className="px-5 py-8 text-center text-silver-600">
                   No players found matching your criteria.
                 </td>
               </tr>
@@ -229,19 +191,6 @@ export default function PlayersManager({ players }: { players: Player[] }) {
                     </div>
                   )}
                 </td>
-                <td className="px-5 py-3">
-                  <select
-                    value={p.tier || ''}
-                    onChange={(e) => handleUpdateTier(p.id, e.target.value ? parseInt(e.target.value) : null)}
-                    disabled={busy}
-                    className="bg-surface-800 border border-surface-600 rounded text-xs text-silver-300 px-2 py-1 focus:outline-none uppercase tracking-widest w-full"
-                  >
-                    <option value="">No Tier</option>
-                    {[1, 2, 3, 4, 5, 6].map((t) => (
-                      <option key={t} value={t}>Tier {t}</option>
-                    ))}
-                  </select>
-                </td>
                 <td className="px-5 py-3 text-right">
                   <button
                     onClick={() => handleDelete(p.id, p.gamertag)}
@@ -255,7 +204,7 @@ export default function PlayersManager({ players }: { players: Player[] }) {
             ))}
             {totalPages > 1 && (
               <tr>
-                <td colSpan={4} className="px-5 py-4 bg-surface-900/50">
+                <td colSpan={3} className="px-5 py-4 bg-surface-900/50">
                   <div className="flex items-center justify-between">
                     <span className="text-silver-500 font-mono text-[10px] uppercase tracking-widest">
                       Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredPlayers.length)} of {filteredPlayers.length} players

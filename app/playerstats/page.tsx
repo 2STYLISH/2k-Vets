@@ -8,24 +8,6 @@ export const metadata = {
   description: 'Player statistics for every tournament and overall in the 2K Veterans League Pro-Am league.',
 };
 
-function getTierBadge(tier: number | null) {
-  if (!tier) return null;
-  const colors: Record<number, string> = {
-    1: 'bg-flag-red text-navy',
-    2: 'bg-purple-600 text-navy',
-    3: 'bg-flag-gold text-navy',
-    4: 'bg-navy-200 text-white/90',
-    5: 'bg-orange-600 text-navy',
-    6: 'bg-navy-900 text-navy',
-  };
-  const color = colors[tier] || colors[6];
-  return (
-    <span className={`inline-flex px-1.5 py-0.5 rounded-md text-[9px] font-mono uppercase tracking-widest font-bold items-center justify-center shadow-sm ${color}`}>
-      T{tier}
-    </span>
-  );
-}
-
 function TabHeader({ activeTab, activeTournamentId }: { activeTab: string; activeTournamentId: string }) {
   return (
     <div className="mb-6">
@@ -67,7 +49,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
 
   const { data: players } = await supabase
     .from('players')
-    .select('id, gamertag, position, tier, slug');
+    .select('id, gamertag, position, slug');
 
   // ── ALL PLAYERS TAB ──────────────────────────────────────────────────────────
   if (activeTab === 'all') {
@@ -143,7 +125,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
                           <Link href={`/${player.slug || player.gamertag.toLowerCase()}`} className="text-white/90 font-body group-hover/row:text-white transition-colors font-medium">
                             {player.gamertag}
                           </Link>
-                          {getTierBadge(player.tier)}
+
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-white/40 font-mono text-[9px] uppercase tracking-widest group-hover/row:text-white/70 transition-colors">{teamName}</td>
@@ -306,7 +288,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
                             <Link href={`/${player.slug || player.gamertag.toLowerCase()}`} className="text-white/90 font-body group-hover/row:text-white transition-colors font-medium">
                               {player.gamertag}
                             </Link>
-                            {getTierBadge(player.tier)}
+
                           </div>
                         </td>
                         {avg ? (

@@ -34,7 +34,7 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
     .from('player_game_stats')
     .select(`
       *,
-      player:players(id, gamertag, position, slug, tier)
+      player:players(id, gamertag, position, slug)
     `)
     .eq('game_id', game.id)
     .order('pts', { ascending: false });
@@ -68,18 +68,6 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
     }
   });
 
-  function getTierBadge(tier: number | null) {
-    if (!tier) return null;
-    const colors: Record<number, string> = {
-      1: 'bg-flag-red text-white',
-      2: 'bg-purple-600 text-white',
-      3: 'bg-flag-gold text-white',
-      4: 'bg-navy-200 text-white/90',
-      5: 'bg-orange-600 text-white',
-      6: 'bg-navy-900 text-white',
-    };
-    return <span className={`ml-2 px-1.5 py-0.5 rounded-md text-[9px] uppercase font-mono font-bold tracking-widest shadow-sm ${colors[tier] || colors[6]}`}>T{tier}</span>;
-  }
 
   function renderStatTable(teamName: string, teamStats: any[], isWinner: boolean) {
     return (
@@ -137,7 +125,7 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
                         <Link href={`/${p?.slug || p?.gamertag?.toLowerCase()}`} className={`font-body transition-colors font-medium ${isPotg ? 'text-flag-gold' : 'text-white/90 group-hover/row:text-flag-gold'}`}>
                           {p?.gamertag}
                         </Link>
-                        {getTierBadge(p?.tier)}
+
                         {isPotg && (
                           <span className="ml-3 text-[12px]" title="Player of the Game">🏆</span>
                         )}

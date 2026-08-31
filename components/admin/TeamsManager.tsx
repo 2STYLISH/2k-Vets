@@ -27,7 +27,6 @@ interface Player {
   id: string;
   gamertag: string;
   position: string | null;
-  tier: number | null;
 }
 
 interface RosterEntry {
@@ -278,7 +277,6 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
           <div key={p.id} className="flex items-center justify-between text-sm group py-1">
             <div className="flex items-center gap-3">
               <span className="text-silver-300">{p.gamertag}</span>
-              {p.tier && <span className="text-[10px] text-silver-500 uppercase font-mono tracking-widest">T{p.tier}</span>}
             </div>
             <button
               type="button"

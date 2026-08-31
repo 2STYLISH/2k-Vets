@@ -42,7 +42,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
   ]);
 
   // ── Player Stats ─────────────────────────────────────────────────────────────
-  const { data: players } = await supabase.from('players').select('id, gamertag, position, tier, slug');
+  const { data: players } = await supabase.from('players').select('id, gamertag, position, slug');
 
   const { data: statsRaw } = await supabase
     .from('player_game_stats')

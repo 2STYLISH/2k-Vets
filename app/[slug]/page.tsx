@@ -6,24 +6,6 @@ import { averageStats } from '@/lib/stats';
 import { formatDate } from '@/lib/format';
 import type { PlayerGameStats } from '@/lib/types';
 
-function getTierBadge(tier: number | null) {
-  if (!tier) return null;
-  const colors: Record<number, string> = {
-    1: 'bg-flag-red text-white',
-    2: 'bg-purple-600 text-white',
-    3: 'bg-flag-gold text-white',
-    4: 'bg-navy-200 text-white/90',
-    5: 'bg-orange-600 text-white',
-    6: 'bg-navy-900 text-white',
-  };
-  const color = colors[tier] || colors[6];
-  return (
-    <span className={`inline-block px-3 py-1 rounded-lg text-[10px] font-mono uppercase tracking-widest font-bold shadow-sm ${color}`}>
-      Tier {tier}
-    </span>
-  );
-}
-
 const AWARD_LABELS: Record<string, { label: string; icon: string }> = {
   BEST_PG: { label: 'Best Point Guard', icon: '🏆' },
   BEST_SG: { label: 'Best Shooting Guard', icon: '🏆' },
@@ -45,7 +27,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
 
   const { data: player } = await supabase
     .from('players')
-    .select('id, gamertag, position, tier, bio, created_at, photo_path, team_id')
+    .select('id, gamertag, position, bio, created_at, photo_path, team_id')
     .eq('slug', params.slug.toLowerCase())
     .maybeSingle();
 
@@ -258,9 +240,6 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                {getTierBadge(player.tier)}
-              </div>
             </div>
           </div>
 

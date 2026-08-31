@@ -25,7 +25,7 @@ export async function deleteTeam(teamId: string) {
   revalidatePath('/admin/teams');
 }
 
-export async function createPlayer(input: { gamertag: string; position?: string; tier?: number }) {
+export async function createPlayer(input: { gamertag: string; position?: string }) {
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
 
@@ -33,7 +33,6 @@ export async function createPlayer(input: { gamertag: string; position?: string;
   const { error } = await supabase.from('players').insert({
     gamertag: input.gamertag,
     position: input.position || null,
-    tier: input.tier || null,
   });
   if (error) throw error;
 
@@ -81,17 +80,6 @@ export async function removePlayerFromTournamentTeam(input: { tournamentId: stri
   revalidatePath('/admin/teams');
 }
 
-export async function updatePlayerTier(playerId: string, tier: number | null) {
-  const { isAdmin } = await requireAdmin();
-  if (!isAdmin) throw new Error('Admin authentication required.');
-
-  const supabase = createClient();
-  const { error } = await supabase.from('players').update({ tier }).eq('id', playerId);
-  if (error) throw error;
-
-  revalidatePath('/admin/teams');
-  revalidatePath('/admin/players');
-}
 
 export async function updatePlayerName(playerId: string, gamertag: string) {
   const { isAdmin } = await requireAdmin();
