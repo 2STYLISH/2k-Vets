@@ -87,7 +87,7 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
 
                 {/* Subtle glow */}
                 <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-flag-gold/[0.03] rounded-full blur-3xl group-hover:bg-flag-gold/[0.06] transition-colors" />
-                
+
                 <div className="flex flex-col items-center text-center gap-2 mb-6 relative z-10">
                   <span className="text-5xl mb-2 transform group-hover:scale-110 transition-transform duration-500">{TROPHY[a.award_type] ?? '🏆'}</span>
                   <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-flag-gold/40 to-transparent mb-2" />
@@ -105,7 +105,7 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
                           <img src={a.winner.photo_path} alt={a.winner.gamertag} className="w-20 h-20 object-cover rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md" />
                         ) : (
                           <div className="w-20 h-20 rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md flex items-center justify-center overflow-hidden p-3">
-                            <img src="/logo2.png" alt={a.winner.gamertag} className="w-full h-full object-contain opacity-50" />
+                            <img src="/logo.png" alt={a.winner.gamertag} className="w-full h-full object-contain opacity-50" />
                           </div>
                         )}
                         <div className="absolute -bottom-1 -right-1 bg-flag-gold w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] shadow-md text-white font-bold">✓</div>

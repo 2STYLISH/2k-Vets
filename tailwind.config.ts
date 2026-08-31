@@ -8,7 +8,7 @@ const config: Config = {
         // 2K Veterans League — Light theme, Philippine flag-inspired
         navy: {
           DEFAULT: '#0033a0',
-          50:  '#e8edf8',
+          50: '#e8edf8',
           100: '#c5d1ed',
           200: '#9db2e0',
           300: '#7593d3',
@@ -21,7 +21,7 @@ const config: Config = {
         },
         'flag-red': {
           DEFAULT: '#ce1126',
-          50:  '#fce8eb',
+          50: '#fce8eb',
           100: '#f8c5cc',
           200: '#f18e9a',
           300: '#ea5768',
@@ -34,7 +34,7 @@ const config: Config = {
         },
         'flag-gold': {
           DEFAULT: '#d4a017',
-          50:  '#fdf6e3',
+          50: '#fdf6e3',
           100: '#faeab5',
           200: '#f5d56e',
           300: '#e8be2e',
@@ -47,7 +47,7 @@ const config: Config = {
         },
         // Surface scale — light translucent panels
         surface: {
-          50:  '#ffffff',
+          50: '#ffffff',
           100: '#f8f9fa',
           200: '#f1f3f5',
           300: '#e9ecef',
@@ -67,7 +67,7 @@ const config: Config = {
       },
       backgroundImage: {
         'grid-subtle': 'repeating-linear-gradient(0deg, rgba(0,51,160,0.03) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, rgba(0,51,160,0.03) 0 1px, transparent 1px 40px)',
-        'kingpins': "url('/bg-kingpins.png')",
+        'logo': "url('/bg-logo.png')",
         'home': "url('/bg-home.png')",
         'other': "url('/bg-other.png')",
         'container': "url('/bg-container.png')",

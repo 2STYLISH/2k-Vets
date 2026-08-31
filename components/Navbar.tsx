@@ -144,7 +144,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
           <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-white/10 bg-navy-800 flex items-center justify-center group-hover:border-flag-red/50 transition-colors shadow-sm">
-            <Image src="/bg-kingpins.png" alt="2K Veterans League Logo" fill className="object-cover" />
+            <Image src="/bg-logo.png" alt="2K Veterans League Logo" fill className="object-cover" />
           </div>
           <span className="hidden sm:block text-lg font-display text-white tracking-[0.12em] uppercase group-hover:text-flag-red transition-colors">
             2K VETERANS LEAGUE

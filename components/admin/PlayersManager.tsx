@@ -146,7 +146,7 @@ export default function PlayersManager({ players }: { players: Player[] }) {
                     {p.photo_path ? (
                       <img src={p.photo_path} alt={p.gamertag} className="w-8 h-8 rounded object-cover border border-surface-600 bg-surface-900" />
                     ) : (
-                      <img src="/logo2.png" alt={p.gamertag} className="w-8 h-8 rounded object-cover border border-surface-600 bg-surface-900 opacity-80" />
+                      <img src="/logo.png" alt={p.gamertag} className="w-8 h-8 rounded object-cover border border-surface-600 bg-surface-900 opacity-80" />
                     )}
                     <input
                       type="file"
@@ -210,14 +210,14 @@ export default function PlayersManager({ players }: { players: Player[] }) {
                       Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredPlayers.length)} of {filteredPlayers.length} players
                     </span>
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                         className="px-3 py-1 bg-surface-800 border border-surface-600 rounded text-[10px] font-mono text-white hover:bg-surface-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         PREV
                       </button>
-                      <button 
+                      <button
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                         className="px-3 py-1 bg-surface-800 border border-surface-600 rounded text-[10px] font-mono text-white hover:bg-surface-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

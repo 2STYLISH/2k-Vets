@@ -76,7 +76,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
       const gameB = Array.isArray(b.game) ? b.game[0] : b.game;
       const schedA = Array.isArray(gameA?.schedule) ? gameA.schedule[0] : gameA?.schedule;
       const schedB = Array.isArray(gameB?.schedule) ? gameB.schedule[0] : gameB?.schedule;
-      
+
       const dateA = schedA?.scheduled_date || '1970-01-01';
       const timeA = schedA?.scheduled_time || '00:00:00';
       const dateB = schedB?.scheduled_date || '1970-01-01';
@@ -223,7 +223,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
               {player.photo_path ? (
                 <img src={player.photo_path} alt={player.gamertag} className="w-full h-full object-cover" />
               ) : (
-                <img src="/logo2.png" alt={player.gamertag} className="w-full h-full object-cover opacity-60" />
+                <img src="/logo.png" alt={player.gamertag} className="w-full h-full object-cover opacity-60" />
               )}
             </div>
 
@@ -406,10 +406,10 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                 if (!game) return null;
                 const schedule = Array.isArray(game.schedule) ? game.schedule[0] : game.schedule;
                 const tournament = Array.isArray(schedule?.tournament) ? schedule.tournament[0] : schedule?.tournament;
-                
+
                 const homeTeam = Array.isArray(game.home) ? game.home[0] : game.home;
                 const awayTeam = Array.isArray(game.away) ? game.away[0] : game.away;
-                
+
                 const isHome = game.home_team_id === row.team_id;
                 const myScore = isHome ? game.home_score : game.away_score;
                 const oppScore = isHome ? game.away_score : game.home_score;
