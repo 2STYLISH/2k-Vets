@@ -160,22 +160,22 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
       <div className="relative rounded-3xl overflow-hidden card border-white/[0.08]">
         {/* Subtle radial gradient */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.04),transparent_70%)]" />
-        <div className="relative z-10 px-6 py-12 md:py-16">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24">
+        <div className="relative z-10 px-4 sm:px-6 py-8 sm:py-12 md:py-16">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 sm:gap-12 md:gap-24">
 
             {/* Home Team */}
             <div className="flex-1 text-center md:text-right flex flex-col items-center md:items-end w-full">
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-4 md:mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
                 {(game.home_team as any)?.logo_url ? (
                   <img src={(game.home_team as any).logo_url} alt={(game.home_team as any).name} className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-2xl text-white/30 font-display tracking-widest">{(game.home_team as any)?.name?.slice(0, 3).toUpperCase()}</span>
                 )}
               </div>
-              <h1 className="text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.home_team as any)?.name}</h1>
-              <div className="relative mt-4">
-                <p className="text-6xl md:text-8xl font-display text-white tracking-tighter">{game.home_score ?? '-'}</p>
-                {isHomeWinner && <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-flag-red shadow-[0_0_12px_rgba(206,17,38,0.6)]" title="Winner" />}
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.home_team as any)?.name}</h1>
+              <div className="relative mt-2 sm:mt-4">
+                <p className="text-5xl sm:text-6xl md:text-8xl font-display text-white tracking-tighter">{game.home_score ?? '-'}</p>
+                {isHomeWinner && <div className="absolute -left-4 sm:-left-8 top-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-flag-red shadow-[0_0_12px_rgba(206,17,38,0.6)]" title="Winner" />}
               </div>
             </div>
 
@@ -188,17 +188,17 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
 
             {/* Away Team */}
             <div className="flex-1 text-center md:text-left flex flex-col items-center md:items-start w-full">
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-4 md:mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
                 {(game.away_team as any)?.logo_url ? (
                   <img src={(game.away_team as any).logo_url} alt={(game.away_team as any).name} className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-2xl text-white/30 font-display tracking-widest">{(game.away_team as any)?.name?.slice(0, 3).toUpperCase()}</span>
                 )}
               </div>
-              <h1 className="text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.away_team as any)?.name}</h1>
-              <div className="relative mt-4">
-                <p className="text-6xl md:text-8xl font-display text-white tracking-tighter">{game.away_score ?? '-'}</p>
-                {!isHomeWinner && (game.away_score || 0) > (game.home_score || 0) && <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-flag-red shadow-[0_0_12px_rgba(206,17,38,0.6)]" title="Winner" />}
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.away_team as any)?.name}</h1>
+              <div className="relative mt-2 sm:mt-4">
+                <p className="text-5xl sm:text-6xl md:text-8xl font-display text-white tracking-tighter">{game.away_score ?? '-'}</p>
+                {!isHomeWinner && (game.away_score || 0) > (game.home_score || 0) && <div className="absolute -right-4 sm:-right-8 top-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-flag-red shadow-[0_0_12px_rgba(206,17,38,0.6)]" title="Winner" />}
               </div>
             </div>
 

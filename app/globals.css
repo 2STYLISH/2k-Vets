@@ -227,3 +227,93 @@ h1, h2, h3, h4 {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ═══════════════════════════════════════════════
+   MOBILE OPTIMIZATION
+   Touch targets, safe areas, responsive fixes
+   ═══════════════════════════════════════════════ */
+
+/* ── Remove 300ms tap delay on all interactive elements ── */
+a, button, [role="button"], input, select, textarea, label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Minimum touch targets on mobile (44px recommended) ── */
+@media (max-width: 767px) {
+  /* Ensure buttons and links have minimum touch size */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Exception for inline text links */
+  p a, td a, span a, li a {
+    min-height: auto;
+    min-width: auto;
+  }
+
+  /* Exception for nav pills that have padding */
+  nav a, .inline-flex a {
+    min-height: auto;
+    min-width: auto;
+  }
+
+  /* Improve mobile table scrolling with momentum */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* Prevent horizontal overflow on mobile */
+  main {
+    overflow-x: hidden;
+  }
+
+  /* Better text rendering on mobile */
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
+/* ── Safe area insets for notched devices ─────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  header {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ── Mobile stat table card scroll hint ──────── */
+@media (max-width: 767px) {
+  .card .overflow-x-auto {
+    position: relative;
+  }
+
+  .card .overflow-x-auto::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(90deg, transparent, rgba(10, 15, 46, 0.8));
+    pointer-events: none;
+    z-index: 1;
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
+}
+
+/* ── Prevent body scroll when mobile menu is open ── */
+body.menu-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+

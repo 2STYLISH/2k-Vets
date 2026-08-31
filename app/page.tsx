@@ -34,7 +34,7 @@ export default async function HomePage() {
       {/* Fixed sponsor rails at viewport edges */}
       <SponsorRails />
 
-      <div className="h-[calc(100vh-8rem)] flex flex-col gap-4 md:gap-6 overflow-hidden">
+      <div className="h-[calc(100dvh-8rem)] flex flex-col gap-4 md:gap-6 overflow-y-auto overflow-x-hidden">
         {/* Match Center */}
         {sortedGames && sortedGames.length > 0 && (
           <section className="animate-fade-in">

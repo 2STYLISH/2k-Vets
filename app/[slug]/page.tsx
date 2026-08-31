@@ -230,7 +230,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
             {/* Gamertag & Info */}
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-end gap-4 mb-3">
-                <h1 className="text-5xl md:text-7xl text-white font-display uppercase tracking-[0.1em] leading-none title-glow">
+                <h1 className="text-3xl sm:text-5xl md:text-7xl text-white font-display uppercase tracking-[0.1em] leading-none title-glow break-words">
                   {player.gamertag}
                 </h1>
                 {(roleDisplay || player.position) && (
@@ -244,35 +244,35 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
           </div>
 
           {/* Masthead Stats Ribbon */}
-          <div className="mt-8 pt-6 border-t border-white/[0.06] flex flex-wrap gap-4 md:gap-8 justify-between lg:justify-start">
-            <div className="min-w-[100px]">
+          <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+            <div>
               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">RECORD</p>
-              <p className="text-2xl font-mono text-flag-gold leading-none">{wins}-{losses}</p>
+              <p className="text-xl sm:text-2xl font-mono text-flag-gold leading-none">{wins}-{losses}</p>
               <p className="text-[9px] font-mono text-white/30 uppercase mt-1">{winPct}% WIN</p>
             </div>
-            <div className="min-w-[100px] border-l border-white/[0.06] pl-4 md:pl-8">
+            <div>
               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">GAMES</p>
-              <p className="text-2xl font-mono text-white leading-none">{gamesPlayed}</p>
+              <p className="text-xl sm:text-2xl font-mono text-white leading-none">{gamesPlayed}</p>
               <p className="text-[9px] font-mono text-white/30 uppercase mt-1">TRACKED</p>
             </div>
-            <div className="min-w-[100px] border-l border-white/[0.06] pl-4 md:pl-8">
+            <div>
               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">PPG</p>
-              <p className="text-2xl font-mono text-white leading-none">{ppg}</p>
+              <p className="text-xl sm:text-2xl font-mono text-white leading-none">{ppg}</p>
               <p className="text-[9px] font-mono text-white/30 uppercase mt-1">CAREER</p>
             </div>
-            <div className="min-w-[100px] border-l border-white/[0.06] pl-4 md:pl-8">
+            <div>
               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">APG</p>
-              <p className="text-2xl font-mono text-white leading-none">{apg}</p>
+              <p className="text-xl sm:text-2xl font-mono text-white leading-none">{apg}</p>
               <p className="text-[9px] font-mono text-white/30 uppercase mt-1">CAREER</p>
             </div>
-            <div className="min-w-[100px] border-l border-white/[0.06] pl-4 md:pl-8">
+            <div>
               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">RPG</p>
-              <p className="text-2xl font-mono text-white leading-none">{rpg}</p>
+              <p className="text-xl sm:text-2xl font-mono text-white leading-none">{rpg}</p>
               <p className="text-[9px] font-mono text-white/30 uppercase mt-1">CAREER</p>
             </div>
-            <div className="min-w-[100px] border-l border-white/[0.06] pl-4 md:pl-8">
+            <div>
               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">3PM</p>
-              <p className="text-2xl font-mono text-flag-gold leading-none">{totalTpm}</p>
+              <p className="text-xl sm:text-2xl font-mono text-flag-gold leading-none">{totalTpm}</p>
               <p className="text-[9px] font-mono text-white/30 uppercase mt-1">MADE</p>
             </div>
           </div>

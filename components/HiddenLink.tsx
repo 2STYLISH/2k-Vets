@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ReactNode, MouseEvent } from 'react';
+import { ReactNode, MouseEvent, TouchEvent } from 'react';
 
 export default function HiddenLink({
   href,
@@ -16,15 +16,21 @@ export default function HiddenLink({
 }) {
   const router = useRouter();
 
-  function handleClick(e: MouseEvent<HTMLDivElement>) {
+  function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     e.preventDefault();
     if (onClick) onClick();
     router.push(href);
   }
 
   return (
-    <div onClick={handleClick} className={`cursor-pointer ${className || ''}`}>
+    <a
+      href={href}
+      onClick={handleClick}
+      className={`cursor-pointer ${className || ''}`}
+      style={{ touchAction: 'manipulation' }}
+    >
       {children}
-    </div>
+    </a>
   );
 }
+

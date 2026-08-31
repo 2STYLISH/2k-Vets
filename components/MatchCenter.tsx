@@ -102,32 +102,32 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
           </div>
 
           {/* Score block */}
-          <div className="flex items-center justify-between flex-col md:flex-row gap-4 relative z-10 w-full">
-            <div className="flex flex-col sm:flex-row items-center gap-4 flex-1 text-center sm:text-left min-w-0">
+          <div className="flex items-center justify-between flex-col sm:flex-row gap-4 relative z-10 w-full">
+            <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-4 flex-1 text-center sm:text-left min-w-0 w-full sm:w-auto">
               {fHomeLogo ? (
-                <img src={fHomeLogo} className="w-14 h-14 lg:w-16 lg:h-16 object-cover rounded-xl border-2 border-white/[0.06] bg-navy-900 shadow-md shrink-0" />
+                <img src={fHomeLogo} className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-cover rounded-xl border-2 border-white/[0.06] bg-navy-900 shadow-md shrink-0" />
               ) : (
-                <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-white/[0.06] border-2 border-white/[0.06] shadow-md shrink-0" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl bg-white/[0.06] border-2 border-white/[0.06] shadow-md shrink-0" />
               )}
-              <span className="text-xl lg:text-2xl font-display text-white tracking-[0.1em] leading-tight break-words min-w-0">{fHome}</span>
+              <span className="text-lg sm:text-xl lg:text-2xl font-display text-white tracking-[0.1em] leading-tight truncate min-w-0">{fHome}</span>
             </div>
 
             <div className="flex items-center gap-3 sm:gap-5 px-2 sm:px-4 shrink-0">
-              <div className={`text-3xl lg:text-5xl font-mono px-4 py-2 lg:px-5 lg:py-3 rounded-xl border-2 shadow-md transition-colors ${fHomeWin ? 'bg-flag-red text-white border-flag-red' : 'bg-navy-900 text-white/70 border-white/[0.08]'}`}>
+              <div className={`text-3xl lg:text-5xl font-mono px-3 py-2 sm:px-4 lg:px-5 lg:py-3 rounded-xl border-2 shadow-md transition-colors ${fHomeWin ? 'bg-flag-red text-white border-flag-red' : 'bg-navy-900 text-white/70 border-white/[0.08]'}`}>
                 {fHomeScore}
               </div>
-              <span className="text-xs text-white/30 font-mono uppercase tracking-widest font-bold hidden sm:inline-block">VS</span>
-              <div className={`text-3xl lg:text-5xl font-mono px-4 py-2 lg:px-5 lg:py-3 rounded-xl border-2 shadow-md transition-colors ${fAwayWin ? 'bg-flag-red text-white border-flag-red' : 'bg-navy-900 text-white/70 border-white/[0.08]'}`}>
+              <span className="text-xs text-white/30 font-mono uppercase tracking-widest font-bold">VS</span>
+              <div className={`text-3xl lg:text-5xl font-mono px-3 py-2 sm:px-4 lg:px-5 lg:py-3 rounded-xl border-2 shadow-md transition-colors ${fAwayWin ? 'bg-flag-red text-white border-flag-red' : 'bg-navy-900 text-white/70 border-white/[0.08]'}`}>
                 {fAwayScore}
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 flex-1 justify-end text-center sm:text-right min-w-0">
-              <span className="text-xl lg:text-2xl font-display text-white tracking-[0.1em] leading-tight break-words min-w-0 order-2 sm:order-1">{fAway}</span>
+            <div className="flex flex-row-reverse sm:flex-col items-center gap-3 sm:gap-4 flex-1 justify-start sm:justify-end text-center sm:text-right min-w-0 w-full sm:w-auto">
+              <span className="text-lg sm:text-xl lg:text-2xl font-display text-white tracking-[0.1em] leading-tight truncate min-w-0">{fAway}</span>
               {fAwayLogo ? (
-                <img src={fAwayLogo} className="w-14 h-14 lg:w-16 lg:h-16 object-cover rounded-xl border-2 border-white/[0.06] bg-navy-900 shadow-md shrink-0 order-1 sm:order-2" />
+                <img src={fAwayLogo} className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-cover rounded-xl border-2 border-white/[0.06] bg-navy-900 shadow-md shrink-0" />
               ) : (
-                <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl bg-white/[0.06] border-2 border-white/[0.06] shadow-md shrink-0 order-1 sm:order-2" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl bg-white/[0.06] border-2 border-white/[0.06] shadow-md shrink-0" />
               )}
             </div>
           </div>
