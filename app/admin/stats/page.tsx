@@ -4,6 +4,7 @@ import { averageStats } from '@/lib/stats';
 import type { PlayerGameStats } from '@/lib/types';
 import BackButton from '@/components/BackButton';
 import TournamentFilter from '@/components/TournamentFilter';
+import { slugify } from '@/lib/format';
 
 export const metadata = {
   title: 'Admin Stats — 2K Veterans League',
@@ -13,7 +14,11 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
   const supabase = createClient();
 
   const { data: tournaments } = await supabase.from('tournaments').select('id, name, status').order('created_at', { ascending: false });
-  const activeTournament = searchParams.t || tournaments?.[0]?.id || '';
+  const activeParam = searchParams.t;
+  
+  const activeTournamentObj = tournaments?.find(t => t.id === activeParam || slugify(t.name) === activeParam) ?? tournaments?.[0];
+  const activeTournament = activeTournamentObj?.id || '';
+  const activeTournamentSlug = activeTournamentObj ? slugify(activeTournamentObj.name) : '';
 
   const { data: teams } = await supabase
     .from('teams')
@@ -23,7 +28,7 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
 
   const { data: players } = await supabase
     .from('players')
-    .select('id, gamertag, position');
+    .select('id, gamertag, position, slug');
 
   const { data: rosters } = await supabase
     .from('tournament_rosters')
@@ -87,9 +92,9 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Tournament:</label>
-          <TournamentFilter tournaments={tournaments ?? []} activeId={activeTournament} basePath="/admin/stats" />
+        <div className="flex items-center gap-4">
+          <p className="text-xs font-mono text-white/40 uppercase tracking-widest font-bold">Tournament:</p>
+          <TournamentFilter tournaments={tournaments ?? []} activeId={activeTournamentSlug} basePath="/admin/stats" />
         </div>
       </div>
 
@@ -131,11 +136,11 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
               </Link>
             </div>
 
-            <div className="relative rounded-2xl overflow-hidden bg-navy-900/70/80 backdrop-blur-md border border-white/[0.06] shadow-2xl transition-all">
+            <div className="relative rounded-2xl overflow-hidden bg-navy-900/70 backdrop-blur-md border border-white/[0.06] shadow-2xl transition-all">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs stat-mono">
                   <thead>
-                    <tr className="bg-navy-900/60/40 border-b border-surface-800/80 text-white/40 uppercase tracking-widest text-[9px]">
+                    <tr className="bg-navy-900/60 border-b border-white/[0.08] text-white/40 uppercase tracking-widest text-[9px]">
                       <th className="text-left px-6 py-4 font-bold">Player</th>
                       <th className="px-4 py-4 text-right">GP</th>
                       <th className="px-4 py-4 text-right">PPG</th>
@@ -163,7 +168,7 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
                       return (
                         <tr key={player.id} className={`border-b border-surface-800 last:border-b-0 hover:bg-white/[0.03] transition-colors group/row ${isPending ? 'opacity-60' : ''}`}>
                           <td className="px-6 py-4">
-                            <span className="text-silver-200 font-body group-hover/row:text-white transition-colors">{player.gamertag}</span>
+                            <Link href={`/${player.slug}`} className="text-white font-bold font-body hover:text-flag-gold transition-colors">{player.gamertag}</Link>
                             {player.position && (
                               <span className="ml-3 px-1.5 py-0.5 bg-navy-900/60 border border-white/[0.06] rounded-xl text-[9px] text-white/30 uppercase">{player.position}</span>
                             )}

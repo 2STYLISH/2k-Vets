@@ -67,7 +67,7 @@ export default function ScreenshotUploadPanel({
     <div className="card p-6 space-y-5">
       <div>
         <h2 className="font-display text-lg text-white tracking-widest mb-1">SCREENSHOT</h2>
-        <p className="text-xs text-silver-500 leading-relaxed">
+        <p className="text-xs text-white leading-relaxed">
           Upload the final box-score screenshot. AI reads it once and pre-fills the stats
           form below — nothing is saved as official until you review, mark DNP players, and verify.
         </p>
@@ -110,7 +110,7 @@ export default function ScreenshotUploadPanel({
       {latestExtraction && (
         <div className="border-t border-surface-700 pt-4 space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono text-silver-600 uppercase tracking-widest">AI Extraction</span>
+            <span className="text-[10px] font-mono text-white font-bold uppercase tracking-widest">AI Extraction</span>
             <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
               aiWorked ? 'text-silver-200 bg-surface-700' : 'text-silver-600 bg-surface-800'
             }`}>
@@ -125,12 +125,12 @@ export default function ScreenshotUploadPanel({
               {/* Show exact API error if we have one */}
               {aiErrorMsg && (
                 <div className="bg-surface-900 border border-surface-600 rounded-lg px-3 py-2">
-                  <p className="text-[10px] font-mono text-silver-600 uppercase tracking-widest mb-1">Error from API</p>
+                  <p className="text-[10px] font-mono text-white font-bold uppercase tracking-widest mb-1">Error from API</p>
                   <p className="text-silver-300 text-xs font-mono break-all">{aiErrorMsg}</p>
                 </div>
               )}
 
-              <p className="text-silver-500 text-xs leading-relaxed">Possible causes:</p>
+              <p className="text-white text-xs leading-relaxed">Possible causes:</p>
               <ul className="text-silver-500 text-xs space-y-1 list-none">
                 <li className="flex gap-2">
                   <span className="text-silver-600">①</span>

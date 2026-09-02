@@ -3,7 +3,8 @@ import { Bebas_Neue, Inter, JetBrains_Mono } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import UrlHider from '@/components/UrlHider';
 import BackgroundManager from '@/components/BackgroundManager';
-import SponsorRails from '@/components/SponsorRails';
+import Footer from '@/components/Footer';
+
 import './globals.css';
 
 const display = Bebas_Neue({ subsets: ['latin'], weight: '400', variable: '--font-display' });
@@ -29,15 +30,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
-      <body className="bg-navy-900 min-h-screen">
+      <body className="bg-navy-900 min-h-screen flex flex-col">
         <BackgroundManager />
         <UrlHider />
         <Navbar />
-        <main className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-8 relative z-0">
+        <main className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-8 relative z-0 flex-1 w-full">
           {children}
-          <SponsorRails />
         </main>
+        <Footer />
       </body>
     </html>
   );
 }
+

@@ -13,22 +13,13 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function ScheduleManager({ games }: { games: any[] }) {
-  const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'ACTIVE' | 'ARCHIVED'>('ACTIVE');
 
   const filtered = games.filter((g) => {
     const isArchived = g.is_archived || g.status === 'COMPLETED';
     if (tab === 'ACTIVE' && isArchived) return false;
     if (tab === 'ARCHIVED' && !isArchived) return false;
-
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      g.home?.name?.toLowerCase().includes(q) ||
-      g.away?.name?.toLowerCase().includes(q) ||
-      g.tournament?.name?.toLowerCase().includes(q) ||
-      g.round_label?.toLowerCase().includes(q)
-    );
+    return true;
   });
 
   return (
@@ -48,13 +39,6 @@ export default function ScheduleManager({ games }: { games: any[] }) {
             Archived
           </button>
         </div>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter by team, tournament, or round…"
-          className="w-full sm:w-64 bg-surface-900 border border-surface-600 rounded-lg px-3 py-1.5 text-silver-200 placeholder-silver-700 text-sm focus:outline-none focus:ring-1 focus:ring-silver-400 transition-colors"
-        />
       </div>
       
       <div className="space-y-3">
@@ -124,22 +108,22 @@ function GameRow({ game }: { game: any }) {
     return (
       <div className="card p-4 space-y-3 border-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.05)]">
         <div className="mb-2">
-          <p className="text-bone font-medium">{game.home?.name} vs {game.away?.name}</p>
-          {tournament && <p className="text-xs text-silver-500 font-mono mt-0.5">{tournament}</p>}
+          <p className="text-white font-bold">{game.home?.name} vs {game.away?.name}</p>
+          {tournament && <p className="text-xs text-white/70 font-mono mt-0.5">{tournament}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div>
-            <label className="block text-[10px] text-silver-500 uppercase tracking-widest mb-1">Date</label>
+            <label className="block text-[10px] text-white font-bold uppercase tracking-widest mb-1">Date</label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input-field py-1.5 text-sm" />
           </div>
           <div>
-            <label className="block text-[10px] text-silver-500 uppercase tracking-widest mb-1">Time</label>
+            <label className="block text-[10px] text-white font-bold uppercase tracking-widest mb-1">Time</label>
             <input type="time" value={time} onChange={e => setTime(e.target.value)} className="input-field py-1.5 text-sm" />
           </div>
           <div>
-            <label className="block text-[10px] text-silver-500 uppercase tracking-widest mb-1">Type</label>
-            <select value={type} onChange={e => setType(e.target.value)} className="input-field py-1.5 text-sm">
+            <label className="block text-[10px] text-white font-bold uppercase tracking-widest mb-1">Type</label>
+            <select value={type} onChange={e => setType(e.target.value)} className="input-field py-1.5 text-sm text-white">
               <option value="REGULAR">Regular</option>
               <option value="PLAYOFF">Playoff</option>
               <option value="TOURNAMENT">Tournament</option>
@@ -147,12 +131,12 @@ function GameRow({ game }: { game: any }) {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-silver-500 uppercase tracking-widest mb-1">Round Label</label>
+            <label className="block text-[10px] text-white font-bold uppercase tracking-widest mb-1">Round Label</label>
             <input type="text" value={roundLabel} onChange={e => setRoundLabel(e.target.value)} placeholder="e.g. Finals" className="input-field py-1.5 text-sm" />
           </div>
           <div>
-            <label className="block text-[10px] text-silver-500 uppercase tracking-widest mb-1">Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value)} className="input-field py-1.5 text-sm">
+            <label className="block text-[10px] text-white font-bold uppercase tracking-widest mb-1">Status</label>
+            <select value={status} onChange={e => setStatus(e.target.value)} className="input-field py-1.5 text-sm text-white">
               <option value="SCHEDULED">Scheduled</option>
               <option value="LIVE">Live</option>
               <option value="COMPLETED">Completed</option>
@@ -180,9 +164,9 @@ function GameRow({ game }: { game: any }) {
   return (
     <div className="card p-4 flex items-center justify-between group">
       <div className="min-w-0">
-        <p className="text-bone font-medium truncate">{game.home?.name} vs {game.away?.name}</p>
-        <p className="text-xs text-mute font-mono uppercase mt-0.5">
-          {tournament && <span className="text-silver-400 not-uppercase normal-case mr-2">[{tournament}]</span>}
+        <p className="text-white font-bold truncate">{game.home?.name} vs {game.away?.name}</p>
+        <p className="text-xs text-white/70 font-mono uppercase mt-0.5">
+          {tournament && <span className="text-white/50 not-uppercase normal-case mr-2">[{tournament}]</span>}
           {formatDate(game.scheduled_date)} · {displayTime}
           {game.round_label ? ` · ${game.round_label}` : ''}
         </p>

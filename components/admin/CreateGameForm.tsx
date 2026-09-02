@@ -97,8 +97,8 @@ export default function CreateGameForm({
     }
   }
 
-  const selectCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-silver-200 focus:outline-none focus:ring-1 focus:ring-silver-400 focus:border-silver-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
-  const inputCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-silver-200 focus:outline-none focus:ring-1 focus:ring-silver-400 focus:border-silver-400 transition-colors';
+  const selectCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-silver-400 focus:border-silver-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+  const inputCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-silver-400 focus:border-silver-400 transition-colors';
 
   return (
     <div className="card p-6 max-w-xl space-y-4">
@@ -106,7 +106,7 @@ export default function CreateGameForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5">Tournament</label>
+          <label className="block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5">Tournament</label>
           <select value={tournamentId} onChange={(e) => handleTournamentChange(e.target.value)} className={selectCls}>
             <option value="">— none —</option>
             {tournaments.map((t) => (
@@ -115,7 +115,7 @@ export default function CreateGameForm({
           </select>
         </div>
         <div>
-          <label className="block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5">Game Type</label>
+          <label className="block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5">Game Type</label>
           <select value={gameType} onChange={(e) => setGameType(e.target.value as any)} className={selectCls}>
             <option value="REGULAR">Regular Season</option>
             <option value="PLAYOFF">Playoff</option>
@@ -141,7 +141,7 @@ export default function CreateGameForm({
       {/* Step 2 — Teams (filtered to tournament roster) */}
       <div className="grid grid-cols-2 gap-3 relative">
         <div>
-          <label className="block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5">
+          <label className="block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5">
             Home Team
             {tournamentId && availableTeams.length === 0 && (
               <span className="ml-2 text-crimson-400 normal-case">No teams registered</span>
@@ -149,7 +149,14 @@ export default function CreateGameForm({
           </label>
           <select
             value={home}
-            onChange={(e) => setHome(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setHome(val);
+              if (val && availableTeams.length === 2) {
+                const other = availableTeams.find(t => t.id !== val);
+                if (other) setAway(other.id);
+              }
+            }}
             disabled={tournamentId !== '' && availableTeams.length === 0}
             className={selectCls}
           >
@@ -160,7 +167,7 @@ export default function CreateGameForm({
           </select>
         </div>
         <div>
-          <label className="block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5">Away Team</label>
+          <label className="block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5">Away Team</label>
           <select
             value={away}
             onChange={(e) => setAway(e.target.value)}
@@ -186,7 +193,7 @@ export default function CreateGameForm({
       {/* Step 3 — Details */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="text-[10px] text-silver-600 uppercase font-mono tracking-widest">Round Label</label>
+          <label className="text-[10px] text-white font-bold uppercase font-mono tracking-widest">Round Label</label>
           <button type="button" onClick={() => setIsRoundLabelEditable(true)} className="text-[10px] text-gold uppercase font-mono tracking-widest hover:text-white transition-colors">
             Edit
           </button>
@@ -202,11 +209,11 @@ export default function CreateGameForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5">Date</label>
+          <label className="block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5">Date</label>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
         </div>
         <div>
-          <label className="block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5">Time</label>
+          <label className="block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5">Time</label>
           <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputCls} />
         </div>
       </div>

@@ -2,6 +2,7 @@ import Link from '@/components/HiddenLink';
 import { createClient } from '@/lib/supabase/server';
 import BackButton from '@/components/BackButton';
 import TournamentSelect from '@/components/TournamentSelect';
+import { slugify } from '@/lib/format';
 
 const AWARD_TYPES = [
   'BEST_PG', 'BEST_SG', 'BEST_SF', 'BEST_PF', 'BEST_CENTER',
@@ -17,9 +18,12 @@ const STATUS_LABEL: Record<string, { label: string; style: string }> = {
 
 export default async function AdminAwardsPage({ searchParams }: { searchParams: { tournament_id?: string } }) {
   const supabase = createClient();
+  const activeParam = searchParams.tournament_id;
 
   const { data: tournaments } = await supabase.from('tournaments').select('id, name').order('created_at', { ascending: false });
-  const activeTournamentId = searchParams.tournament_id || tournaments?.[0]?.id;
+  const activeTournamentObj = activeParam ? (tournaments ?? []).find(t => t.id === activeParam || slugify(t.name) === activeParam) : tournaments?.[0];
+  const activeTournamentId = activeTournamentObj?.id;
+  const activeTournamentSlug = activeTournamentObj ? slugify(activeTournamentObj.name) : '';
 
   const { data: awards } = await supabase
     .from('awards')
@@ -86,7 +90,7 @@ export default async function AdminAwardsPage({ searchParams }: { searchParams: 
                   </p>
                 </div>
                 <Link
-                  href={`/admin/awards/${type}?tournament_id=${activeTournamentId}`}
+                  href={`/admin/awards/${type}?tournament_id=${activeTournamentSlug}`}
                   className="btn-secondary text-xs px-3 py-1.5 whitespace-nowrap"
                 >
                   MANAGE →

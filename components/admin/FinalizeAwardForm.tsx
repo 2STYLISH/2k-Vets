@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { finalizeAward } from '@/lib/actions/awards';
 
-const selectCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-silver-200 focus:outline-none focus:ring-1 focus:ring-silver-400 transition-colors';
-const labelCls = 'block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5';
+const selectCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-silver-400 transition-colors';
+const labelCls = 'block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5';
 
 export default function FinalizeAwardForm({
   awardType,

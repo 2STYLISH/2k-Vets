@@ -6,6 +6,8 @@ import SeedEditor from '@/components/admin/SeedEditor';
 import SwissGenerator from '@/components/admin/SwissGenerator';
 import Link from '@/components/HiddenLink';
 import BackButton from '@/components/BackButton';
+import { slugify } from '@/lib/format';
+import TournamentFilter from '@/components/TournamentFilter';
 
 export default async function AdminBracketPage({
   searchParams,
@@ -13,6 +15,7 @@ export default async function AdminBracketPage({
   searchParams: { t?: string };
 }) {
   const supabase = createClient();
+  const activeParam = searchParams.t;
 
   const { data: tournaments } = await supabase
     .from('tournaments')
@@ -20,9 +23,11 @@ export default async function AdminBracketPage({
     .neq('status', 'COMPLETED')
     .order('created_at', { ascending: false });
 
-  const active = searchParams.t
-    ? tournaments?.find((t) => t.id === searchParams.t) ?? tournaments?.[0]
+  const active = activeParam
+    ? tournaments?.find((t) => t.id === activeParam || slugify(t.name) === activeParam) ?? tournaments?.[0]
     : tournaments?.[0];
+
+  const activeTournamentSlug = active ? slugify(active.name) : '';
 
   const { data: teams } = active 
     ? await supabase.from('teams').select('id, name').eq('tournament_id', active.id).order('name')
@@ -51,7 +56,8 @@ export default async function AdminBracketPage({
   return (
     <div className="space-y-8">
       <BackButton />
-      <div className="flex items-center justify-between">
+      
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl text-white/90">BRACKET MANAGEMENT</h1>
           <p className="text-white/40 text-sm mt-1">
@@ -59,28 +65,14 @@ export default async function AdminBracketPage({
             use Admin Override below for manual corrections.
           </p>
         </div>
-        <Link href="/admin/tournaments/create" className="px-4 py-2 bg-flag-gold text-arena-950 rounded-md text-sm font-display">
-          CREATE TOURNAMENT
-        </Link>
-      </div>
-
-      {tournaments && tournaments.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {tournaments.map((t) => (
-            <Link
-              key={t.id}
-              href={`/admin/bracket?t=${t.id}`}
-              className={`px-3 py-1 rounded-md text-xs font-mono uppercase border ${
-                active?.id === t.id
-                  ? 'border-gold text-flag-gold'
-                  : 'border-arena-700 text-white/40 hover:text-white/90'
-              }`}
-            >
-              {t.name}
-            </Link>
-          ))}
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3 bg-surface-900/50 p-2 rounded-xl border border-white/[0.06]">
+            <span className="text-[10px] font-mono text-silver-400 uppercase tracking-widest pl-2">Tournament</span>
+            <TournamentFilter tournaments={tournaments ?? []} activeId={activeTournamentSlug} basePath="/admin/bracket" />
+          </div>
         </div>
-      )}
+      </div>
 
       {!active ? (
         <p className="card p-6 text-white/40 text-sm">No tournaments yet.</p>

@@ -25,7 +25,7 @@ export default function TournamentStatusToggle({ tournamentId, currentStatus }: 
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[10px] text-silver-500 uppercase tracking-widest">Status</label>
+      <label className="text-[10px] text-white font-bold uppercase tracking-widest">Status</label>
       <select
         value={status}
         onChange={(e) => handleStatusChange(e.target.value)}

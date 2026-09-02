@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { overrideBracketMatchup } from '@/lib/actions/bracket';
 import type { Matchup, Team } from '../BracketTree';
 
-const selectCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-silver-200 focus:outline-none focus:ring-1 focus:ring-silver-400 transition-colors';
-const labelCls = 'block text-[10px] text-silver-600 uppercase font-mono tracking-widest mb-1.5';
+const selectCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-silver-400 transition-colors';
+const labelCls = 'block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5';
 
 export default function EditMatchupModal({
   matchup,
@@ -72,14 +72,14 @@ export default function EditMatchupModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="bg-arena-900 border border-surface-700 rounded-lg p-6 max-w-md w-full shadow-2xl relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-mute hover:text-bone">
+        <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-silver-300">
           ✕
         </button>
         
-        <h2 className="text-xl text-bone font-display mb-1">
+        <h2 className="text-xl text-white font-bold font-display mb-1">
           Edit Matchup {matchup.matchNumber ? `#${matchup.matchNumber}` : ''}
         </h2>
-        <p className="text-xs font-mono text-mute mb-6">
+        <p className="text-xs font-mono text-white mb-6">
           {matchup.bracket_side} - Round {matchup.round} Slot {matchup.slot}
         </p>
 
@@ -153,14 +153,14 @@ export default function EditMatchupModal({
             <button
               onClick={onClose}
               disabled={saving}
-              className="flex-1 py-2 rounded border border-surface-600 text-silver-400 hover:text-bone disabled:opacity-50 transition-colors"
+              className="flex-1 btn-secondary"
             >
               CANCEL
             </button>
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-1 py-2 rounded bg-crimson text-bone font-medium hover:bg-crimson-600 disabled:opacity-50 transition-colors"
+              className="flex-1 btn-primary"
             >
               {saving ? 'SAVING...' : 'CONFIRM OVERRIDE'}
             </button>

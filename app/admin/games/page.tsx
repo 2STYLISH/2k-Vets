@@ -1,7 +1,8 @@
 import Link from '@/components/HiddenLink';
 import { createClient } from '@/lib/supabase/server';
 import BackButton from '@/components/BackButton';
-import { formatDate, formatTime } from '@/lib/format';
+import { formatDate, formatTime, slugify } from '@/lib/format';
+import TournamentFilter from '@/components/TournamentFilter';
 
 export const maxDuration = 60;
 
@@ -14,17 +15,25 @@ const STATUS_STYLES: Record<string, string> = {
   COMPLETED: 'text-white/30 bg-white/[0.03]',
 };
 
-export default async function AdminGamesPage() {
+export default async function AdminGamesPage({ searchParams }: { searchParams: { tab?: string, t?: string } }) {
+  const tab = searchParams.tab || 'active';
   const supabase = createClient();
+  const activeParam = searchParams.t;
+
+  const { data: tournamentsData } = await supabase.from('tournaments').select('id, name').neq('status', 'COMPLETED');
+  const tournaments = tournamentsData ?? [];
+  const activeTournamentObj = tournaments.find(t => t.id === activeParam || slugify(t.name) === activeParam) ?? tournaments[0];
+  const activeTournament = activeTournamentObj?.id || '';
+  const activeTournamentSlug = activeTournamentObj ? slugify(activeTournamentObj.name) : '';
 
   const { data: schedules } = await supabase
     .from('schedules')
     .select(
-      'id, scheduled_date, scheduled_time, game_type, round_label, status, home:teams!schedules_home_team_id_fkey(id,name), away:teams!schedules_away_team_id_fkey(id,name)'
+      'id, scheduled_date, scheduled_time, game_type, round_label, status, is_archived, home:teams!schedules_home_team_id_fkey(id,name), away:teams!schedules_away_team_id_fkey(id,name)'
     )
-    .eq('is_archived', false)
+    .eq('tournament_id', activeTournament)
     .order('scheduled_date', { ascending: false })
-    .limit(50);
+    .limit(200);
 
   const { data: games } = await supabase
     .from('games')
@@ -34,25 +43,56 @@ export default async function AdminGamesPage() {
   return (
     <div className="space-y-4">
       <BackButton />
-      <div className="mb-8 pb-6 border-b border-white/[0.06]">
-        <h1 className="text-4xl text-white mb-1">GAMES & SCREENSHOTS</h1>
-        <p className="text-white/40 text-sm">
-          Upload the final box-score screenshot, run AI extraction, then review and mark players
-          as DNP before verifying. Stats and award rankings update automatically on verify.
-        </p>
+      
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-6 border-b border-white/[0.06]">
+        <div>
+          <h1 className="text-4xl text-white mb-1">GAMES & SCREENSHOTS</h1>
+          <p className="text-white/40 text-sm">
+            Upload the final box-score screenshot, run AI extraction, then review and mark players
+            as DNP before verifying. Stats and award rankings update automatically on verify.
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3 bg-surface-900/50 p-2 rounded-xl border border-white/[0.06]">
+          <span className="text-[10px] font-mono text-silver-400 uppercase tracking-widest pl-2">Tournament</span>
+          <TournamentFilter tournaments={tournaments} activeId={activeTournamentSlug} basePath="/admin/games" />
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <Link 
+          href="?tab=active" 
+          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'active' ? 'bg-[#b8860b]/20 text-[#b8860b] border border-[#b8860b]/50' : 'bg-surface-800 text-silver-500 hover:text-white border border-surface-600'}`}
+        >
+          Active
+        </Link>
+        <Link 
+          href="?tab=archived" 
+          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'archived' ? 'bg-[#b8860b]/20 text-[#b8860b] border border-[#b8860b]/50' : 'bg-surface-800 text-silver-500 hover:text-white border border-surface-600'}`}
+        >
+          Archived
+        </Link>
       </div>
 
       <div className="grid gap-3">
-        {(schedules ?? []).length === 0 && (
-          <div className="card p-8 text-center">
-            <p className="text-white/40 text-sm">No games scheduled yet — create one in Schedule.</p>
-          </div>
-        )}
         {(() => {
           const combined = (schedules ?? []).map((s: any) => {
             const game = gameBySchedule.get(s.id);
             return { ...s, gameStatus: game?.status ?? 'SCHEDULED' };
           });
+
+          const activeList = combined.filter(s => !s.is_archived && s.gameStatus !== 'VERIFIED' && s.gameStatus !== 'COMPLETED');
+          const archivedList = combined.filter(s => s.is_archived || s.gameStatus === 'VERIFIED' || s.gameStatus === 'COMPLETED');
+          
+          const currentList = tab === 'archived' ? archivedList : activeList;
+
+          if (currentList.length === 0) {
+            return (
+              <div className="card p-8 text-center">
+                <p className="text-white/40 text-sm">No games found in this view.</p>
+              </div>
+            );
+          }
 
           const sortOrder: Record<string, number> = {
             SCHEDULED: 1,
@@ -63,7 +103,7 @@ export default async function AdminGamesPage() {
             COMPLETED: 10,
           };
 
-          combined.sort((a, b) => {
+          currentList.sort((a, b) => {
             const orderA = sortOrder[a.gameStatus] ?? 5;
             const orderB = sortOrder[b.gameStatus] ?? 5;
             if (orderA !== orderB) return orderA - orderB;
@@ -73,7 +113,7 @@ export default async function AdminGamesPage() {
             return dateB - dateA;
           });
 
-          return combined.map((s) => {
+          return currentList.map((s) => {
             const statusStyle = STATUS_STYLES[s.gameStatus] ?? 'text-white/40';
             return (
               <Link

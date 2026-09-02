@@ -92,7 +92,7 @@ export default function TeamsManager({
       {/* Top controls: Create Team & Select Tournament */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="card p-5">
-          <h2 className="font-display text-sm text-silver-400 uppercase tracking-widest mb-4">New Team</h2>
+          <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest mb-4">New Team</h2>
           <form className="flex gap-3" onSubmit={handleCreateTeam}>
             <input
               value={newTeamName}
@@ -107,7 +107,7 @@ export default function TeamsManager({
         </div>
 
         <div className="card p-5 border-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.05)]">
-          <h2 className="font-display text-sm text-gold uppercase tracking-widest mb-4">Active Tournament Rosters</h2>
+          <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest mb-4">Active Tournament Rosters</h2>
           <div className="flex items-center gap-3">
             <label htmlFor="tourney-logo-upload" className="relative cursor-pointer group shrink-0" title="Click to upload tournament logo">
               <div className="w-10 h-10 rounded border border-surface-600 bg-surface-800 flex items-center justify-center overflow-hidden group-hover:border-gold/50 transition-colors">
@@ -265,7 +265,7 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
           </label>
           <p className="text-base text-white font-display tracking-widest">{team.name}</p>
         </div>
-        <button type="button" onClick={handleDeleteTeam} className="text-xs text-silver-600 hover:text-silver-300 transition-colors font-mono">
+        <button type="button" onClick={handleDeleteTeam} className="text-xs text-white font-bold hover:text-silver-300 transition-colors font-mono">
           DELETE TEAM
         </button>
       </div>
@@ -276,7 +276,7 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
         {roster.map((p) => (
           <div key={p.id} className="flex items-center justify-between text-sm group py-1">
             <div className="flex items-center gap-3">
-              <span className="text-silver-300">{p.gamertag}</span>
+              <span className="text-white font-bold">{p.gamertag}</span>
             </div>
             <button
               type="button"
@@ -292,7 +292,7 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
       {/* Add player */}
       <div className="pt-3 border-t border-surface-700">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-mono text-silver-500 uppercase tracking-widest">Register Player</span>
+          <span className="text-[10px] font-mono text-white font-bold uppercase tracking-widest">Register Player</span>
         </div>
 
         <div className="flex gap-2">
@@ -301,7 +301,7 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
             placeholder="Type to search player..." 
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="flex-1 bg-surface-900 border border-surface-600 rounded-lg px-2 py-1.5 text-sm text-silver-200 focus:outline-none"
+            className="flex-1 bg-surface-900 border border-surface-600 rounded-lg px-2 py-1.5 text-sm text-white font-bold focus:outline-none"
           />
           <datalist id={`players-${team.id}`}>
             {unassignedPlayers.map(p => (

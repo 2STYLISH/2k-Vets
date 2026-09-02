@@ -5,8 +5,8 @@ import { createTournament, generateBracket } from '@/lib/actions/tournaments';
 
 
 
-const inputCls = 'w-full bg-surface-950/80 border border-surface-600 rounded-lg px-4 py-3 text-silver-100 font-mono focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all shadow-inner';
-const labelCls = 'block text-[10px] text-silver-500 uppercase font-mono tracking-widest font-bold mb-2';
+const inputCls = 'w-full bg-surface-950/80 border border-surface-600 rounded-lg px-4 py-3 text-white font-bold font-mono focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all shadow-inner';
+const labelCls = 'block text-[10px] text-white uppercase font-mono tracking-widest font-bold mb-2';
 
 export default function CreateTournamentForm() {
   const [name, setName] = useState('');

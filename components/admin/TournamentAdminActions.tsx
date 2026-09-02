@@ -95,7 +95,7 @@ export default function TournamentAdminActions({
       </div>
       {/* Championship award name */}
       <div className="flex-1 flex items-center gap-2 min-w-0">
-        <label className="text-[10px] font-mono text-silver-500 uppercase tracking-widest whitespace-nowrap">
+        <label className="text-[10px] font-mono text-white font-bold uppercase tracking-widest whitespace-nowrap">
           Champion Award Name
         </label>
         <input

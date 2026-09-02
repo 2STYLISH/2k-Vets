@@ -1,6 +1,7 @@
 import Link from '@/components/HiddenLink';
 import { createClient } from '@/lib/supabase/server';
 import MatchCenter from '@/components/MatchCenter';
+import SponsorSlideshow from '@/components/SponsorSlideshow';
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -30,7 +31,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <div className="min-h-[calc(100dvh-8rem)] flex flex-col gap-4 md:gap-6 pb-8">
+      <div className="flex flex-col gap-4 md:gap-6 h-full justify-center">
 
         {/* Match Center */}
         {sortedGames && sortedGames.length > 0 && (
@@ -42,7 +43,7 @@ export default async function HomePage() {
         {/* Hero Banner */}
         <section className="animate-slide-up flex-1 relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-navy-900/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
           <div
-            className="w-full flex-1 bg-cover bg-center bg-no-repeat min-h-[120px] md:min-h-[80px]"
+            className="w-full flex-1 bg-cover bg-center bg-no-repeat min-h-[180px] md:min-h-[200px]"
             style={{ backgroundImage: "url('/bg-container.png')" }}
           />
           <div className="relative p-4 md:p-6 bg-navy-900/80 backdrop-blur-md border-t border-white/[0.06]">

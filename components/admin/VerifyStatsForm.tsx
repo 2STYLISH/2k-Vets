@@ -199,7 +199,7 @@ export default function VerifyStatsForm({
     <div className="card p-6 space-y-6">
       <div>
         <h2 className="font-display text-lg text-white tracking-widest mb-1">REVIEW & VERIFY STATS</h2>
-        <p className="text-xs text-silver-500 leading-relaxed">
+        <p className="text-xs text-white font-bold leading-relaxed">
           Pre-filled from the AI extraction where a gamertag matched. Toggle{' '}
           <span className="text-silver-300 font-mono">DNP</span> for players who did not play —
           they will be excluded from stats and awards. Check every row before saving.
@@ -208,7 +208,7 @@ export default function VerifyStatsForm({
 
       {/* Score row */}
       <div className="flex flex-wrap gap-6 items-center p-4 bg-surface-900 rounded-xl border border-surface-700">
-        <label className="flex items-center gap-3 text-sm text-silver-400">
+        <label className="flex items-center gap-3 text-sm text-white font-bold">
           <span className="font-mono text-white">{homeTeamName}</span>
           <input
             type="number"
@@ -217,8 +217,8 @@ export default function VerifyStatsForm({
             className="w-20 bg-surface-800 border border-surface-600 rounded-lg px-2 py-1 text-white stat-mono text-center focus:outline-none focus:ring-1 focus:ring-silver-400"
           />
         </label>
-        <span className="text-silver-600 font-display text-sm">VS</span>
-        <label className="flex items-center gap-3 text-sm text-silver-400">
+        <span className="text-white font-bold font-display text-sm">VS</span>
+        <label className="flex items-center gap-3 text-sm text-white font-bold">
           <span className="font-mono text-white">{awayTeamName}</span>
           <input
             type="number"
@@ -269,7 +269,7 @@ export default function VerifyStatsForm({
       {confirming && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card p-6 max-w-md w-full border-surface-500 shadow-2xl">
-            <p className="text-xs font-mono text-silver-500 uppercase tracking-widest mb-3">
+            <p className="text-xs font-mono text-white font-bold uppercase tracking-widest mb-3">
               ⚠ Confirm Verification
             </p>
             <p className="text-white leading-relaxed text-sm">
@@ -326,14 +326,14 @@ function StatTable({
     <div>
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-surface-700">
         <p className="text-sm font-display text-white uppercase tracking-widest">{teamName}</p>
-        <span className="text-[10px] font-mono bg-surface-800 border border-surface-700 text-silver-400 px-2 py-1 rounded uppercase tracking-widest">
+        <span className="text-[10px] font-mono bg-surface-800 border border-surface-700 text-white font-bold px-2 py-1 rounded uppercase tracking-widest">
           {activePlayers} PLAYING · {rows.length - activePlayers} DNP
         </span>
       </div>
       <div className="overflow-x-auto rounded-lg border border-surface-700 bg-surface-950 shadow-inner">
         <table className="w-full text-xs stat-mono min-w-[900px] border-collapse">
           <thead>
-            <tr className="bg-surface-900 border-b border-surface-700 text-silver-400 uppercase tracking-widest text-[9px]">
+            <tr className="bg-surface-900 border-b border-surface-700 text-white font-bold uppercase tracking-widest text-[9px]">
               <th className="text-left px-3 py-3 font-mono font-bold w-40 border-r border-surface-800">Player</th>
               <th className="px-2 py-3 text-center w-16 border-r border-surface-800">Pos</th>
               <th className="px-2 py-3 text-center w-20 border-r border-surface-800">Status</th>
@@ -350,7 +350,7 @@ function StatTable({
                 key={r.playerId}
                 className={`border-b border-surface-800 last:border-b-0 transition-colors focus-within:bg-surface-800/80 hover:bg-surface-800/50 ${r.didNotPlay ? 'opacity-50 grayscale' : ''}`}
               >
-                <td className="px-3 py-2 text-silver-200 font-body whitespace-nowrap border-r border-surface-800 bg-surface-900/20">
+                <td className="px-3 py-2 text-white font-bold font-body whitespace-nowrap border-r border-surface-800 bg-surface-900/20">
                   {r.gamertag}
                 </td>
                 <td className="p-0 border-r border-surface-800 text-center relative group">
@@ -358,7 +358,7 @@ function StatTable({
                     value={r.position}
                     disabled={r.didNotPlay}
                     onChange={(e) => onChange(r.playerId, 'position', e.target.value)}
-                    className="w-full h-full bg-transparent px-1 py-3 text-silver-300 text-center focus:outline-none focus:bg-surface-700 cursor-pointer appearance-none disabled:cursor-not-allowed group-hover:bg-surface-800/50 transition-colors"
+                    className="w-full h-full bg-transparent px-1 py-3 text-white font-bold text-center focus:outline-none focus:bg-surface-700 cursor-pointer appearance-none disabled:cursor-not-allowed group-hover:bg-surface-800/50 transition-colors"
                   >
                     <option value="">-</option>
                     <option value="PG">PG</option>
@@ -386,7 +386,7 @@ function StatTable({
                       value={r[f] as number | ''}
                       disabled={r.didNotPlay}
                       onChange={(e) => onChange(r.playerId, f, e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full h-full bg-transparent px-3 py-3 text-right text-silver-100 font-bold focus:outline-none focus:bg-surface-700 focus:text-white transition-colors disabled:cursor-not-allowed placeholder-surface-700"
+                      className="w-full h-full bg-transparent px-3 py-3 text-right text-white font-bold focus:outline-none focus:bg-surface-700 focus:text-white transition-colors disabled:cursor-not-allowed placeholder-surface-700"
                       placeholder="0"
                     />
                   </td>

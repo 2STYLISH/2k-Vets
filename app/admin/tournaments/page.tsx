@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import TournamentStatusToggle from '@/components/admin/TournamentStatusToggle';
 import BackButton from '@/components/BackButton';
 import TournamentAdminActions from '@/components/admin/TournamentAdminActions';
+import { slugify } from '@/lib/format';
 
 export default async function AdminTournamentsPage() {
   const supabase = createClient();
@@ -34,7 +35,7 @@ export default async function AdminTournamentsPage() {
                 <p className="text-2xl text-white font-display uppercase tracking-widest mb-1.5 drop-shadow-sm">{t.name}</p>
                 <div className="flex items-center gap-4">
                   <span className="text-[10px] font-mono text-white/30 font-bold uppercase tracking-widest bg-navy-900/60 px-2 py-1 rounded-xl border border-white/[0.06]">{t.format.replace('_', ' ')}</span>
-                  <Link href={`/admin/bracket?t=${t.id}`} className="text-[10px] font-mono font-bold text-white/30 hover:text-white hover:border-white uppercase tracking-widest border border-white/[0.06] rounded-full px-3 py-1 transition-colors shadow-sm">
+                  <Link href={`/admin/bracket?t=${slugify(t.name)}`} className="text-[10px] font-mono font-bold text-white/30 hover:text-white hover:border-white uppercase tracking-widest border border-white/[0.06] rounded-full px-3 py-1 transition-colors shadow-sm">
                     Manage Bracket
                   </Link>
                 </div>

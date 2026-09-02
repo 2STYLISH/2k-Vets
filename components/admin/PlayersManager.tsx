@@ -96,7 +96,7 @@ export default function PlayersManager({ players }: { players: Player[] }) {
   return (
     <div className="space-y-6">
       <div className="card p-5">
-        <h2 className="font-display text-sm text-silver-400 uppercase tracking-widest mb-4">Register New Player</h2>
+        <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest mb-4">Register New Player</h2>
         <div className="flex gap-3">
           <input
             value={gamertag}
@@ -112,7 +112,7 @@ export default function PlayersManager({ players }: { players: Player[] }) {
       </div>
 
       <div className="flex gap-4 items-center">
-        <h2 className="font-display text-sm text-silver-400 uppercase tracking-widest flex-shrink-0">Player Roster ({filteredPlayers.length})</h2>
+        <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest flex-shrink-0">Player Roster ({filteredPlayers.length})</h2>
         <input
           type="text"
           placeholder="Search gamertag..."
@@ -124,7 +124,7 @@ export default function PlayersManager({ players }: { players: Player[] }) {
 
       <div className="card overflow-hidden">
         <table className="w-full text-sm text-left">
-          <thead className="bg-surface-900 border-b border-surface-700 text-silver-500 font-mono text-[10px] uppercase tracking-widest">
+          <thead className="bg-surface-900 border-b border-surface-700 text-white font-bold font-mono text-[10px] uppercase tracking-widest">
             <tr>
               <th className="px-5 py-3 w-16">Photo</th>
               <th className="px-5 py-3">Gamertag</th>
