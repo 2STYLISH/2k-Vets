@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { deleteTournament, updateTournamentChampionshipName, updateTournamentLogo } from '@/lib/actions/tournaments';
 import { uploadFileBypassingRLS } from '@/lib/actions/upload';
+import { useNotification } from '@/components/providers/NotificationProvider';
+import { parseError } from '@/lib/format';
 
 export default function TournamentAdminActions({
   tournamentId,
@@ -24,6 +26,7 @@ export default function TournamentAdminActions({
   const [deleting, setDeleting] = useState(false);
   const [logoUrl, setLogoUrl] = useState(currentLogoUrl);
   const [uploading, setUploading] = useState(false);
+  const { showConfirm, showToast } = useNotification();
   const supabase = createClient();
 
   async function handleSaveChampName() {
@@ -32,20 +35,29 @@ export default function TournamentAdminActions({
     try {
       await updateTournamentChampionshipName(tournamentId, champName);
       setSaved(true);
+      showToast('Championship name saved.', 'success');
       setTimeout(() => setSaved(false), 2000);
+    } catch (e: any) {
+      showToast(parseError(e), 'error');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirm(`DELETE "${tournamentName}"?\n\nThis will permanently delete the tournament, all its brackets, schedules, awards, and rosters. This cannot be undone.`)) return;
+    const confirmed = await showConfirm(
+      'Delete Tournament',
+      `DELETE "${tournamentName}"?\n\nThis will permanently delete the tournament, all its brackets, schedules, awards, and rosters. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
     setDeleting(true);
     try {
       await deleteTournament(tournamentId);
+      showToast('Tournament deleted.', 'success');
       router.refresh();
     } catch (e: any) {
-      alert('Failed to delete: ' + (e?.message ?? 'Unknown error'));
+      showToast(parseError(e), 'error');
       setDeleting(false);
     }
   }
@@ -54,7 +66,7 @@ export default function TournamentAdminActions({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      alert('Logo must be under 2MB');
+      showToast('Logo must be under 2MB', 'error');
       return;
     }
     setUploading(true);
@@ -70,9 +82,10 @@ export default function TournamentAdminActions({
       const cacheBustedUrl = publicUrl + `?t=${Date.now()}`;
       await updateTournamentLogo(tournamentId, cacheBustedUrl);
       setLogoUrl(cacheBustedUrl);
+      showToast('Tournament logo uploaded.', 'success');
       router.refresh();
     } catch (err: any) {
-      alert('Upload failed: ' + (err?.message ?? 'Unknown error'));
+      showToast(parseError(err), 'error');
     } finally {
       setUploading(false);
     }

@@ -7,7 +7,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: { f
 
   let query = supabase
     .from('schedules')
-    .select('id, scheduled_date, scheduled_time, game_type, round_label, status, tournament_id, tournament:tournaments(name, status), home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id)')
+    .select('id, scheduled_date, scheduled_time, game_type, round_label, status, tournament_id, tournament:tournaments(name, status), home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)')
     .eq('is_archived', false)
     .neq('status', 'COMPLETED')
     .order('scheduled_date', { ascending: true })

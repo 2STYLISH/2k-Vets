@@ -124,7 +124,7 @@ function BracketSection({ title, matchups, onMatchupClick, defaultMatchFormat }:
 
 function MatchCard({ matchup, onClick, defaultMatchFormat }: { matchup: Matchup; onClick?: (m: Matchup) => void; defaultMatchFormat?: string }) {
   const isComplete = matchup.status === 'COMPLETED';
-  const href = `/bracket/${matchup.id}`;
+  const href = `/bracket/${(matchup as any).short_id || matchup.id}`;
   const boFormat = matchup.match_format || defaultMatchFormat;
 
   let scoreA: number | undefined;

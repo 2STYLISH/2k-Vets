@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from '@/components/HiddenLink';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatGameUrl } from '@/lib/format';
 
 export default function MatchesFilter({ rounds, isUpcoming = false }: { rounds: { roundName: string; games: any[] }[], isUpcoming?: boolean }) {
   if (rounds.length === 0) {
@@ -63,6 +63,7 @@ export default function MatchesFilter({ rounds, isUpcoming = false }: { rounds: 
         )}
         {activeGames.map((g: any) => {
           const gameId = g.games?.[0]?.id;
+          const shortId = g.games?.[0]?.short_id;
           
           if (isUpcoming) {
             return (
@@ -74,7 +75,7 @@ export default function MatchesFilter({ rounds, isUpcoming = false }: { rounds: 
           }
 
           return gameId ? (
-            <Link key={g.id} href={`/games/${gameId}`} className="block text-sm font-mono text-white/80 hover:text-white hover:underline transition-colors p-2 rounded hover:bg-white/[0.06]">
+            <Link key={g.id} href={formatGameUrl(gameId, shortId, g.home?.name, g.away?.name)} className="block text-sm font-mono text-white/80 hover:text-white hover:underline transition-colors p-2 rounded hover:bg-white/[0.06]">
               {g.home?.name} <span className="text-white/40 mx-1">VS</span> {g.away?.name}
             </Link>
           ) : (

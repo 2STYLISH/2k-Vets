@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { createPlayer, deletePlayer, updatePlayerName } from '@/lib/actions/teams';
 import { updatePlayerPhoto } from '@/lib/actions/players';
 import { uploadFileBypassingRLS } from '@/lib/actions/upload';
+import { useNotification } from '@/components/providers/NotificationProvider';
+import { parseError } from '@/lib/format';
 
 interface Player {
   id: string;
@@ -17,6 +19,7 @@ interface Player {
 
 export default function PlayersManager({ players }: { players: Player[] }) {
   const router = useRouter();
+  const { showConfirm, showToast } = useNotification();
   const [gamertag, setGamertag] = useState('');
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -42,19 +45,32 @@ export default function PlayersManager({ players }: { players: Player[] }) {
     setBusy(true);
     try {
       await createPlayer({ gamertag: gamertag.trim() });
+      showToast('Player registered successfully!', 'success');
       setGamertag('');
       router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
   }
 
   async function handleDelete(playerId: string, tag: string) {
-    if (!confirm(`Delete player ${tag}? This will remove them from all rosters and stats.`)) return;
+    const confirmed = await showConfirm(
+      'Delete Player',
+      `Delete player ${tag}? This will remove them from all rosters and stats.`
+    );
+    if (!confirmed) return;
+
     setBusy(true);
     try {
       await deletePlayer(playerId);
+      showToast(`Player ${tag} deleted.`, 'success');
       router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -65,8 +81,12 @@ export default function PlayersManager({ players }: { players: Player[] }) {
     setBusy(true);
     try {
       await updatePlayerName(playerId, editName.trim());
+      showToast('Player name updated.', 'success');
       setEditingId(null);
       router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -84,10 +104,11 @@ export default function PlayersManager({ players }: { players: Player[] }) {
       const publicUrl = await uploadFileBypassingRLS(formData, 'player-photos', fileName);
 
       await updatePlayerPhoto(playerId, publicUrl);
+      showToast('Photo uploaded successfully!', 'success');
       router.refresh();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert('Failed to upload player photo.');
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }

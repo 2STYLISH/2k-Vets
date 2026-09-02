@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { updateSchedule, deleteSchedule } from '@/lib/actions/schedule';
 import { formatDate } from '@/lib/format';
+import { useNotification } from '@/components/providers/NotificationProvider';
+import { parseError } from '@/lib/format';
 
 const STATUS_STYLES: Record<string, string> = {
   SCHEDULED:  'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50',
@@ -52,6 +54,7 @@ export default function ScheduleManager({ games }: { games: any[] }) {
 }
 
 function GameRow({ game }: { game: any }) {
+  const { showConfirm, showToast } = useNotification();
   const [editing, setEditing] = useState(false);
   const [date, setDate] = useState(game.scheduled_date || '');
   const [time, setTime] = useState(game.scheduled_time?.slice(0, 5) || '');
@@ -78,7 +81,11 @@ function GameRow({ game }: { game: any }) {
         roundLabel: roundLabel || undefined,
         status: status as any,
       });
+      showToast('Schedule saved.', 'success');
       setEditing(false);
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -88,18 +95,26 @@ function GameRow({ game }: { game: any }) {
     setBusy(true);
     try {
       await updateSchedule(game.id, { isArchived: !game.is_archived });
+      showToast(game.is_archived ? 'Restored game.' : 'Archived game.', 'success');
       setEditing(false);
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this scheduled game?')) return;
+    const confirmed = await showConfirm('Delete Schedule', 'Are you sure you want to delete this scheduled game?');
+    if (!confirmed) return;
     setBusy(true);
     try {
       await deleteSchedule(game.id);
-    } catch {
+      showToast('Game deleted.', 'success');
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
       setBusy(false);
     }
   }

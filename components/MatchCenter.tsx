@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatGameUrl } from '@/lib/format';
 
 function formatDateHuman(dateStr: string) {
   if (!dateStr) return '';
@@ -137,7 +138,7 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
               {fHomeWin ? `${fHome} WINS` : fAwayWin ? `${fAway} WINS` : 'TIE'}
             </span>
             <div
-              onClick={() => router.push(`/games/${featured.id}`)}
+              onClick={() => router.push(formatGameUrl(featured.id, featured.short_id, featured.home?.name, featured.away?.name))}
               className="cursor-pointer text-[10px] font-mono text-white/70 bg-navy-900 hover:bg-flag-red hover:text-white border border-white/10 px-4 py-2 rounded-xl uppercase tracking-[0.15em] transition-all duration-300 flex items-center gap-2 shadow-sm"
             >
               BOX SCORE <span className="transition-colors">→</span>
@@ -167,7 +168,7 @@ function GridMatch({ game }: { game: any }) {
   const aWin = aScore > hScore;
 
   return (
-    <div onClick={() => router.push(`/games/${game.id}`)} className="cursor-pointer flex-1 p-4 bg-transparent hover:bg-white/[0.03] transition-all duration-300 flex flex-col justify-center min-h-[110px] relative group">
+    <div onClick={() => router.push(formatGameUrl(game.id, game.short_id, hName, aName))} className="cursor-pointer flex-1 p-4 bg-transparent hover:bg-white/[0.03] transition-all duration-300 flex flex-col justify-center min-h-[110px] relative group">
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-navy rounded-r scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center" />
 
       <div className="flex justify-between items-center mb-3">

@@ -40,3 +40,46 @@ export function slugify(text: string): string {
     .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
     .replace(/\-\-+/g, '-');     // Replace multiple - with single -
 }
+
+export function formatGameUrl(gameId: string, shortId?: number, homeTeamName?: string, awayTeamName?: string, date?: string, tournamentName?: string): string {
+  if (shortId) return `/games?id=${shortId}`;
+  if (!gameId) return '#';
+  return `/games?id=${gameId}`;
+}
+
+export function parseError(e: any): string {
+  if (!e) return 'An unknown error occurred';
+  
+  // Convert the entire error object to a string so we can easily search it
+  const fullErrorString = typeof e === 'string' ? e : (e.message ? String(e.message) : JSON.stringify(e));
+  
+  // Handle Supabase/PostgreSQL constraint violations
+  if (fullErrorString.includes('duplicate key value') || fullErrorString.includes('unique constraint') || fullErrorString.includes('23505')) {
+    if (fullErrorString.includes('players_slug_key')) {
+      return 'A player with this gamertag already exists.';
+    }
+    if (fullErrorString.includes('teams_slug_key')) {
+      return 'A team with this name already exists in this tournament.';
+    }
+    if (fullErrorString.includes('tournaments_slug_key')) {
+      return 'A tournament with this name already exists.';
+    }
+    return 'This record already exists.';
+  }
+
+  // If we can parse the string as JSON, extract the message
+  try {
+    const parsed = JSON.parse(fullErrorString);
+    if (parsed.message) return parsed.message;
+  } catch {
+    // Ignore
+  }
+
+  // If it's a huge dump of an object, try to just return a generic message,
+  // or return the original message if it's short enough.
+  if (fullErrorString.length > 200 || fullErrorString.includes('{code:')) {
+    return 'An unexpected database error occurred. Please try again.';
+  }
+
+  return fullErrorString || 'An unknown error occurred';
+}

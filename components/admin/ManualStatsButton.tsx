@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ensureGameForSchedule } from '@/lib/actions/games';
+import { useNotification } from '@/components/providers/NotificationProvider';
+import { parseError } from '@/lib/format';
 
 export default function ManualStatsButton({ scheduleId }: { scheduleId: string }) {
   const router = useRouter();
+  const { showToast } = useNotification();
   const [busy, setBusy] = useState(false);
 
   async function handleManualEntry() {
@@ -13,9 +16,9 @@ export default function ManualStatsButton({ scheduleId }: { scheduleId: string }
     try {
       await ensureGameForSchedule(scheduleId);
       router.refresh();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert('Failed to enable manual entry');
+      showToast(parseError(e), 'error');
       setBusy(false);
     }
   }

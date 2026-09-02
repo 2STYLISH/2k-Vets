@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from '@/components/HiddenLink';
+import { formatGameUrl } from '@/lib/format';
 
 export default function ScheduleAccordion({ 
   tournamentName, 
@@ -48,6 +49,7 @@ export default function ScheduleAccordion({
                     ? new Date(`1970-01-01T${g.scheduled_time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) 
                     : '';
                   const gameId = g.games?.[0]?.id;
+                  const shortId = g.games?.[0]?.short_id;
                   const isComplete = g.status === 'COMPLETED' && gameId;
 
                   const CardContent = (
@@ -72,7 +74,7 @@ export default function ScheduleAccordion({
                   );
 
                   return isComplete ? (
-                    <Link key={g.id} href={`/games/${gameId}`} className="group/card relative block p-5 rounded-xl border border-white/[0.06] bg-navy-900/70 backdrop-blur-sm shadow-sm hover:border-flag-red hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden">
+                    <Link key={g.id} href={formatGameUrl(gameId, shortId, g.home?.name, g.away?.name)} className="group/card relative block p-5 rounded-xl border border-white/[0.06] bg-navy-900/70 backdrop-blur-sm shadow-sm hover:border-flag-red hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden">
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-navy rounded-r" />
                       {CardContent}
                     </Link>

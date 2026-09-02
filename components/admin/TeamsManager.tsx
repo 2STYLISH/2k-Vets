@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import { createTeam, deleteTeam, assignPlayerToTournamentTeam, removePlayerFromTournamentTeam, updateTeamLogo } from '@/lib/actions/teams';
 import { updateTournamentLogo } from '@/lib/actions/tournaments';
 import { uploadFileBypassingRLS } from '@/lib/actions/upload';
+import { useNotification } from '@/components/providers/NotificationProvider';
+import { parseError } from '@/lib/format';
 
 interface Tournament {
   id: string;
@@ -47,6 +49,7 @@ export default function TeamsManager({
   rosters: RosterEntry[];
 }) {
   const router = useRouter();
+  const { showConfirm, showToast } = useNotification();
   const [newTeamName, setNewTeamName] = useState('');
   const [busy, setBusy] = useState(false);
   const [activeTournament, setActiveTournament] = useState<string>(tournaments[0]?.id || '');
@@ -57,8 +60,12 @@ export default function TeamsManager({
     setBusy(true);
     try {
       await createTeam({ tournamentId: activeTournament, name: newTeamName.trim() });
+      showToast('Team created successfully.', 'success');
       setNewTeamName('');
       router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -79,9 +86,10 @@ export default function TeamsManager({
       const publicUrl = await uploadFileBypassingRLS(formData, 'tournament-logos', path);
       
       await updateTournamentLogo(activeTournament, publicUrl + `?t=${Date.now()}`);
+      showToast('Tournament logo updated.', 'success');
       router.refresh();
     } catch (err: any) {
-      alert('Upload failed: ' + (err.message || 'Unknown error'));
+      showToast(parseError(err), 'error');
     } finally {
       setUploadingTourney(false);
     }
@@ -178,6 +186,7 @@ export default function TeamsManager({
 
 function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Team; roster: Player[]; tournamentId: string; unassignedPlayers: Player[] }) {
   const router = useRouter();
+  const { showConfirm, showToast } = useNotification();
   const supabase = createClient();
   const [busy, setBusy] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -192,29 +201,50 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
     setBusy(true);
     try {
       await assignPlayerToTournamentTeam({ tournamentId, teamId: team.id, playerId: player.id });
+      showToast(`${player.gamertag} added to ${team.name}.`, 'success');
       setSearchQuery('');
       router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
   }
 
   async function handleRemovePlayer(playerId: string) {
-    await removePlayerFromTournamentTeam({ tournamentId, playerId });
-    router.refresh();
+    try {
+      await removePlayerFromTournamentTeam({ tournamentId, playerId });
+      showToast('Player removed from team.', 'info');
+      router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
+    }
   }
 
   async function handleDeleteTeam() {
-    if (!confirm(`Delete ${team.name}? This removes it from ALL tournaments.`)) return;
-    await deleteTeam(team.id);
-    router.refresh();
+    const confirmed = await showConfirm(
+      'Delete Team',
+      `Delete ${team.name}? This removes it from ALL tournaments.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteTeam(team.id);
+      showToast(`Team deleted.`, 'success');
+      router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      showToast(parseError(e), 'error');
+    }
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      alert('Logo must be under 2MB');
+      showToast('Logo must be under 2MB', 'error');
       return;
     }
     setUploading(true);
@@ -230,9 +260,10 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
       const cacheBustedUrl = publicUrl + `?t=${Date.now()}`;
       await updateTeamLogo(team.id, cacheBustedUrl);
       setLogoUrl(cacheBustedUrl);
+      showToast('Team logo updated.', 'success');
       router.refresh();
     } catch (err: any) {
-      alert('Upload failed: ' + (err?.message ?? 'Unknown error'));
+      showToast(parseError(err), 'error');
     } finally {
       setUploading(false);
     }

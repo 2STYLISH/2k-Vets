@@ -27,17 +27,21 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+import { NotificationProvider } from '@/components/providers/NotificationProvider';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="bg-navy-900 min-h-screen flex flex-col">
-        <BackgroundManager />
-        <UrlHider />
-        <Navbar />
-        <main className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-8 relative z-0 flex-1 w-full">
-          {children}
-        </main>
-        <Footer />
+        <NotificationProvider>
+          <BackgroundManager />
+          <UrlHider />
+          <Navbar />
+          <main className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 py-8 relative z-0 flex-1 w-full">
+            {children}
+          </main>
+          <Footer />
+        </NotificationProvider>
       </body>
     </html>
   );

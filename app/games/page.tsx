@@ -3,63 +3,25 @@ import { notFound } from 'next/navigation';
 import BackButton from '@/components/BackButton';
 import Link from '@/components/HiddenLink';
 
-export default async function GameBoxScorePage({ params }: { params: { id: string } }) {
+export default async function GameBoxScorePage({ searchParams }: { searchParams: { id: string } }) {
   const supabase = createClient();
-  let game = null;
+  const gameId = searchParams.id;
+  
+  if (!gameId) notFound();
 
-  // If the parameter is a slug (e.g. lakers-vs-celtics)
-  if (params.id.includes('-vs-') && !params.id.match(/[0-9a-f]{8}-[0-9a-f]{4}/i)) {
-    const [homeSlug, awaySlug] = params.id.split('-vs-');
-    
-    // Resolve teams by slug
-    const { data: teams } = await supabase
-      .from('teams')
-      .select('id, slug')
-      .in('slug', [homeSlug, awaySlug]);
-
-    const homeTeam = teams?.find(t => t.slug === homeSlug);
-    const awayTeam = teams?.find(t => t.slug === awaySlug);
-
-    if (homeTeam && awayTeam) {
-      const { data: matchedGame } = await supabase
-        .from('games')
-        .select(`
-          id,
-          schedule_id,
-          home_score,
-          away_score,
-          home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url),
-          away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url),
-          schedules!inner(tournament_id, round_label, status, scheduled_date)
-        `)
-        .eq('home_team_id', homeTeam.id)
-        .eq('away_team_id', awayTeam.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-        
-      game = matchedGame;
-    }
-  }
-
-  // Fallback to strict UUID query
-  if (!game) {
-    const { data: uuidGame } = await supabase
-      .from('games')
-      .select(`
-        id,
-        schedule_id,
-        home_score,
-        away_score,
-        home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url),
-        away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url),
-        schedules!inner(tournament_id, round_label, status, scheduled_date)
-      `)
-      .eq('id', params.id)
-      .maybeSingle();
-      
-    game = uuidGame;
-  }
+  const { data: game } = await supabase
+    .from('games')
+    .select(`
+      id,
+      schedule_id,
+      home_score,
+      away_score,
+      home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url),
+      away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url),
+      schedules!inner(tournament_id, round_label, status, scheduled_date)
+    `)
+    .eq('short_id', gameId)
+    .maybeSingle();
 
   if (!game) notFound();
 

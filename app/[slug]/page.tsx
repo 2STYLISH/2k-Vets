@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import BackButton from '@/components/BackButton';
 import { averageStats } from '@/lib/stats';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatGameUrl } from '@/lib/format';
 import type { PlayerGameStats } from '@/lib/types';
 
 const AWARD_LABELS: Record<string, { label: string; icon: string }> = {
@@ -64,7 +64,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
   const { data: statsRaw } = await supabase
     .from('player_game_stats')
     .select(
-      'id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, position, game:games!player_game_stats_game_id_fkey(id, home_team_id, away_team_id, home_score, away_score, played_at, home:teams!games_home_team_id_fkey(name, logo_url), away:teams!games_away_team_id_fkey(name, logo_url), schedule:schedules(scheduled_date, scheduled_time, tournament_id, tournament:tournaments(id, name)))'
+      'id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, position, game:games!player_game_stats_game_id_fkey(id, short_id, home_team_id, away_team_id, home_score, away_score, played_at, home:teams!games_home_team_id_fkey(name, logo_url), away:teams!games_away_team_id_fkey(name, logo_url), schedule:schedules(scheduled_date, scheduled_time, tournament_id, tournament:tournaments(id, name)))'
     )
     .eq('player_id', player.id)
     .eq('is_verified', true);
@@ -417,7 +417,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                 const didWin = myScore > oppScore;
 
                 return (
-                  <Link href={`/games/${game.id}`} key={game.id + idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-white/[0.06] bg-navy-900/60 hover:bg-white/[0.03] transition-colors rounded-xl group">
+                  <Link href={formatGameUrl(game.id, game.short_id, isHome ? homeTeam?.name : awayTeam?.name, isHome ? awayTeam?.name : homeTeam?.name)} key={game.id + idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-white/[0.06] bg-navy-900/60 hover:bg-white/[0.03] transition-colors rounded-xl group">
                     <div className="flex items-center gap-3">
                       <div className={`w-6 h-6 flex items-center justify-center rounded-lg font-mono text-[10px] font-bold ${didWin ? 'bg-green-600 text-white' : 'bg-flag-red text-white'}`}>
                         {didWin ? 'W' : 'L'}
@@ -587,7 +587,7 @@ function HighCard({ label, val, row, playerTeamId }: { label: string, val: numbe
       <p className="text-[9px] font-mono text-white/40 uppercase truncate mb-3" title={tournament?.name}>
         {formatDate(schedule?.scheduled_date)} <span className="text-white/20">/</span> {tournament?.name}
       </p>
-      <Link href={`/games/${game.id}`} className="inline-block bg-flag-red text-white hover:bg-navy-600 border border-flag-red px-3 py-1.5 rounded-lg text-[9px] font-mono uppercase tracking-widest transition-colors shadow-sm">
+      <Link href={formatGameUrl(game.id, game.short_id, game.home_team?.name, game.away_team?.name)} className="inline-block bg-flag-red text-white hover:bg-navy-600 border border-flag-red px-3 py-1.5 rounded-lg text-[9px] font-mono uppercase tracking-widest transition-colors shadow-sm">
         VIEW MATCH
       </Link>
     </div>

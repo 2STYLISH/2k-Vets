@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { randomizeBracket, resetBracketSeeding } from '@/lib/actions/tournaments';
+import { useNotification } from '@/components/providers/NotificationProvider';
+import { parseError } from '@/lib/format';
 
 export default function BracketSeeder({ 
   tournamentId, 
@@ -14,18 +16,24 @@ export default function BracketSeeder({
   rosterIds: string[];
   seededIds: string[];
 }) {
+  const { showConfirm, showToast } = useNotification();
   const [busy, setBusy] = useState(false);
 
   const availableTeams = teams.filter(t => rosterIds.includes(t.id) && !seededIds.includes(t.id));
   const seededTeams = teams.filter(t => seededIds.includes(t.id));
 
   async function handleRandomize() {
-    if (!confirm('This will wipe existing seeds and randomly assign all registered teams to slots. Are you sure?')) return;
+    const confirmed = await showConfirm(
+      'Randomize Bracket',
+      'This will wipe existing seeds and randomly assign all registered teams to slots. Are you sure?'
+    );
+    if (!confirmed) return;
     setBusy(true);
     try {
       await randomizeBracket(tournamentId);
+      showToast('Bracket randomized.', 'success');
     } catch (err: any) {
-      alert(err.message || 'Failed to randomize bracket');
+      showToast(parseError(err), 'error');
     } finally {
       setBusy(false);
     }
@@ -43,10 +51,17 @@ export default function BracketSeeder({
         <div className="flex gap-3">
           <button 
             onClick={async () => {
-              if (!confirm('This will wipe all matchups and return all teams to the available pool. Are you sure?')) return;
+              const confirmed = await showConfirm(
+                'Reset Seeding',
+                'This will wipe all matchups and return all teams to the available pool. Are you sure?'
+              );
+              if (!confirmed) return;
               setBusy(true);
-              try { await resetBracketSeeding(tournamentId); }
-              catch (err: any) { alert(err.message || 'Failed to reset bracket'); }
+              try { 
+                await resetBracketSeeding(tournamentId); 
+                showToast('Seeding reset.', 'success');
+              }
+              catch (err: any) { showToast(parseError(err), 'error'); }
               finally { setBusy(false); }
             }}
             disabled={busy || seededIds.length === 0} 

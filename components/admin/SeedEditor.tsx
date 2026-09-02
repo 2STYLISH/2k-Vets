@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { updateSeedStats, randomizeBracket } from '@/lib/actions/tournaments';
+import { useNotification } from '@/components/providers/NotificationProvider';
+import { parseError } from '@/lib/format';
 
 export default function SeedEditor({
   tournamentId,
@@ -12,6 +14,7 @@ export default function SeedEditor({
   teams: { id: string, name: string }[];
   seeds: { team_id: string, seed: number, manual_wins?: number, manual_losses?: number, point_differential?: number }[];
 }) {
+  const { showConfirm, showToast } = useNotification();
   const [busy, setBusy] = useState(false);
   const [localSeeds, setLocalSeeds] = useState(() => {
     const map = new Map<string, any>();
@@ -50,22 +53,23 @@ export default function SeedEditor({
           point_differential: data.point_differential === '' ? null : parseInt(data.point_differential),
         });
       }
-      alert('Saved successfully!');
+      showToast('Saved successfully!', 'success');
     } catch (e: any) {
-      alert(e.message || 'Failed to save');
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
   };
 
   const handleSeedBracket = async () => {
-    if (!confirm('This will lock in the current seeds and push them to the bracket. Are you sure?')) return;
+    const confirmed = await showConfirm('Generate Bracket', 'This will lock in the current seeds and push them to the bracket. Are you sure?');
+    if (!confirmed) return;
     setBusy(true);
     try {
       await randomizeBracket(tournamentId, { randomizeSeeds: false });
-      alert('Bracket seeded!');
+      showToast('Bracket seeded!', 'success');
     } catch (e: any) {
-      alert(e.message || 'Failed to seed bracket');
+      showToast(parseError(e), 'error');
     } finally {
       setBusy(false);
     }
