@@ -81,38 +81,24 @@ export default function TournamentAdminActions({
   return (
     <div className="pt-3 border-t border-surface-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       {/* Logo Upload */}
-      <div className="flex items-center gap-3">
-        <label htmlFor={`tourney-logo-${tournamentId}`} className="w-10 h-10 rounded bg-surface-800 flex items-center justify-center border border-surface-600 cursor-pointer overflow-hidden relative hover:border-gold/50 transition-colors shrink-0">
+      <div className="flex items-center gap-4">
+        <label htmlFor={`tourney-logo-${tournamentId}`} className="w-12 h-12 rounded bg-surface-900 flex items-center justify-center border border-surface-600 cursor-pointer overflow-hidden relative hover:border-silver-400 transition-colors shadow-sm shrink-0">
           {uploading ? (
-            <span className="text-[9px] text-mute font-mono">...</span>
+            <span className="text-[9px] text-silver-500 font-mono">...</span>
           ) : logoUrl ? (
             <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
           ) : (
-            <span className="text-[9px] text-mute font-mono">LOGO</span>
+            <span className="text-[9px] text-silver-500 font-mono">LOGO</span>
           )}
           <input id={`tourney-logo-${tournamentId}`} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
         </label>
+        <div className="flex flex-col justify-center">
+          <span className="text-[10px] font-mono text-white font-bold uppercase tracking-widest">Tournament Logo</span>
+          <span className="text-[9px] font-mono text-silver-400 uppercase tracking-widest mt-0.5">Click box to upload (Max 2MB)</span>
+        </div>
       </div>
-      {/* Championship award name */}
-      <div className="flex-1 flex items-center gap-2 min-w-0">
-        <label className="text-[10px] font-mono text-white font-bold uppercase tracking-widest whitespace-nowrap">
-          Champion Award Name
-        </label>
-        <input
-          type="text"
-          value={champName}
-          onChange={(e) => setChampName(e.target.value)}
-          placeholder={`e.g. ${tournamentName} Champion`}
-          className="flex-1 min-w-0 bg-surface-900 border border-surface-600 rounded px-2 py-1 text-sm text-silver-200 placeholder-silver-700 focus:outline-none focus:ring-1 focus:ring-silver-400 transition-colors"
-        />
-        <button
-          onClick={handleSaveChampName}
-          disabled={saving}
-          className="text-[10px] font-mono text-silver-400 hover:text-white uppercase tracking-widest border border-surface-600 rounded px-2 py-1 hover:border-silver-400 transition-colors whitespace-nowrap"
-        >
-          {saving ? '…' : saved ? '✓ Saved' : 'Save'}
-        </button>
-      </div>
+      {/* Spacing between logo and delete button */}
+      <div className="flex-1" />
 
       {/* Delete */}
       <button
