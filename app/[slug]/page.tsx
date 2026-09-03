@@ -1,17 +1,14 @@
-import Link from '@/components/HiddenLink';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import BackButton from '@/components/BackButton';
+import RecentMatchesListPlayer from './RecentMatchesListPlayer';
 import { averageStats } from '@/lib/stats';
 import { formatDate, formatGameUrl } from '@/lib/format';
 import type { PlayerGameStats } from '@/lib/types';
 
 const AWARD_LABELS: Record<string, { label: string; icon: string }> = {
-  BEST_PG: { label: 'Best Point Guard', icon: '🏆' },
-  BEST_SG: { label: 'Best Shooting Guard', icon: '🏆' },
-  BEST_SF: { label: 'Best Small Forward', icon: '🏆' },
-  BEST_PF: { label: 'Best Power Forward', icon: '🏆' },
-  BEST_CENTER: { label: 'Best Center', icon: '🏆' },
+  MYTHICAL_TEAM: { label: 'Mythical Team', icon: '🏆' },
   FINALS_MVP: { label: 'Finals MVP', icon: '🏆' },
   OVERALL_MVP: { label: 'Overall MVP', icon: '🏆' },
   OVERALL_DPOY: { label: 'Overall DPOY', icon: '🏆' },
@@ -196,8 +193,8 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
 
   const { data: awards } = await supabase
     .from('awards')
-    .select('award_type, tournament_id, season_id, tournament:tournaments(name), season:seasons(name)')
-    .eq('winner_player_id', player.id)
+    .select('award_type, custom_name, winner_player_ids, tournament_id, season_id, tournament:tournaments(name), season:seasons(name)')
+    .or(`winner_player_id.eq.${player.id},winner_player_ids.cs.{${player.id}}`)
     .eq('status', 'PUBLISHED');
 
   // 4. Recent matches (Last 10)
@@ -395,53 +392,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
           </div>
 
           {/* Recent Games */}
-          <div className="card p-6">
-            <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] mb-4 font-bold">MATCH HISTORY / {recentGames.length} RECENT</p>
-            <h2 className="text-2xl font-display text-white uppercase tracking-[0.1em] mb-6">RECENT GAMES</h2>
-
-            <div className="space-y-2">
-              {recentGames.length === 0 && <p className="text-white/40 text-sm font-mono">No games found.</p>}
-              {recentGames.map((row, idx) => {
-                const game = Array.isArray(row.game) ? row.game[0] : row.game;
-                if (!game) return null;
-                const schedule = Array.isArray(game.schedule) ? game.schedule[0] : game.schedule;
-                const tournament = Array.isArray(schedule?.tournament) ? schedule.tournament[0] : schedule?.tournament;
-
-                const homeTeam = Array.isArray(game.home) ? game.home[0] : game.home;
-                const awayTeam = Array.isArray(game.away) ? game.away[0] : game.away;
-
-                const isHome = game.home_team_id === row.team_id;
-                const myScore = isHome ? game.home_score : game.away_score;
-                const oppScore = isHome ? game.away_score : game.home_score;
-                const oppName = isHome ? awayTeam?.name : homeTeam?.name;
-                const didWin = myScore > oppScore;
-
-                return (
-                  <Link href={formatGameUrl(game.id, game.short_id, isHome ? homeTeam?.name : awayTeam?.name, isHome ? awayTeam?.name : homeTeam?.name)} key={game.id + idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-white/[0.06] bg-navy-900/60 hover:bg-white/[0.03] transition-colors rounded-xl group">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 flex items-center justify-center rounded-lg font-mono text-[10px] font-bold ${didWin ? 'bg-green-600 text-white' : 'bg-flag-red text-white'}`}>
-                        {didWin ? 'W' : 'L'}
-                      </div>
-                      <div>
-                        <p className="text-sm font-display tracking-[0.1em] text-white group-hover:text-flag-gold transition-colors uppercase">{oppName || 'TBD'}</p>
-                        <p className="text-[9px] font-mono text-white/40 uppercase">{tournament?.name} / {formatDate(schedule?.scheduled_date)}</p>
-                      </div>
-                    </div>
-                    <div className="mt-2 sm:mt-0 flex items-center gap-4">
-                      <p className="font-mono text-lg text-white">
-                        <span className={didWin ? 'text-navy' : 'text-white/40'}>{myScore}</span>
-                        <span className="text-white/20 mx-1">-</span>
-                        <span className={didWin ? 'text-white/40' : 'text-navy'}>{oppScore}</span>
-                      </p>
-                      <p className="text-[9px] font-mono text-white/40 max-w-[120px] text-right">
-                        {row.pts} PTS / {row.reb} REB / {row.ast} AST / {row.stl} STL
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+          <RecentMatchesListPlayer games={recentGames} playerTeamId={player.team_id} />
         </div>
 
         {/* Right Column (Teams, Accolades) */}
@@ -498,52 +449,50 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
 
           {/* Accolades & Milestones */}
           <div className="card p-6">
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] font-bold">TROPHY CASE</p>
-            </div>
-            <h2 className="text-2xl font-display text-white uppercase tracking-[0.1em] mb-6">ACCOLADES & MILESTONES</h2>
-
-            {champWins.length === 0 && runnerUps.length === 0 && (awards ?? []).length === 0 ? (
-              <div className="p-4 border border-white/[0.06] border-dashed bg-white/[0.03] rounded-xl text-center">
-                <p className="text-sm text-white/40 font-mono italic">No earned trophies or badges yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {champWins.map((c: any, i: number) => (
-                  <div key={'cw' + i} className="flex items-center gap-3 p-3 bg-gradient-to-r from-flag-gold/10 to-transparent border border-flag-gold/20 rounded-xl">
-                    <span className="text-xl">🏆</span>
-                    <div>
-                      <p className="text-xs font-display text-white tracking-[0.1em] uppercase">{c.tournament?.championship_award_name || 'Champion'}</p>
-                      <p className="text-[9px] font-mono text-flag-gold uppercase mt-0.5">{c.tournament?.name}</p>
-                    </div>
-                  </div>
-                ))}
-                {runnerUps.map((c: any, i: number) => (
-                  <div key={'ru' + i} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl">
-                    <span className="text-xl">🥈</span>
-                    <div>
-                      <p className="text-xs font-display text-white/70 tracking-[0.1em] uppercase">Runner Up</p>
-                      <p className="text-[9px] font-mono text-white/40 uppercase mt-0.5">{c.tournament?.name}</p>
-                    </div>
-                  </div>
-                ))}
-                {(awards ?? []).map((a: any, i: number) => {
-                  const meta = AWARD_LABELS[a.award_type];
-                  if (!meta) return null;
-                  return (
-                    <div key={'aw' + i} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl">
-                      <span className="text-xl">{meta.icon}</span>
+            <h2 className="text-2xl font-display text-white tracking-widest mb-4">TROPHY CASE</h2>
+            <div className="space-y-3 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
+              {champWins.length === 0 && runnerUps.length === 0 && (awards?.length ?? 0) === 0 ? (
+                <p className="text-white/30 text-sm font-mono">No accolades yet.</p>
+              ) : (
+                <>
+                  {champWins.map((cw, idx) => (
+                    <div key={'cw' + idx} className="flex items-center gap-3 p-3 bg-flag-gold/10 border border-flag-gold/30 rounded-lg">
+                      <span className="text-2xl">🏆</span>
                       <div>
-                        <p className="text-xs font-display text-white tracking-[0.1em] uppercase">{meta.label}</p>
-                        <p className="text-[9px] font-mono text-white/40 uppercase mt-0.5">
-                          {a.tournament ? a.tournament.name : a.season ? a.season.name : 'Pro-Am'}
-                        </p>
+                        <p className="text-flag-gold font-bold font-mono uppercase text-sm tracking-widest">CHAMPION</p>
+                        <p className="text-white/50 text-[10px] uppercase">{cw.tournament?.name} {cw.tournament?.championship_award_name || ''}</p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  ))}
+                  
+                  {runnerUps.map((ru, idx) => (
+                    <div key={'ru' + idx} className="flex items-center gap-3 p-3 bg-silver-400/10 border border-silver-400/30 rounded-lg">
+                      <span className="text-2xl opacity-70">🥈</span>
+                      <div>
+                        <p className="text-silver-300 font-bold font-mono uppercase text-sm tracking-widest">RUNNER UP</p>
+                        <p className="text-white/50 text-[10px] uppercase">{ru.tournament?.name}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {awards?.map((a, idx) => {
+                    const isMythical = a.award_type === 'MYTHICAL_TEAM';
+                    const label = isMythical ? (a.custom_name || 'Mythical Team') : (AWARD_LABELS[a.award_type]?.label || a.award_type.replace(/_/g, ' '));
+                    const icon = AWARD_LABELS[a.award_type]?.icon || '🏅';
+                    const tName = Array.isArray(a.tournament) ? (a.tournament[0] as any)?.name : (a.tournament as any)?.name;
+                    return (
+                      <div key={'aw' + idx} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/10 rounded-lg">
+                        <span className="text-2xl">{icon}</span>
+                        <div>
+                          <p className="text-white font-bold font-mono uppercase text-sm tracking-widest">{label}</p>
+                          <p className="text-white/50 text-[10px] uppercase">{tName}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
           </div>
 
         </div>

@@ -50,3 +50,6 @@ update_db_dump.ps1
 
 # OpenAPI / generated specs (large, not needed in repo)
 kingpins_openapi.json
+
+alter.sql
+2kvets_schema.sql

@@ -4,11 +4,7 @@ import Link from '@/components/HiddenLink';
 import { slugify } from '@/lib/format';
 
 const TROPHY: Record<string, string> = {
-  BEST_PG: '🏆',
-  BEST_SG: '🏆',
-  BEST_SF: '🏆',
-  BEST_PF: '🏆',
-  BEST_CENTER: '🏆',
+  MYTHICAL_TEAM: '🏆',
   FINALS_MVP: '🏆',
   OVERALL_MVP: '🏆',
   OVERALL_DPOY: '🏆',
@@ -50,6 +46,35 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
     });
   }
 
+  // Fetch players for MYTHICAL_TEAM
+  const mythicalTeamIds = new Set<string>();
+  (awards ?? []).forEach((a: any) => {
+    if (a.award_type === 'MYTHICAL_TEAM' && a.winner_player_ids) {
+      a.winner_player_ids.forEach((id: string) => mythicalTeamIds.add(id));
+    }
+  });
+
+  let teamWinnersData: any[] = [];
+  if (mythicalTeamIds.size > 0) {
+    const { data: players } = await supabase
+      .from('players')
+      .select('id, gamertag, slug, photo_path')
+      .in('id', Array.from(mythicalTeamIds));
+    teamWinnersData = players ?? [];
+
+    if (activeTournamentId) {
+      const { data: rosters } = await supabase
+        .from('tournament_rosters')
+        .select('player_id, team:teams(name)')
+        .eq('tournament_id', activeTournamentId)
+        .in('player_id', Array.from(mythicalTeamIds));
+
+      (rosters ?? []).forEach((r: any) => {
+        playerTeams.set(r.player_id, r.team?.name);
+      });
+    }
+  }
+
   const activeTournamentName = tournaments?.find(t => t.id === activeTournamentId)?.name ?? 'Awards';
 
   return (
@@ -86,10 +111,17 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {(awards ?? []).map((a: any) => {
+            const isMythical = a.award_type === 'MYTHICAL_TEAM';
+            
+            // For regular awards
             const teamName = playerTeams.get(a.winner_player_id);
             const playerSlug = a.winner?.slug || a.winner?.gamertag?.toLowerCase();
+            
+            // For Mythical Team
+            const mythicalWinners = isMythical && teamWinnersData ? teamWinnersData.filter((p: any) => a.winner_player_ids?.includes(p.id)) : [];
+
             return (
-              <div key={a.id} className="relative card p-8 transition-all duration-500 group overflow-hidden hover:border-flag-gold/40 hover:shadow-[0_8px_32px_rgba(212,160,23,0.12)] hover:-translate-y-1">
+              <div key={a.id} className={`relative card p-8 transition-all duration-500 group overflow-hidden hover:border-flag-gold/40 hover:shadow-[0_8px_32px_rgba(212,160,23,0.12)] hover:-translate-y-1 ${isMythical ? 'md:col-span-2 lg:col-span-3' : ''}`}>
                 {/* Gold accent top stripe */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-flag-gold/60 via-flag-gold to-flag-gold/60 opacity-60 group-hover:opacity-100 transition-opacity" />
 
@@ -100,13 +132,45 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
                   <span className="text-5xl mb-2 transform group-hover:scale-110 transition-transform duration-500">{TROPHY[a.award_type] ?? '🏆'}</span>
                   <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-flag-gold/40 to-transparent mb-2" />
                   <h2 className="text-lg text-white font-display tracking-[0.15em] uppercase group-hover:text-flag-gold transition-colors">
-                    {a.award_type?.replace(/_/g, ' ') || 'Unknown Award'}
+                    {isMythical ? a.custom_name || 'Mythical Team' : a.award_type?.replace(/_/g, ' ') || 'Unknown Award'}
                   </h2>
                   <p className="text-[9px] font-mono text-white/40 uppercase tracking-[0.3em]">2K Veterans League</p>
                 </div>
 
-                <div className="relative z-10 bg-white/[0.03] backdrop-blur-sm rounded-2xl p-6 border border-white/[0.06] group-hover:border-flag-gold/20 transition-colors">
-                  {a.winner ? (
+                <div className={`relative z-10 bg-white/[0.03] backdrop-blur-sm rounded-2xl p-6 border border-white/[0.06] group-hover:border-flag-gold/20 transition-colors ${isMythical ? 'grid grid-cols-2 md:grid-cols-5 gap-4' : ''}`}>
+                  {isMythical ? (
+                    mythicalWinners.length > 0 ? (
+                      mythicalWinners.map((w: any) => {
+                        const mTeamName = playerTeams.get(w.id);
+                        const mSlug = w.slug || w.gamertag.toLowerCase();
+                        return (
+                          <div key={w.id} className="flex flex-col items-center gap-3 text-center">
+                            <div className="relative">
+                              {w.photo_path ? (
+                                <img src={w.photo_path} alt={w.gamertag} className="w-16 h-16 object-cover rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md" />
+                              ) : (
+                                <div className="w-16 h-16 rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md flex items-center justify-center overflow-hidden p-3">
+                                  <img src="/logo.png" alt={w.gamertag} className="w-full h-full object-contain opacity-50" />
+                                </div>
+                              )}
+                              <div className="absolute -bottom-1 -right-1 bg-flag-gold w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[8px] shadow-md text-white font-bold">✓</div>
+                            </div>
+                            <div>
+                              <Link href={`/${mSlug}`} className="block text-sm text-white font-display tracking-widest mb-0.5 uppercase hover:text-flag-gold transition-colors">
+                                {w.gamertag}
+                              </Link>
+                              {mTeamName && <p className="text-[9px] text-white/40 font-mono tracking-widest uppercase">{mTeamName}</p>}
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="col-span-full flex flex-col items-center text-center py-4">
+                        <p className="text-3xl text-white/20 font-display tracking-wide mb-1 uppercase">—</p>
+                        <p className="text-[10px] text-white/30 font-mono uppercase tracking-widest">TBD</p>
+                      </div>
+                    )
+                  ) : a.winner ? (
                     <div className="flex flex-col items-center gap-4 text-center">
                       <div className="relative">
                         {a.winner.photo_path ? (

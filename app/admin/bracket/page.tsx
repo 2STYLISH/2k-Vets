@@ -31,13 +31,13 @@ export default async function AdminBracketPage({
   const activeTournamentSlug = active ? slugify(active.name) : '';
 
   const { data: teams } = active 
-    ? await supabase.from('teams').select('id, name').eq('tournament_id', active.id).order('name')
+    ? await supabase.from('teams').select('id, name, group_name').eq('tournament_id', active.id).order('name')
     : { data: [] };
 
   const { data: matchups } = active
     ? await supabase
         .from('bracket_matchups')
-        .select('id, round, slot, status, winner_id, is_bye, bracket_side, match_format, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name)')
+        .select('id, round, slot, status, winner_id, is_bye, bracket_side, match_format, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,group_name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,group_name), schedule:schedules(home_team_id, away_team_id, games(home_score, away_score))')
         .eq('tournament_id', active.id)
         .order('round', { ascending: true })
         .order('slot', { ascending: true })
@@ -110,7 +110,7 @@ export default async function AdminBracketPage({
               {/* Show playoff bracket if generated */}
               {(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
                 <div className="mt-8">
-                  <h2 className="text-xl font-display text-flag-gold tracking-widest mb-4">PLAYOFF BRACKET</h2>
+
                   <AdminInteractiveBracket 
                     matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} 
                     teams={(teams ?? []) as any} 

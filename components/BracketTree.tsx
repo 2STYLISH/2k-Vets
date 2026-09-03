@@ -1,4 +1,11 @@
-export type Team = { id: string; name: string } | null;
+export type Team = { 
+  id: string; 
+  name: string; 
+  slug?: string;
+  short_name?: string;
+  logo_url?: string | null;
+  group_name?: string | null;
+} | null;
 export type Matchup = {
   id: string;
   round: number;
@@ -17,6 +24,8 @@ export type Matchup = {
   match_format?: string;
   schedule?: { games?: { id: string }[] };
 };
+
+import Link from 'next/link';
 
 export default function BracketTree({ 
   matchups,
@@ -164,7 +173,7 @@ function MatchCard({ matchup, onClick, defaultMatchFormat }: { matchup: Matchup;
     <>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.02),transparent_70%)] pointer-events-none"></div>
       
-      <TeamRow name={matchup.team_a?.name} score={scoreA} isWinner={isComplete && matchup.winner_id === matchup.team_a?.id} isByePlaceholder={matchup.is_bye && !matchup.team_a} placeholderText={matchup.sourceA} />
+      <TeamRow name={matchup.team_a?.name} slug={matchup.team_a?.slug} score={scoreA} isWinner={isComplete && matchup.winner_id === matchup.team_a?.id} isByePlaceholder={matchup.is_bye && !matchup.team_a} placeholderText={matchup.sourceA} />
       
       <div className="flex items-center gap-2 my-2 relative z-10">
         <div className="flex-1 border-t border-white/[0.06]" />
@@ -181,7 +190,7 @@ function MatchCard({ matchup, onClick, defaultMatchFormat }: { matchup: Matchup;
         )}
       </div>
       
-      <TeamRow name={matchup.team_b?.name} score={scoreB} isWinner={isComplete && matchup.winner_id === matchup.team_b?.id} isByePlaceholder={matchup.is_bye && !matchup.team_b} placeholderText={matchup.sourceB} />
+      <TeamRow name={matchup.team_b?.name} slug={matchup.team_b?.slug} score={scoreB} isWinner={isComplete && matchup.winner_id === matchup.team_b?.id} isByePlaceholder={matchup.is_bye && !matchup.team_b} placeholderText={matchup.sourceB} />
     </>
   );
 
@@ -203,13 +212,19 @@ function MatchCard({ matchup, onClick, defaultMatchFormat }: { matchup: Matchup;
   );
 }
 
-function TeamRow({ name, score, isWinner, isByePlaceholder, placeholderText }: { name?: string; score?: number | null; isWinner: boolean; isByePlaceholder?: boolean; placeholderText?: string }) {
+function TeamRow({ name, slug, score, isWinner, isByePlaceholder, placeholderText }: { name?: string; slug?: string; score?: number | null; isWinner: boolean; isByePlaceholder?: boolean; placeholderText?: string }) {
   if (isByePlaceholder) {
     return <p className="text-sm font-display tracking-widest text-white/30 italic uppercase text-center">BYE</p>;
   }
   return (
     <div className={`flex items-center justify-between text-sm font-display tracking-widest uppercase truncate relative z-10 ${isWinner ? 'text-flag-gold font-bold drop-shadow-[0_0_8px_rgba(212,160,23,0.5)]' : 'text-white'} ${!name ? 'text-white/40 italic text-[12px]' : ''}`}>
-      <span className="truncate">{name ?? placeholderText ?? 'TBD'}</span>
+      <span className="truncate">
+        {slug ? (
+          <Link href={`/teams/${slug}`} className="hover:text-flag-gold hover:underline transition-colors">{name}</Link>
+        ) : (
+          name ?? placeholderText ?? 'TBD'
+        )}
+      </span>
       {score !== undefined && score !== null && (
         <span className={`ml-2 font-mono text-[16px] px-2 py-0.5 rounded shadow-inner border ${isWinner ? 'bg-flag-gold/10 text-flag-gold border-flag-gold/30' : 'bg-white/[0.04] text-white border-white/[0.06]'}`}>{score}</span>
       )}

@@ -5,6 +5,8 @@ import BracketTree from '@/components/BracketTree';
 import StandingsTable from '@/components/StandingsTable';
 import MatchesFilter from '@/components/MatchesFilter';
 import BackButton from '@/components/BackButton';
+import LeaderboardCard from '@/components/TournamentLeaders';
+import TournamentPlayerStats from '@/components/TournamentPlayerStats';
 import { notFound } from 'next/navigation';
 import { formatDate, slugify } from '@/lib/format';
 import { averageStats } from '@/lib/stats';
@@ -39,14 +41,14 @@ export default async function TournamentDashboard({ params }: { params: { id: st
   ] = await Promise.all([
     supabase
       .from('bracket_matchups')
-      .select('id, short_id, round, slot, status, match_format, winner_id, is_bye, bracket_side, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name), series(team_a_id, team_b_id, team_a_wins, team_b_wins), schedule:schedules(games(home_score, away_score))')
+      .select('id, short_id, round, slot, status, match_format, winner_id, is_bye, bracket_side, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,group_name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,group_name), series(team_a_id, team_b_id, team_a_wins, team_b_wins), schedule:schedules(games(home_score, away_score))')
       .eq('tournament_id', tournament.id)
       .order('round', { ascending: true })
       .order('slot', { ascending: true }),
-    supabase.from('tournament_seeds').select('seed, team_id, manual_wins, manual_losses, point_differential, team:teams(name)').eq('tournament_id', tournament.id).order('seed'),
+    supabase.from('tournament_seeds').select('seed, team_id, manual_wins, manual_losses, point_differential, team:teams(name,slug)').eq('tournament_id', tournament.id).order('seed'),
     supabase.from('schedules').select('id, scheduled_date, scheduled_time, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'SCHEDULED'),
     supabase.from('schedules').select('id, scheduled_date, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'COMPLETED'),
-    supabase.from('tournament_rosters').select('team_id, player_id, team:teams(id, name)').eq('tournament_id', tournament.id),
+    supabase.from('tournament_rosters').select('team_id, player_id, team:teams(id, name, slug, group_name)').eq('tournament_id', tournament.id),
     supabase.from('championships').select('champion_team_id, runner_up_team_id, champion:teams!championships_champion_team_id_fkey(name), runner_up:teams!championships_runner_up_team_id_fkey(name)').eq('tournament_id', tournament.id).maybeSingle(),
   ]);
 
@@ -79,11 +81,11 @@ export default async function TournamentDashboard({ params }: { params: { id: st
   }
 
   // Build team → players map for stats
-  const teamStatsMap = new Map<string, { teamName: string; players: { player: any; avg: any }[] }>();
+  const teamStatsMap = new Map<string, { teamId: string; teamName: string; players: { player: any; avg: any }[] }>();
   for (const roster of (rosters ?? []) as any[]) {
     const teamName = roster.team?.name ?? 'Unknown';
     const teamId = roster.team_id;
-    if (!teamStatsMap.has(teamId)) teamStatsMap.set(teamId, { teamName, players: [] });
+    if (!teamStatsMap.has(teamId)) teamStatsMap.set(teamId, { teamId, teamName, players: [] });
     const player = (players ?? []).find(p => p.id === roster.player_id);
     if (!player) continue;
     const entry = statsByPlayer.get(player.id);
@@ -111,6 +113,18 @@ export default async function TournamentDashboard({ params }: { params: { id: st
     if (!upcomingByRound.has(r)) upcomingByRound.set(r, []);
     upcomingByRound.get(r)!.push(g);
   });
+
+  const allPlayerStats: { player: any; teamName: string; avg: any }[] = [];
+  for (const team of teamStatsMap.values()) {
+    for (const p of team.players) {
+      if (p.avg) allPlayerStats.push({ player: p.player, teamName: team.teamName, avg: p.avg });
+    }
+  }
+
+  const topPts = [...allPlayerStats].sort((a, b) => b.avg.ppg - a.avg.ppg).slice(0, 5);
+  const topAst = [...allPlayerStats].sort((a, b) => b.avg.apg - a.avg.apg).slice(0, 5);
+  const topReb = [...allPlayerStats].sort((a, b) => b.avg.rpg - a.avg.rpg).slice(0, 5);
+  const topStl = [...allPlayerStats].sort((a, b) => b.avg.spg - a.avg.spg).slice(0, 5);
 
   return (
     <div className="space-y-10">
@@ -143,29 +157,69 @@ export default async function TournamentDashboard({ params }: { params: { id: st
         </div>
       )}
 
+      {/* Top Section: Leaderboards & Standings/Bracket */}
+      {tournament.format === 'VETERANS_LEAGUE' ? (
+        <div className="flex flex-col xl:flex-row gap-6">
+          {/* Left Column (2 Leaderboards) */}
+          <div className="w-full xl:w-[280px] shrink-0 space-y-6 hidden xl:block">
+            <LeaderboardCard title="Points Per Game" leaders={topPts} dataKey="ppg" />
+            <LeaderboardCard title="Assists Per Game" leaders={topAst} dataKey="apg" />
+          </div>
+
+          {/* Center Content (Standings) */}
+          <div className="flex-1 min-w-0">
+            <section className="card p-6 md:p-8 overflow-hidden h-full">
+              <h2 className="text-xl font-display text-white tracking-widest mb-6">STANDINGS</h2>
+              <StandingsTable matchups={(matchups ?? []) as any} teams={(() => {
+                const teamMap = new Map<string, any>();
+                for (const r of (rosters ?? []) as any[]) {
+                  if (r.team && !teamMap.has(r.team.id)) teamMap.set(r.team.id, r.team);
+                }
+                for (const m of (matchups ?? []) as any[]) {
+                  if (m.team_a && !teamMap.has(m.team_a.id)) teamMap.set(m.team_a.id, m.team_a);
+                  if (m.team_b && !teamMap.has(m.team_b.id)) teamMap.set(m.team_b.id, m.team_b);
+                }
+                return Array.from(teamMap.values());
+              })()} seeds={(seeds ?? []) as any} />
+            </section>
+          </div>
+
+          {/* Right Column (2 Leaderboards) */}
+          <div className="w-full xl:w-[280px] shrink-0 space-y-6 hidden xl:block">
+            <LeaderboardCard title="Rebounds Per Game" leaders={topReb} dataKey="rpg" />
+            <LeaderboardCard title="Steals Per Game" leaders={topStl} dataKey="spg" />
+          </div>
+        </div>
+      ) : (
+        <div className="relative">
+          {/* Absolute Left Column for 1920px screens */}
+          <div className="absolute top-0 -left-[250px] w-[240px] space-y-6 hidden min-[1880px]:block">
+            <LeaderboardCard title="Points Per Game" leaders={topPts} dataKey="ppg" />
+            <LeaderboardCard title="Assists Per Game" leaders={topAst} dataKey="apg" />
+          </div>
+
+          <section className="card p-6 md:p-8 overflow-hidden">
+            <h2 className="text-xl font-display text-white tracking-widest mb-6">BRACKET</h2>
+            <div className="overflow-x-auto pb-4">
+              <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} />
+            </div>
+          </section>
+
+          {/* Absolute Right Column for 1920px screens */}
+          <div className="absolute top-0 -right-[250px] w-[240px] space-y-6 hidden min-[1880px]:block">
+            <LeaderboardCard title="Rebounds Per Game" leaders={topReb} dataKey="rpg" />
+            <LeaderboardCard title="Steals Per Game" leaders={topStl} dataKey="spg" />
+          </div>
+        </div>
+      )}
+
       {tournament.format === 'VETERANS_LEAGUE' ? (
         <>
-          {/* Standings */}
-          <section className="card p-6 md:p-8 overflow-hidden">
-            <h2 className="text-xl font-display text-white tracking-widest mb-6">STANDINGS</h2>
-            <StandingsTable matchups={(matchups ?? []) as any} teams={(() => {
-              const teamMap = new Map<string, any>();
-              for (const r of (rosters ?? []) as any[]) {
-                if (r.team && !teamMap.has(r.team.id)) teamMap.set(r.team.id, r.team);
-              }
-              // Also include teams from matchups in case rosters are empty
-              for (const m of (matchups ?? []) as any[]) {
-                if (m.team_a && !teamMap.has(m.team_a.id)) teamMap.set(m.team_a.id, m.team_a);
-                if (m.team_b && !teamMap.has(m.team_b.id)) teamMap.set(m.team_b.id, m.team_b);
-              }
-              return Array.from(teamMap.values());
-            })()} seeds={(seeds ?? []) as any} />
-          </section>
 
           {/* Playoff Bracket */}
           {(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
             <section className="card p-6 md:p-8 overflow-hidden">
-              <h2 className="text-xl font-display text-flag-gold tracking-widest mb-6">PLAYOFF BRACKET</h2>
+
               <div className="overflow-x-auto pb-4">
                 <BracketTree matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} defaultMatchFormat={tournament.match_format} />
               </div>
@@ -207,13 +261,6 @@ export default async function TournamentDashboard({ params }: { params: { id: st
         </>
       ) : (
         <>
-          <section className="card p-6 md:p-8 overflow-hidden">
-            <h2 className="text-xl font-display text-white tracking-widest mb-6">BRACKET</h2>
-            <div className="overflow-x-auto pb-4">
-              <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} />
-            </div>
-          </section>
-
           <section className="grid md:grid-cols-2 gap-6">
             <div>
               <h2 className="text-xl font-display text-white tracking-widest mb-3">SEEDS</h2>
@@ -245,64 +292,17 @@ export default async function TournamentDashboard({ params }: { params: { id: st
 
       {/* Player Stats */}
       {teamStatsMap.size > 0 && (
-        <section>
-          <h2 className="text-xl font-display text-white tracking-widest mb-6">PLAYER STATS</h2>
-          <div className="space-y-8">
-            {[...teamStatsMap.entries()].map(([teamId, { teamName, players: teamPlayers }]) => (
-              <div key={teamId}>
-                <h3 className="text-lg font-display text-flag-gold tracking-widest mb-3">{teamName}</h3>
-                <div className="card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs font-mono">
-                      <thead>
-                        <tr className="bg-navy-800 border-b border-white/[0.06] text-white uppercase tracking-widest text-[10px]">
-                          <th className="text-left px-5 py-4">Player</th>
-                          <th className="px-3 py-3 text-right">GP</th>
-                          <th className="px-3 py-3 text-right">PPG</th>
-                          <th className="px-3 py-3 text-right">RPG</th>
-                          <th className="px-3 py-3 text-right">APG</th>
-                          <th className="px-3 py-3 text-right">SPG</th>
-                          <th className="px-3 py-3 text-right">BPG</th>
-                          <th className="px-3 py-3 text-right">FG%</th>
-                          <th className="px-3 py-3 text-right">3P%</th>
-                          <th className="px-3 py-3 text-right">FT%</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {teamPlayers.map(({ player, avg }) => (
-                          <tr key={player.id} className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.03] transition-colors">
-                            <td className="px-5 py-3">
-                              <Link href={`/${player.slug || player.gamertag.toLowerCase()}`} className="text-white hover:text-flag-gold transition-colors hover:underline">
-                                {player.gamertag}
-                              </Link>
-                              {player.position && <span className="ml-2 text-[10px] text-white/40 uppercase">{player.position}</span>}
-                            </td>
-                            {avg ? (
-                              <>
-                                <td className="px-3 py-3 text-right text-white/30">{avg.gamesPlayed}</td>
-                                <td className="px-3 py-3 text-right text-white font-semibold">{avg.ppg}</td>
-                                <td className="px-3 py-3 text-right text-white/50">{avg.rpg}</td>
-                                <td className="px-3 py-3 text-right text-white/50">{avg.apg}</td>
-                                <td className="px-3 py-3 text-right text-white/50">{avg.spg}</td>
-                                <td className="px-3 py-3 text-right text-white/50">{avg.bpg}</td>
-                                <td className="px-3 py-3 text-right text-white/30">{avg.fgPct}%</td>
-                                <td className="px-3 py-3 text-right text-white/40">{avg.tpPct}%</td>
-                                <td className="px-3 py-3 text-right text-white/40">{avg.ftPct}%</td>
-                              </>
-                            ) : (
-                              <td colSpan={9} className="px-3 py-3 text-right text-white/40 italic">No games played</td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <TournamentPlayerStats teams={Array.from(teamStatsMap.values())} />
       )}
+
+      {/* Mobile Leaderboards (Bottom) */}
+      <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mt-12 ${tournament.format === 'VETERANS_LEAGUE' ? 'xl:hidden' : 'min-[1880px]:hidden'}`}>
+        <LeaderboardCard title="Points Per Game" leaders={topPts} dataKey="ppg" />
+        <LeaderboardCard title="Assists Per Game" leaders={topAst} dataKey="apg" />
+        <LeaderboardCard title="Rebounds Per Game" leaders={topReb} dataKey="rpg" />
+        <LeaderboardCard title="Steals Per Game" leaders={topStl} dataKey="spg" />
+      </div>
+
     </div>
   );
 }

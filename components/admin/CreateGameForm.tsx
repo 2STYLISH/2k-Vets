@@ -43,18 +43,21 @@ export default function CreateGameForm({
     setIsRoundLabelEditable(false);
   }
 
-  function handleMatchupChange(matchupId: string) {
+  function handleMatchupChange(matchupId: string, keepTeams = false) {
     setSelectedMatchupId(matchupId);
     if (!matchupId) return;
     const matchup = (matchupsMap?.[tournamentId] ?? []).find(m => m.id === matchupId);
     if (matchup) {
-      setHome('');
-      setAway('');
+      if (!keepTeams) {
+        setHome('');
+        setAway('');
+      }
       let newRoundLabel = '';
       if (matchup.bracket_side === 'GRAND_FINAL') newRoundLabel = 'Grand Final';
       else if (matchup.bracket_side === 'WINNERS') newRoundLabel = `Upper Round ${matchup.round}`;
       else if (matchup.bracket_side === 'LOSERS') newRoundLabel = `Lower Round ${matchup.round}`;
       else if (matchup.bracket_side === 'PLAY_IN') newRoundLabel = `Play-In Round ${matchup.round}`;
+      else if (matchup.bracket_side === 'ROUND_ROBIN') newRoundLabel = `Group Stage - Round ${matchup.round}`;
       else newRoundLabel = `Round ${matchup.round}`;
 
       const seriesId = matchup.series?.[0]?.id;
@@ -65,7 +68,7 @@ export default function CreateGameForm({
 
       setRoundLabel(`${newRoundLabel} - Game ${gameNumber}`);
       setIsRoundLabelEditable(false);
-      setGameType('PLAYOFF');
+      setGameType(matchup.bracket_side === 'ROUND_ROBIN' ? 'REGULAR' : 'PLAYOFF');
     }
   }
 
@@ -155,6 +158,18 @@ export default function CreateGameForm({
               if (val && availableTeams.length === 2) {
                 const other = availableTeams.find(t => t.id !== val);
                 if (other) setAway(other.id);
+              } else if (val && tournamentId && matchupsMap?.[tournamentId]) {
+                const pending = matchupsMap[tournamentId].filter(m => m.team_a_id === val || m.team_b_id === val);
+                if (pending.length === 1) {
+                  const m = pending[0];
+                  const otherId = m.team_a_id === val ? m.team_b_id : m.team_a_id;
+                  if (otherId) {
+                    setAway(otherId);
+                    if (!selectedMatchupId) {
+                      handleMatchupChange(m.id, true);
+                    }
+                  }
+                }
               }
             }}
             disabled={tournamentId !== '' && availableTeams.length === 0}

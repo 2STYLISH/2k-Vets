@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/client';
 import { checkAdminStatus } from '@/lib/actions/auth';
 
 const LINKS = [
+  { href: '/players', label: 'Players' },
+  { href: '/teams', label: 'Teams' },
   { href: '/schedule', label: 'Schedule' },
   { href: '/playerstats', label: 'Stats' },
   { href: '/awards', label: 'Awards' },
@@ -21,10 +23,6 @@ export default function Navbar() {
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ gamertag: string; slug: string | null }[]>([]);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const desktopProfileRef = useRef<HTMLDivElement>(null);
@@ -35,8 +33,6 @@ export default function Navbar() {
   useEffect(() => {
     setMobileMenuOpen(false);
     setProfileOpen(false);
-    setSearchOpen(false);
-    setQuery('');
   }, [pathname]);
 
   useEffect(() => {
@@ -59,17 +55,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return; }
-    const timer = setTimeout(async () => {
-      const { data } = await supabase.from('players').select('gamertag, slug').ilike('gamertag', `%${query}%`).limit(8);
-      setResults(data ?? []);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
       const target = e.target as Node;
       const inDesktopProfile = desktopProfileRef.current && desktopProfileRef.current.contains(target);
       const inMobileProfileBtn = mobileProfileBtnRef.current && mobileProfileBtnRef.current.contains(target);
@@ -83,12 +69,6 @@ export default function Navbar() {
       document.removeEventListener('touchstart', handleClick as any);
     };
   }, []);
-
-  function handleSearchSelect(player: { gamertag: string; slug: string | null }) {
-    const href = `/${player.slug || player.gamertag.toLowerCase()}`;
-    setQuery(''); setResults([]); setSearchOpen(false); setMobileMenuOpen(false);
-    router.push(href);
-  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -144,14 +124,16 @@ export default function Navbar() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-white/10 bg-navy-800 flex items-center justify-center group-hover:border-flag-red/50 transition-colors shadow-sm">
-            <Image src="/bg-logo.png" alt="2K Veterans League Logo" fill className="object-cover" />
-          </div>
-          <span className="hidden sm:block text-lg font-display text-white tracking-[0.12em] uppercase group-hover:text-flag-red transition-colors">
-            2K VETERANS LEAGUE
-          </span>
-        </Link>
+        <div className="flex-1 flex items-center justify-start">
+          <Link href="/" className="flex items-center gap-3 shrink-0 group">
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-white/10 bg-navy-800 flex items-center justify-center group-hover:border-flag-red/50 transition-colors shadow-sm">
+              <Image src="/bg-logo.png" alt="2K Veterans League Logo" fill className="object-cover" />
+            </div>
+            <span className="hidden sm:block text-lg font-display text-white tracking-[0.12em] uppercase group-hover:text-flag-red transition-colors">
+              2K VETERANS LEAGUE
+            </span>
+          </Link>
+        </div>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1 bg-white/[0.04] rounded-xl p-1 border border-white/[0.06]">
@@ -170,29 +152,7 @@ export default function Navbar() {
 
         {/* Desktop Right */}
         <div className="hidden md:flex items-center gap-4 flex-1 justify-end">
-          <div ref={searchRef} className="relative max-w-[260px] w-full">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input type="text" value={query} onChange={(e) => { setQuery(e.target.value); setSearchOpen(true); }} onFocus={() => setSearchOpen(true)}
-                placeholder="Search player…"
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-flag-red/30 focus:border-flag-red/40 transition-all"
-              />
-            </div>
-            {searchOpen && results.length > 0 && (
-              <div className="absolute top-full mt-2 left-0 right-0 bg-navy-900/95 backdrop-blur-xl border border-white/[0.08] rounded-xl overflow-hidden z-50 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
-                {results.map((p) => (
-                  <button key={p.gamertag} onMouseDown={() => handleSearchSelect(p)}
-                    className="w-full text-left px-4 py-3 text-sm text-white/70 hover:bg-white/[0.06] hover:text-flag-gold transition-colors flex items-center gap-2.5"
-                  >
-                    <span className="w-6 h-6 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-[9px] font-mono text-white/40 uppercase">{p.gamertag.charAt(0)}</span>
-                    <span className="font-medium">{p.gamertag}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+
 
           {/* Desktop Profile Button + Dropdown */}
           <div ref={desktopProfileRef} className="relative">
@@ -274,22 +234,7 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-white/[0.06] bg-navy-900/95 backdrop-blur-2xl animate-fade-in">
           <div className="p-4 space-y-3">
-            <div className="relative w-full">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search player…"
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-flag-red/30 focus:border-flag-red/40"
-              />
-              {query && results.length > 0 && (
-                <div className="absolute top-full mt-1.5 left-0 right-0 bg-navy-900/95 border border-white/[0.08] rounded-xl overflow-hidden z-50 shadow-lg">
-                  {results.map((p) => (
-                    <button key={p.gamertag} onClick={() => handleSearchSelect(p)}
-                      className="w-full text-left px-4 py-3 text-sm text-white/70 hover:bg-white/[0.06] active:bg-white/[0.08] hover:text-flag-gold transition-colors">{p.gamertag}</button>
-                  ))}
-                </div>
-              )}
-            </div>
+
             <nav className="flex flex-col gap-1">
               {LINKS.map((l) => {
                 const active = pathname === l.href || pathname.startsWith(l.href + '/');

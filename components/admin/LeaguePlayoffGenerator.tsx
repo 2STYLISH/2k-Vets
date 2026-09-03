@@ -46,10 +46,34 @@ export default function LeaguePlayoffGenerator({
         if (m.team_a?.id === t.id) {
           if (m.winner_id === t.id) wins++;
           else losses++;
+          
+          if (m.schedule) {
+            const scheds = Array.isArray(m.schedule) ? m.schedule : [m.schedule];
+            for (const sched of scheds) {
+              for (const g of sched.games || []) {
+                if (g.home_score != null && g.away_score != null) {
+                  if (sched.home_team_id === t.id) pd += (g.home_score - g.away_score);
+                  else pd += (g.away_score - g.home_score);
+                }
+              }
+            }
+          }
         }
         if (m.team_b?.id === t.id) {
           if (m.winner_id === t.id) wins++;
           else losses++;
+
+          if (m.schedule) {
+            const scheds = Array.isArray(m.schedule) ? m.schedule : [m.schedule];
+            for (const sched of scheds) {
+              for (const g of sched.games || []) {
+                if (g.home_score != null && g.away_score != null) {
+                  if (sched.home_team_id === t.id) pd += (g.home_score - g.away_score);
+                  else pd += (g.away_score - g.home_score);
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -124,10 +148,10 @@ export default function LeaguePlayoffGenerator({
     <div className="card p-5 border-flag-gold/30 shadow-[0_0_15px_rgba(255,215,0,0.05)] mt-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-lg text-bone uppercase tracking-widest font-display flex items-center gap-3">
+          <h2 className="text-lg text-white uppercase tracking-widest font-display flex items-center gap-3">
             <span className="text-flag-gold">🏆</span> Playoff Picture
           </h2>
-          <p className="text-sm text-mute mt-1">
+          <p className="text-sm text-white/70 mt-1">
             {totalTeams >= 10
               ? 'Seeds 1–6 go directly to playoffs. Seeds 7–10 compete in the play-in. Seeds 11+ are eliminated.'
               : totalTeams >= 8
@@ -148,8 +172,8 @@ export default function LeaguePlayoffGenerator({
 
       {/* Standings preview with zone coloring */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-mute">
-          <thead className="bg-arena-900 border-b border-arena-800 text-xs font-mono uppercase">
+        <table className="w-full text-left text-sm text-white">
+          <thead className="bg-arena-900 border-b border-arena-800 text-xs font-mono uppercase text-white">
             <tr>
               <th className="px-4 py-3 font-medium w-12">#</th>
               <th className="px-4 py-3 font-medium">Team</th>
@@ -170,7 +194,7 @@ export default function LeaguePlayoffGenerator({
                   className={`border-l-4 transition-colors hover:bg-white/[0.03] ${getZoneColor(rank)}`}
                 >
                   <td className="px-4 py-3 text-white font-mono font-bold">{rank}</td>
-                  <td className="px-4 py-3 text-bone font-medium">{row.teamName}</td>
+                  <td className="px-4 py-3 text-white font-medium">{row.teamName}</td>
                   <td className="px-4 py-3 text-center text-emerald-400 font-mono font-bold">{row.wins}</td>
                   <td className="px-4 py-3 text-center text-red-400 font-mono font-bold">{row.losses}</td>
                   <td className={`px-4 py-3 text-center font-mono font-bold ${row.pd > 0 ? 'text-flag-gold' : row.pd < 0 ? 'text-red-400' : 'text-white/40'}`}>

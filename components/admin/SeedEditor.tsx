@@ -16,6 +16,7 @@ export default function SeedEditor({
 }) {
   const { showConfirm, showToast } = useNotification();
   const [busy, setBusy] = useState(false);
+  const [doubleRoundRobin, setDoubleRoundRobin] = useState(true);
   const [localSeeds, setLocalSeeds] = useState(() => {
     const map = new Map<string, any>();
     for (const t of teams) {
@@ -66,7 +67,7 @@ export default function SeedEditor({
     if (!confirmed) return;
     setBusy(true);
     try {
-      await randomizeBracket(tournamentId, { randomizeSeeds: false });
+      await randomizeBracket(tournamentId, { randomizeSeeds: false, doubleRoundRobin });
       showToast('Bracket seeded!', 'success');
     } catch (e: any) {
       showToast(parseError(e), 'error');
@@ -89,24 +90,33 @@ export default function SeedEditor({
     <div className="card p-5 border-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.05)] mt-8">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-lg text-bone uppercase tracking-widest font-display">Standings & Seed Editor</h2>
-          <p className="text-sm text-mute mt-1">
+          <h2 className="text-lg text-white uppercase tracking-widest font-display">Standings & Seed Editor</h2>
+          <p className="text-sm text-white/70 mt-1">
             Manually override team stats and assign seeds. Save your changes, then click "Generate Bracket From Seeds".
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          <label className="flex items-center gap-2 mr-2 cursor-pointer text-sm text-white/70 hover:text-white transition-colors">
+            <input 
+              type="checkbox" 
+              checked={doubleRoundRobin} 
+              onChange={(e) => setDoubleRoundRobin(e.target.checked)}
+              className="w-4 h-4 rounded bg-arena-900 border-white/20 text-flag-gold focus:ring-flag-gold"
+            />
+            Double Round Robin
+          </label>
           <button onClick={handleSaveAll} disabled={busy} className="btn-secondary py-2 px-6">
             {busy ? 'SAVING...' : 'SAVE STATS & SEEDS'}
           </button>
           <button onClick={handleSeedBracket} disabled={busy} className="btn-primary py-2 px-6">
-            GENERATE BRACKET FROM SEEDS
+            GENERATE BRACKET
           </button>
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-mute">
-          <thead className="bg-arena-900 border-b border-arena-800 text-xs font-mono uppercase">
+        <table className="w-full text-left text-sm text-white">
+          <thead className="bg-arena-900 border-b border-arena-800 text-xs font-mono uppercase text-white">
             <tr>
               <th className="px-4 py-3 font-medium">Team</th>
               <th className="px-4 py-3 font-medium">Seed (1-10)</th>
@@ -120,7 +130,7 @@ export default function SeedEditor({
               const data = localSeeds.get(t.id);
               return (
                 <tr key={t.id} className="hover:bg-arena-800/50 transition-colors">
-                  <td className="px-4 py-3 text-bone font-medium">{t.name}</td>
+                  <td className="px-4 py-3 text-white font-medium">{t.name}</td>
                   <td className="px-4 py-3">
                     <input type="number" value={data?.seed} onChange={e => handleUpdate(t.id, 'seed', e.target.value)} className="input-field w-20 text-center py-1" />
                   </td>

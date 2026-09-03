@@ -502,7 +502,7 @@ function generateSeedOrder(bracketSize: number): number[] {
   return matches;
 }
 
-export async function randomizeBracket(tournamentId: string, options?: { randomizeSeeds?: boolean }) {
+export async function randomizeBracket(tournamentId: string, options?: { randomizeSeeds?: boolean, doubleRoundRobin?: boolean }) {
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
 
@@ -562,33 +562,83 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
     // Round Robin / Circle Method Generation
     await supabase.from('bracket_matchups').delete().eq('tournament_id', tournamentId);
 
-    const isOdd = teamIds.length % 2 !== 0;
-    const workingTeams = isOdd ? [...teamIds, null] : [...teamIds];
-    const n = workingTeams.length;
-    const rounds = n - 1;
+    // Sort teams by seed to ensure balanced groups
+    const sortedTeamIds = [...teamIds].sort((a, b) => {
+      let seedA = 999, seedB = 999;
+      for (const [s, t] of teamSeedMap.entries()) {
+        if (t === a) seedA = s;
+        if (t === b) seedB = s;
+      }
+      return seedA - seedB;
+    });
 
-    let slotCounter = 1;
-    for (let round = 1; round <= rounds; round++) {
-      for (let i = 0; i < n / 2; i++) {
-        const teamA = workingTeams[i];
-        const teamB = workingTeams[n - 1 - i];
+    let groupsOfTeams: string[][] = [sortedTeamIds];
 
-        if (teamA && teamB) { // If neither is the BYE slot
-          await supabase.from('bracket_matchups').insert({
-            tournament_id: tournamentId,
-            round,
-            slot: slotCounter++,
-            status: 'PENDING',
-            bracket_side: 'ROUND_ROBIN',
-            team_a_id: teamA,
-            team_b_id: teamB,
-          });
+    if (tourney?.format === 'VETERANS_LEAGUE') {
+      const total = sortedTeamIds.length;
+      let numGroups = Math.max(1, Math.round(total / 5.5));
+      if (total < 8) numGroups = 1;
+
+      if (numGroups > 1) {
+        groupsOfTeams = Array.from({ length: numGroups }, () => []);
+        // Snake draft to balance seeds across groups
+        for (let i = 0; i < total; i++) {
+          const round = Math.floor(i / numGroups);
+          const isEvenRound = round % 2 === 0;
+          const groupIdx = isEvenRound ? (i % numGroups) : (numGroups - 1 - (i % numGroups));
+          groupsOfTeams[groupIdx].push(sortedTeamIds[i]);
+        }
+
+        // Assign group_names in the DB
+        const groupLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for (let g = 0; g < groupsOfTeams.length; g++) {
+          const groupName = `Group ${groupLetters[g]}`;
+          for (const tId of groupsOfTeams[g]) {
+            await supabase.from('teams').update({ group_name: groupName }).eq('id', tId);
+          }
         }
       }
-      // Rotate array for next round (keep first element fixed)
-      workingTeams.splice(1, 0, workingTeams.pop() as string | null);
     }
 
+    let slotCounter = 1;
+
+    for (const groupTeams of groupsOfTeams) {
+      const isOdd = groupTeams.length % 2 !== 0;
+      const isDouble = options?.doubleRoundRobin ?? (tourney?.format === 'VETERANS_LEAGUE');
+      const numCycles = isDouble ? 2 : 1;
+
+      for (let cycle = 0; cycle < numCycles; cycle++) {
+        // Reset working teams for each cycle
+        const workingTeams = isOdd ? [...groupTeams, null] : [...groupTeams];
+        const n = workingTeams.length;
+        const rounds = n - 1;
+
+        for (let round = 1; round <= rounds; round++) {
+          for (let i = 0; i < n / 2; i++) {
+            let teamA = workingTeams[i];
+            let teamB = workingTeams[n - 1 - i];
+
+            if (cycle === 1) {
+              [teamA, teamB] = [teamB, teamA];
+            }
+
+            if (teamA && teamB) {
+              await supabase.from('bracket_matchups').insert({
+                tournament_id: tournamentId,
+                round: round + (cycle * rounds),
+                slot: slotCounter++,
+                status: 'PENDING',
+                bracket_side: 'ROUND_ROBIN',
+                team_a_id: teamA,
+                team_b_id: teamB,
+              });
+            }
+          }
+          // Rotate array for next round (keep first element fixed)
+          workingTeams.splice(1, 0, workingTeams.pop() as string | null);
+        }
+      }
+    }
     await supabase.from('tournaments').update({ status: 'IN_PROGRESS' }).eq('id', tournamentId);
     revalidatePath('/admin/bracket');
     revalidatePath('/bracket');

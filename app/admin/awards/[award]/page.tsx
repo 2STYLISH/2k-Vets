@@ -5,16 +5,12 @@ import PublishAwardButton from '@/components/admin/PublishAwardButton';
 import FinalizeAwardForm from '@/components/admin/FinalizeAwardForm';
 
 const VALID_TYPES = [
-  'BEST_PG', 'BEST_SG', 'BEST_SF', 'BEST_PF', 'BEST_CENTER',
+  'MYTHICAL_TEAM',
   'FINALS_MVP', 'OVERALL_MVP', 'OVERALL_DPOY',
 ];
 
 const AWARD_DESC: Record<string, string> = {
-  BEST_PG: 'Best Point Guard',
-  BEST_SG: 'Best Shooting Guard',
-  BEST_SF: 'Best Small Forward',
-  BEST_PF: 'Best Power Forward',
-  BEST_CENTER: 'Best Center',
+  MYTHICAL_TEAM: 'Mythical Team (Customizable Name, 5 Players)',
   FINALS_MVP: 'Finals Most Valuable Player',
   OVERALL_MVP: 'Overall Most Valuable Player',
   OVERALL_DPOY: 'Overall Defensive Player of the Year',
@@ -34,6 +30,15 @@ export default async function AdminAwardDetailPage({ params, searchParams }: { p
     .eq('award_type', awardType)
     .eq('tournament_id', tournamentId)
     .maybeSingle();
+
+  let teamWinners: any[] = [];
+  if (awardType === 'MYTHICAL_TEAM' && award?.winner_player_ids?.length) {
+    const { data: players } = await supabase
+      .from('players')
+      .select('id, gamertag')
+      .in('id', award.winner_player_ids);
+    teamWinners = players ?? [];
+  }
 
   // If award doesn't exist for this tournament, we can create it dynamically or just let the finalize form handle it.
   // Actually, FinalizeAwardForm expects an awardId to update, or it inserts.
@@ -72,14 +77,25 @@ export default async function AdminAwardDetailPage({ params, searchParams }: { p
           awardId={award?.id ?? null}
           tournamentId={tournamentId}
           currentWinnerId={award?.winner_player_id ?? null}
+          currentWinnerIds={award?.winner_player_ids ?? []}
+          currentCustomName={award?.custom_name ?? ''}
           candidates={eligiblePlayers}
         />
       ) : (
         <div className="card p-6 border-flag-gold/20 bg-flag-gold/5 flex flex-col items-center justify-center text-center py-10">
           <p className="text-[10px] font-mono text-flag-gold uppercase tracking-widest mb-2">OFFICIAL WINNER</p>
           <p className="text-3xl text-white font-display tracking-widest">
-            {(award as any).winner?.gamertag ?? 'Unknown'}
+            {awardType === 'MYTHICAL_TEAM' 
+              ? award?.custom_name || 'Mythical Team'
+              : (award as any).winner?.gamertag ?? 'Unknown'}
           </p>
+          {awardType === 'MYTHICAL_TEAM' && (
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              {teamWinners.map(w => (
+                <span key={w.id} className="text-sm font-mono text-white/70 bg-black/20 px-3 py-1 rounded-full border border-flag-gold/20">{w.gamertag}</span>
+              ))}
+            </div>
+          )}
           <p className="text-white/30 text-sm font-mono uppercase tracking-widest mt-6">
             ✓ Published to public awards page
           </p>
@@ -90,9 +106,16 @@ export default async function AdminAwardDetailPage({ params, searchParams }: { p
       {award?.status === 'FINALIZED' && (
         <div className="card p-5 flex items-center justify-between">
           <div>
-            <p className="text-white/50 text-sm">
-              Winner: <span className="text-white font-display">{(award as any).winner?.gamertag}</span>
-            </p>
+            {awardType === 'MYTHICAL_TEAM' ? (
+              <div className="text-white/50 text-sm">
+                Winner: <span className="text-white font-display">{award?.custom_name || 'Mythical Team'}</span>
+                <span className="ml-2 text-xs text-white/30 font-mono">({teamWinners.length} players)</span>
+              </div>
+            ) : (
+              <p className="text-white/50 text-sm">
+                Winner: <span className="text-white font-display">{(award as any).winner?.gamertag}</span>
+              </p>
+            )}
             <p className="text-[10px] font-mono text-white/40 uppercase mt-1">
               Finalized — not yet visible to the public
             </p>

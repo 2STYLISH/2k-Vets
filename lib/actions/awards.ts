@@ -12,7 +12,9 @@ export async function finalizeAward(input: {
   awardType: string;
   awardId: string | null;
   tournamentId: string;
-  winnerPlayerId: string;
+  winnerPlayerId: string | null;
+  winnerPlayerIds?: string[];
+  customName?: string;
   notes: string;
   publishNotes: boolean;
 }) {
@@ -38,6 +40,8 @@ export async function finalizeAward(input: {
     .update({
       status: 'FINALIZED',
       winner_player_id: input.winnerPlayerId,
+      winner_player_ids: input.winnerPlayerIds,
+      custom_name: input.customName,
       admin_notes: input.notes,
       publish_notes: input.publishNotes,
       finalized_by: user.id,
@@ -52,7 +56,12 @@ export async function finalizeAward(input: {
     action: 'AWARD_FINALIZED',
     target_type: 'award',
     target_id: awardId,
-    metadata: { award_type: input.awardType, winner_player_id: input.winnerPlayerId },
+    metadata: { 
+      award_type: input.awardType, 
+      winner_player_id: input.winnerPlayerId,
+      winner_player_ids: input.winnerPlayerIds,
+      custom_name: input.customName
+    },
   });
 
   revalidatePath('/admin/awards');

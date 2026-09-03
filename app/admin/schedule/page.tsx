@@ -28,7 +28,7 @@ export default async function AdminSchedulePage({ searchParams }: { searchParams
       .order('scheduled_date', { ascending: true }),
     supabase
       .from('bracket_matchups')
-      .select('id, tournament_id, team_a_id, team_b_id, status, bracket_side, round, team_a:teams!bracket_matchups_team_a_id_fkey(name), team_b:teams!bracket_matchups_team_b_id_fkey(name), series(id)')
+      .select('id, tournament_id, team_a_id, team_b_id, status, bracket_side, round, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug), series(id)')
       .eq('tournament_id', activeTournament)
       .not('team_a_id', 'is', null)
       .not('team_b_id', 'is', null)

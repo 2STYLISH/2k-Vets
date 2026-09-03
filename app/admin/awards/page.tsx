@@ -5,7 +5,7 @@ import TournamentSelect from '@/components/TournamentSelect';
 import { slugify } from '@/lib/format';
 
 const AWARD_TYPES = [
-  'BEST_PG', 'BEST_SG', 'BEST_SF', 'BEST_PF', 'BEST_CENTER',
+  'MYTHICAL_TEAM',
   'FINALS_MVP', 'OVERALL_MVP', 'OVERALL_DPOY',
 ];
 
