@@ -4,6 +4,7 @@ import StandingsTable from '@/components/StandingsTable';
 import BracketSeeder from '@/components/admin/BracketSeeder';
 import SeedEditor from '@/components/admin/SeedEditor';
 import SwissGenerator from '@/components/admin/SwissGenerator';
+import LeaguePlayoffGenerator from '@/components/admin/LeaguePlayoffGenerator';
 import Link from '@/components/HiddenLink';
 import BackButton from '@/components/BackButton';
 import { slugify } from '@/lib/format';
@@ -82,7 +83,7 @@ export default async function AdminBracketPage({
             <p className="text-white/90">{active.name}</p>
             <p className="text-xs font-mono text-flag-gold uppercase">{active.status}</p>
           </div>
-          {active.format === 'PLAYOFFS' && (
+          {(active.format === 'PLAYOFFS' || active.format === 'VETERANS_LEAGUE') && (
             <SeedEditor 
               tournamentId={active.id} 
               teams={teams ?? []}
@@ -90,7 +91,47 @@ export default async function AdminBracketPage({
             />
           )}
 
-          {(active.format === 'ROUND_ROBIN' || active.format === 'LEADERBOARD') ? (
+          {active.format === 'VETERANS_LEAGUE' ? (
+            <>
+              {/* Round-robin standings */}
+              <StandingsTable matchups={(matchups ?? []) as any} teams={teams ?? []} seeds={seeds ?? []} />
+              
+              {/* Playoff picture & generator */}
+              {active.status === 'IN_PROGRESS' && (
+                <LeaguePlayoffGenerator
+                  tournamentId={active.id}
+                  teams={teams ?? []}
+                  seeds={seeds ?? []}
+                  matchups={(matchups ?? []) as any}
+                  hasPlayoffs={(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN')}
+                />
+              )}
+
+              {/* Show playoff bracket if generated */}
+              {(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
+                <div className="mt-8">
+                  <h2 className="text-xl font-display text-flag-gold tracking-widest mb-4">PLAYOFF BRACKET</h2>
+                  <AdminInteractiveBracket 
+                    matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} 
+                    teams={(teams ?? []) as any} 
+                    defaultMatchFormat={active.match_format} 
+                  />
+                </div>
+              )}
+
+              {/* Round-robin matchups */}
+              {(matchups ?? []).some((m: any) => m.bracket_side === 'ROUND_ROBIN') && (
+                <div className="mt-8">
+                  <h2 className="text-xl font-display text-white tracking-widest mb-4">REGULAR SEASON MATCHUPS</h2>
+                  <AdminInteractiveBracket 
+                    matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side === 'ROUND_ROBIN')} 
+                    teams={(teams ?? []) as any} 
+                    defaultMatchFormat="BO1" 
+                  />
+                </div>
+              )}
+            </>
+          ) : (active.format === 'ROUND_ROBIN' || active.format === 'LEADERBOARD') ? (
             <StandingsTable matchups={(matchups ?? []) as any} teams={teams ?? []} seeds={seeds ?? []} />
           ) : active.format === 'SWISS' ? (
             <>

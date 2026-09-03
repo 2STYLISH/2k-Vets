@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import Link from '@/components/HiddenLink';
 import BracketTree from '@/components/BracketTree';
+import StandingsTable from '@/components/StandingsTable';
 import MatchesFilter from '@/components/MatchesFilter';
 import BackButton from '@/components/BackButton';
 import { notFound } from 'next/navigation';
@@ -42,7 +43,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
       .eq('tournament_id', tournament.id)
       .order('round', { ascending: true })
       .order('slot', { ascending: true }),
-    supabase.from('tournament_seeds').select('seed, team:teams(name)').eq('tournament_id', tournament.id).order('seed'),
+    supabase.from('tournament_seeds').select('seed, team_id, manual_wins, manual_losses, point_differential, team:teams(name)').eq('tournament_id', tournament.id).order('seed'),
     supabase.from('schedules').select('id, scheduled_date, scheduled_time, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'SCHEDULED'),
     supabase.from('schedules').select('id, scheduled_date, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'COMPLETED'),
     supabase.from('tournament_rosters').select('team_id, player_id, team:teams(id, name)').eq('tournament_id', tournament.id),
@@ -142,32 +143,98 @@ export default async function TournamentDashboard({ params }: { params: { id: st
         </div>
       )}
 
-      <section className="card p-6 md:p-8 overflow-hidden">
-        <h2 className="text-xl font-display text-white tracking-widest mb-6">BRACKET</h2>
-        <div className="overflow-x-auto pb-4">
-          <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} />
-        </div>
-      </section>
+      {tournament.format === 'VETERANS_LEAGUE' ? (
+        <>
+          {/* Standings */}
+          <section className="card p-6 md:p-8 overflow-hidden">
+            <h2 className="text-xl font-display text-white tracking-widest mb-6">STANDINGS</h2>
+            <StandingsTable matchups={(matchups ?? []) as any} teams={(() => {
+              const teamMap = new Map<string, any>();
+              for (const r of (rosters ?? []) as any[]) {
+                if (r.team && !teamMap.has(r.team.id)) teamMap.set(r.team.id, r.team);
+              }
+              // Also include teams from matchups in case rosters are empty
+              for (const m of (matchups ?? []) as any[]) {
+                if (m.team_a && !teamMap.has(m.team_a.id)) teamMap.set(m.team_a.id, m.team_a);
+                if (m.team_b && !teamMap.has(m.team_b.id)) teamMap.set(m.team_b.id, m.team_b);
+              }
+              return Array.from(teamMap.values());
+            })()} seeds={(seeds ?? []) as any} />
+          </section>
 
-      <section className="grid md:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-xl font-display text-white tracking-widest mb-3">SEEDS</h2>
-          <div className="border border-white/[0.06] card p-4 space-y-1 shadow-lg">
-            {(seeds ?? []).map((s: any) => (
-              <p key={s.seed} className="text-sm font-mono text-white"><span className="text-white/40 mr-2">#{s.seed}</span> {s.team?.name}</p>
-            ))}
-            {(seeds ?? []).length === 0 && <p className="text-white/40 text-sm font-mono uppercase tracking-widest">Seeding not set yet.</p>}
-          </div>
-        </div>
+          {/* Playoff Bracket */}
+          {(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
+            <section className="card p-6 md:p-8 overflow-hidden">
+              <h2 className="text-xl font-display text-flag-gold tracking-widest mb-6">PLAYOFF BRACKET</h2>
+              <div className="overflow-x-auto pb-4">
+                <BracketTree matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} defaultMatchFormat={tournament.match_format} />
+              </div>
+            </section>
+          )}
 
-        <div>
-          <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
-          <MatchesFilter 
-            rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
-            isUpcoming={true}
-          />
-        </div>
-      </section>
+          {/* Seeds */}
+          <section className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h2 className="text-xl font-display text-white tracking-widest mb-3">SEEDS</h2>
+              <div className="border border-white/[0.06] card p-4 space-y-1 shadow-lg">
+                {(seeds ?? []).map((s: any) => {
+                  const rank = s.seed;
+                  const totalTeams = (seeds ?? []).length;
+                  let directSeeds = 6, playInSeeds = 4;
+                  if (totalTeams >= 10) { directSeeds = 6; playInSeeds = 4; }
+                  else if (totalTeams >= 8) { directSeeds = 4; playInSeeds = 4; }
+                  else if (totalTeams >= 6) { directSeeds = 2; playInSeeds = Math.min(4, totalTeams - 2); }
+                  else { directSeeds = totalTeams; playInSeeds = 0; }
+
+                  const color = rank <= directSeeds ? 'text-emerald-400' : rank <= directSeeds + playInSeeds ? 'text-yellow-400' : 'text-red-400';
+                  return (
+                    <p key={s.seed} className={`text-sm font-mono ${color}`}>
+                      <span className="text-white/40 mr-2">#{s.seed}</span> {s.team?.name}
+                    </p>
+                  );
+                })}
+                {(seeds ?? []).length === 0 && <p className="text-white/40 text-sm font-mono uppercase tracking-widest">Seeding not set yet.</p>}
+              </div>
+            </div>
+            <div>
+              <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
+              <MatchesFilter 
+                rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
+                isUpcoming={true}
+              />
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          <section className="card p-6 md:p-8 overflow-hidden">
+            <h2 className="text-xl font-display text-white tracking-widest mb-6">BRACKET</h2>
+            <div className="overflow-x-auto pb-4">
+              <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} />
+            </div>
+          </section>
+
+          <section className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h2 className="text-xl font-display text-white tracking-widest mb-3">SEEDS</h2>
+              <div className="border border-white/[0.06] card p-4 space-y-1 shadow-lg">
+                {(seeds ?? []).map((s: any) => (
+                  <p key={s.seed} className="text-sm font-mono text-white"><span className="text-white/40 mr-2">#{s.seed}</span> {s.team?.name}</p>
+                ))}
+                {(seeds ?? []).length === 0 && <p className="text-white/40 text-sm font-mono uppercase tracking-widest">Seeding not set yet.</p>}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
+              <MatchesFilter 
+                rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
+                isUpcoming={true}
+              />
+            </div>
+          </section>
+        </>
+      )}
 
       <section>
         <h2 className="text-xl font-display text-white tracking-widest mb-3">COMPLETED MATCHES</h2>

@@ -7,7 +7,7 @@ import { collapseGhostNodes } from './node-collapse';
 
 export async function createTournament(input: {
   name: string;
-  format: 'SINGLE_ELIM' | 'DOUBLE_ELIM' | 'PLAYOFFS' | 'ROUND_ROBIN' | 'SWISS' | 'FREE_FOR_ALL' | 'LEADERBOARD';
+  format: 'SINGLE_ELIM' | 'DOUBLE_ELIM' | 'PLAYOFFS' | 'ROUND_ROBIN' | 'SWISS' | 'FREE_FOR_ALL' | 'LEADERBOARD' | 'VETERANS_LEAGUE';
   numTeams: number;
   matchFormat: 'BO1' | 'BO3' | 'BO5' | 'BO7';
   startDate?: string;
@@ -141,7 +141,7 @@ export async function generateBracket(tournamentId: string, numTeams: number) {
   const { data: tourney } = await supabase.from('tournaments').select('format').eq('id', tournamentId).single();
   const isDoubleElim = tourney?.format === 'DOUBLE_ELIM';
 
-  if (tourney?.format === 'ROUND_ROBIN' || tourney?.format === 'LEADERBOARD' || tourney?.format === 'SWISS') {
+  if (tourney?.format === 'ROUND_ROBIN' || tourney?.format === 'LEADERBOARD' || tourney?.format === 'SWISS' || tourney?.format === 'VETERANS_LEAGUE') {
     await supabase.from('tournaments').update({ status: 'SEEDING' }).eq('id', tournamentId);
     revalidatePath('/admin/bracket');
     revalidatePath('/bracket');
@@ -468,6 +468,7 @@ export async function updateSeedStats(input: {
   
   revalidatePath('/admin/bracket');
   revalidatePath('/bracket');
+  revalidatePath('/tournaments');
 }
 
 /** Clear a single team out of a Round 1 matchup slot (e.g. picked wrong team). */
@@ -557,7 +558,7 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
 
   const { data: tourney } = await supabase.from('tournaments').select('format').eq('id', tournamentId).single();
 
-  if (tourney?.format === 'ROUND_ROBIN' || tourney?.format === 'LEADERBOARD') {
+  if (tourney?.format === 'ROUND_ROBIN' || tourney?.format === 'LEADERBOARD' || tourney?.format === 'VETERANS_LEAGUE') {
     // Round Robin / Circle Method Generation
     await supabase.from('bracket_matchups').delete().eq('tournament_id', tournamentId);
 
@@ -1000,4 +1001,464 @@ export async function resetBracketSeeding(tournamentId: string) {
 
   revalidatePath('/admin/bracket');
   revalidatePath('/bracket');
+}
+
+/**
+ * Compute standings from completed round-robin matchups, then generate
+ * a play-in + playoff bracket for a VETERANS_LEAGUE tournament.
+ *
+ * Standings are ranked by: wins (desc) → point differential (desc) → losses (asc).
+ *
+ * Playoff structure (if 10+ teams):
+ *   Seeds 1–6  → direct to 8-team single-elim bracket
+ *   Seeds 7–10 → Play-In (7v8, 9v10, elimination game)
+ *   Seeds 11+  → eliminated
+ *
+ * If fewer than 10 teams, the bracket adapts:
+ *   8–9 teams  → 4 direct + 4 play-in
+ *   6–7 teams  → 2 direct + 4 play-in (or direct bracket if not enough)
+ *   4–5 teams  → direct single-elim bracket
+ *
+ * Play-ins are always BO1, playoffs are always BO3.
+ */
+export async function generateLeaguePlayoffs(tournamentId: string) {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) throw new Error('Admin authentication required.');
+
+  const supabase = createClient();
+
+  // 1. Verify this is a VETERANS_LEAGUE tournament
+  const { data: tourney } = await supabase
+    .from('tournaments')
+    .select('format, match_format')
+    .eq('id', tournamentId)
+    .single();
+  if (!tourney || tourney.format !== 'VETERANS_LEAGUE') {
+    throw new Error('This action is only available for Veterans League tournaments.');
+  }
+
+  // 2. Fetch all registered teams
+  const { data: rosters } = await supabase
+    .from('tournament_rosters')
+    .select('team_id')
+    .eq('tournament_id', tournamentId);
+  const teamIds = Array.from(new Set((rosters ?? []).map(r => r.team_id)));
+  if (teamIds.length < 4) throw new Error('Need at least 4 teams to generate playoffs.');
+
+  // 3. Compute standings from completed round-robin games
+  const { data: games } = await supabase
+    .from('games')
+    .select('home_team_id, away_team_id, home_score, away_score, status, schedule:schedules!games_schedule_id_fkey(tournament_id)')
+    .in('status', ['VERIFIED', 'COMPLETED']);
+
+  const tourneyGames = (games ?? []).filter((g: any) => g.schedule?.tournament_id === tournamentId);
+
+  // Also get manual overrides from seeds
+  const { data: existingSeeds } = await supabase
+    .from('tournament_seeds')
+    .select('team_id, seed, manual_wins, manual_losses, point_differential')
+    .eq('tournament_id', tournamentId);
+
+  type Standing = { teamId: string; wins: number; losses: number; pd: number };
+  const standingsMap = new Map<string, Standing>();
+
+  for (const id of teamIds) {
+    const seedData = existingSeeds?.find(s => s.team_id === id);
+    standingsMap.set(id, {
+      teamId: id,
+      wins: seedData?.manual_wins ?? 0,
+      losses: seedData?.manual_losses ?? 0,
+      pd: seedData?.point_differential ?? 0,
+    });
+  }
+
+  // Calculate from actual game results if no manual overrides
+  for (const game of tourneyGames as any[]) {
+    if (!game.home_team_id || !game.away_team_id) continue;
+    if (game.home_score == null || game.away_score == null) continue;
+
+    const homeEntry = standingsMap.get(game.home_team_id);
+    const awayEntry = standingsMap.get(game.away_team_id);
+    const homeSeed = existingSeeds?.find(s => s.team_id === game.home_team_id);
+    const awaySeed = existingSeeds?.find(s => s.team_id === game.away_team_id);
+
+    // Only count game results if no manual overrides for that team
+    if (homeEntry && homeSeed?.manual_wins == null && homeSeed?.manual_losses == null) {
+      if (game.home_score > game.away_score) homeEntry.wins++;
+      else homeEntry.losses++;
+      if (homeSeed?.point_differential == null) {
+        homeEntry.pd += (game.home_score - game.away_score);
+      }
+    }
+    if (awayEntry && awaySeed?.manual_wins == null && awaySeed?.manual_losses == null) {
+      if (game.away_score > game.home_score) awayEntry.wins++;
+      else awayEntry.losses++;
+      if (awaySeed?.point_differential == null) {
+        awayEntry.pd += (game.away_score - game.home_score);
+      }
+    }
+  }
+
+  // 4. Rank teams: wins desc → PD desc → losses asc
+  const standings = Array.from(standingsMap.values()).sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.pd !== a.pd) return b.pd - a.pd;
+    return a.losses - b.losses;
+  });
+
+  // 5. Delete existing playoff matchups (keep round-robin)
+  await supabase
+    .from('bracket_matchups')
+    .delete()
+    .eq('tournament_id', tournamentId)
+    .in('bracket_side', ['PLAY_IN', 'WINNERS', 'GRAND_FINAL']);
+
+  // 6. Update seeds based on standings
+  // First clear old seeds
+  await supabase.from('tournament_seeds').delete().eq('tournament_id', tournamentId);
+
+  for (let i = 0; i < standings.length; i++) {
+    const s = standings[i];
+    const oldSeed = existingSeeds?.find(x => x.team_id === s.teamId);
+
+    await supabase
+      .from('tournament_seeds')
+      .insert({
+        tournament_id: tournamentId,
+        team_id: s.teamId,
+        seed: i + 1,
+        manual_wins: oldSeed?.manual_wins ?? null,
+        manual_losses: oldSeed?.manual_losses ?? null,
+        point_differential: oldSeed?.point_differential ?? null,
+      });
+  }
+
+  const totalTeams = standings.length;
+
+  // 7. Determine playoff structure based on team count
+  if (totalTeams >= 10) {
+    // ── Standard: 6 direct + 4 play-in ────────────────────────
+    await generateStandardPlayoffs(supabase, tournamentId, standings);
+  } else if (totalTeams >= 8) {
+    // ── 8-9 teams: 4 direct + 4 play-in ──────────────────────
+    await generateSmallPlayoffs(supabase, tournamentId, standings, 4, 4);
+  } else if (totalTeams >= 6) {
+    // ── 6-7 teams: 2 direct + up to 4 play-in ────────────────
+    const playInCount = Math.min(4, totalTeams - 2);
+    if (playInCount >= 4) {
+      await generateSmallPlayoffs(supabase, tournamentId, standings, 2, playInCount);
+    } else {
+      await generateDirectBracket(supabase, tournamentId, standings.slice(0, totalTeams));
+    }
+  } else {
+    // ── 4-5 teams: direct bracket ─────────────────────────────
+    await generateDirectBracket(supabase, tournamentId, standings.slice(0, totalTeams));
+  }
+
+  revalidatePath('/admin/bracket');
+  revalidatePath('/bracket');
+  revalidatePath('/tournaments');
+}
+
+/**
+ * Standard 10+ team playoffs: 6 direct seeds + 4 play-in seeds → 8-team bracket.
+ * Play-ins: BO1. Playoffs: BO3.
+ */
+async function generateStandardPlayoffs(
+  supabase: any,
+  tournamentId: string,
+  standings: { teamId: string; wins: number; losses: number; pd: number }[]
+) {
+  const seed = (n: number) => standings[n - 1]?.teamId || null;
+
+  // ── Play-In (bracket_side = 'PLAY_IN') ──────────────────
+  // Match 1: 7 vs 8 (winner → 7th playoff slot)
+  const playInM1 = await insertMatchup(supabase, tournamentId, 1, 1, 'PLAY_IN');
+  // Match 2: 9 vs 10 (winner → Match 3)
+  const playInM2 = await insertMatchup(supabase, tournamentId, 1, 2, 'PLAY_IN');
+  // Match 3: Loser M1 vs Winner M2 (winner → 8th playoff slot)
+  const playInM3 = await insertMatchup(supabase, tournamentId, 2, 1, 'PLAY_IN');
+
+  // Set match format to BO1 for play-ins
+  await supabase.from('bracket_matchups').update({ match_format: 'BO1' }).in('id', [playInM1, playInM2, playInM3]);
+
+  // Wire play-in feeds
+  await supabase.from('bracket_matchups').update({ loser_feeds_into_matchup_id: playInM3 }).eq('id', playInM1);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: playInM3 }).eq('id', playInM2);
+
+  // Seed play-in teams
+  await supabase.from('bracket_matchups').update({ team_a_id: seed(7), team_b_id: seed(8) }).eq('id', playInM1);
+  await supabase.from('bracket_matchups').update({ team_a_id: seed(9), team_b_id: seed(10) }).eq('id', playInM2);
+
+  // ── Playoff Bracket (WINNERS, 8-team single-elim) ──────
+  // QF: 1v8slot, 4v5, 2v7slot, 3v6
+  const qf1 = await insertMatchup(supabase, tournamentId, 1, 1, 'WINNERS'); // 1 vs play-in 8th
+  const qf2 = await insertMatchup(supabase, tournamentId, 1, 2, 'WINNERS'); // 4 vs 5
+  const qf3 = await insertMatchup(supabase, tournamentId, 1, 3, 'WINNERS'); // 2 vs play-in 7th
+  const qf4 = await insertMatchup(supabase, tournamentId, 1, 4, 'WINNERS'); // 3 vs 6
+
+  // SF
+  const sf1 = await insertMatchup(supabase, tournamentId, 2, 1, 'WINNERS');
+  const sf2 = await insertMatchup(supabase, tournamentId, 2, 2, 'WINNERS');
+
+  // Finals
+  const finals = await insertMatchup(supabase, tournamentId, 3, 1, 'WINNERS');
+
+  // Set match format to BO3 for playoffs
+  await supabase.from('bracket_matchups').update({ match_format: 'BO3' }).in('id', [qf1, qf2, qf3, qf4, sf1, sf2, finals]);
+
+  // Wire playoff feeds
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: sf1 }).eq('id', qf1);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: sf1 }).eq('id', qf2);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: sf2 }).eq('id', qf3);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: sf2 }).eq('id', qf4);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: finals }).eq('id', sf1);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: finals }).eq('id', sf2);
+
+  // Wire play-in winners into playoff bracket
+  // M1 winner (7th seed slot) → QF3 team_b (vs 2nd seed)
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: qf3 }).eq('id', playInM1);
+  // M3 winner (8th seed slot) → QF1 team_b (vs 1st seed)
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: qf1 }).eq('id', playInM3);
+
+  // Seed direct playoff teams
+  await supabase.from('bracket_matchups').update({ team_a_id: seed(1) }).eq('id', qf1);  // 1 vs TBD (play-in)
+  await supabase.from('bracket_matchups').update({ team_a_id: seed(4), team_b_id: seed(5) }).eq('id', qf2);
+  await supabase.from('bracket_matchups').update({ team_a_id: seed(2) }).eq('id', qf3);  // 2 vs TBD (play-in)
+  await supabase.from('bracket_matchups').update({ team_a_id: seed(3), team_b_id: seed(6) }).eq('id', qf4);
+}
+
+/**
+ * Smaller playoff bracket for 6–9 teams with play-ins.
+ * directCount seeds go direct, playInCount seeds go through play-in.
+ */
+async function generateSmallPlayoffs(
+  supabase: any,
+  tournamentId: string,
+  standings: { teamId: string; wins: number; losses: number; pd: number }[],
+  directCount: number,
+  playInCount: number
+) {
+  const seed = (n: number) => standings[n - 1]?.teamId || null;
+  
+  // ── Play-In ──────────────────────────────────────────────
+  const piSeed1 = directCount + 1;
+  const piSeed2 = directCount + 2;
+  const piSeed3 = directCount + 3;
+  const piSeed4 = directCount + 4;
+
+  const playInM1 = await insertMatchup(supabase, tournamentId, 1, 1, 'PLAY_IN');
+  const playInM2 = await insertMatchup(supabase, tournamentId, 1, 2, 'PLAY_IN');
+  const playInM3 = await insertMatchup(supabase, tournamentId, 2, 1, 'PLAY_IN');
+
+  await supabase.from('bracket_matchups').update({ match_format: 'BO1' }).in('id', [playInM1, playInM2, playInM3]);
+
+  await supabase.from('bracket_matchups').update({ loser_feeds_into_matchup_id: playInM3 }).eq('id', playInM1);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: playInM3 }).eq('id', playInM2);
+
+  await supabase.from('bracket_matchups').update({
+    team_a_id: seed(piSeed1),
+    team_b_id: seed(piSeed2)
+  }).eq('id', playInM1);
+
+  if (seed(piSeed3) && seed(piSeed4)) {
+    await supabase.from('bracket_matchups').update({
+      team_a_id: seed(piSeed3),
+      team_b_id: seed(piSeed4)
+    }).eq('id', playInM2);
+  } else if (seed(piSeed3)) {
+    // Odd number — only 3 play-in teams, M2 is a bye
+    await supabase.from('bracket_matchups').update({
+      team_a_id: seed(piSeed3),
+      winner_id: seed(piSeed3),
+      is_bye: true,
+      status: 'COMPLETED'
+    }).eq('id', playInM2);
+  } else {
+    // Only 2 play-in teams, M2 not needed — mark as bye
+    await supabase.from('bracket_matchups').update({
+      is_bye: true,
+      status: 'COMPLETED'
+    }).eq('id', playInM2);
+  }
+
+  // ── Bracket ─────────────────────────────────────────────
+  const bracketTeams = directCount + 2;
+  const bracketSize = Math.pow(2, Math.ceil(Math.log2(bracketTeams)));
+  const rounds = Math.ceil(Math.log2(bracketSize));
+
+  const matchupIds: string[][] = [];
+  for (let round = 1; round <= rounds; round++) {
+    const count = bracketSize / Math.pow(2, round);
+    const roundIds: string[] = [];
+    for (let slot = 1; slot <= count; slot++) {
+      const id = await insertMatchup(supabase, tournamentId, round, slot, 'WINNERS');
+      roundIds.push(id);
+    }
+    matchupIds.push(roundIds);
+  }
+
+  // Set all playoff matchups to BO3
+  const allPlayoffIds = matchupIds.flat();
+  if (allPlayoffIds.length > 0) {
+    await supabase.from('bracket_matchups').update({ match_format: 'BO3' }).in('id', allPlayoffIds);
+  }
+
+  // Wire rounds
+  for (let r = 0; r < matchupIds.length - 1; r++) {
+    const current = matchupIds[r];
+    const next = matchupIds[r + 1];
+    for (let i = 0; i < current.length; i++) {
+      await supabase.from('bracket_matchups')
+        .update({ feeds_into_matchup_id: next[Math.floor(i / 2)] })
+        .eq('id', current[i]);
+    }
+  }
+
+  // Place direct seeds — use standard bracket seeding order
+  const r1 = matchupIds[0];
+  const seedOrder = generatePlayoffSeedOrder(bracketSize);
+
+  for (let i = 0; i < r1.length; i++) {
+    const seedA = seedOrder[i * 2];
+    const seedB = seedOrder[i * 2 + 1];
+
+    const teamA = seedA <= directCount ? seed(seedA) : null;
+    const teamB = seedB <= directCount ? seed(seedB) : null;
+
+    const update: any = {};
+    if (teamA) update.team_a_id = teamA;
+    if (teamB) update.team_b_id = teamB;
+
+    // Handle byes
+    if (teamA && !teamB && seedB > bracketTeams) {
+      update.team_a_id = teamA;
+      update.winner_id = teamA;
+      update.is_bye = true;
+      update.status = 'COMPLETED';
+    } else if (!teamA && teamB && seedA > bracketTeams) {
+      update.team_b_id = teamB;
+      update.winner_id = teamB;
+      update.is_bye = true;
+      update.status = 'COMPLETED';
+    }
+
+    if (Object.keys(update).length > 0) {
+      await supabase.from('bracket_matchups').update(update).eq('id', r1[i]);
+    }
+  }
+
+  // Wire play-in winners into the bracket slots
+  const piSlot1Seed = directCount + 1;
+  const piSlot2Seed = directCount + 2;
+
+  for (let i = 0; i < r1.length; i++) {
+    const seedA = seedOrder[i * 2];
+    const seedB = seedOrder[i * 2 + 1];
+    if (seedA === piSlot1Seed || seedB === piSlot1Seed) {
+      await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r1[i] }).eq('id', playInM1);
+    }
+    if (seedA === piSlot2Seed || seedB === piSlot2Seed) {
+      await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r1[i] }).eq('id', playInM3);
+    }
+  }
+}
+
+/**
+ * Direct single-elim bracket for small team counts (4–5 teams, no play-in).
+ */
+async function generateDirectBracket(
+  supabase: any,
+  tournamentId: string,
+  standings: { teamId: string; wins: number; losses: number; pd: number }[]
+) {
+  const n = standings.length;
+  const bracketSize = Math.pow(2, Math.ceil(Math.log2(n)));
+  const rounds = Math.ceil(Math.log2(bracketSize));
+
+  const matchupIds: string[][] = [];
+  for (let round = 1; round <= rounds; round++) {
+    const count = bracketSize / Math.pow(2, round);
+    const roundIds: string[] = [];
+    for (let slot = 1; slot <= count; slot++) {
+      const id = await insertMatchup(supabase, tournamentId, round, slot, 'WINNERS');
+      roundIds.push(id);
+    }
+    matchupIds.push(roundIds);
+  }
+
+  // Set all to BO3
+  const allIds = matchupIds.flat();
+  if (allIds.length > 0) {
+    await supabase.from('bracket_matchups').update({ match_format: 'BO3' }).in('id', allIds);
+  }
+
+  // Wire rounds
+  for (let r = 0; r < matchupIds.length - 1; r++) {
+    const current = matchupIds[r];
+    const next = matchupIds[r + 1];
+    for (let i = 0; i < current.length; i++) {
+      await supabase.from('bracket_matchups')
+        .update({ feeds_into_matchup_id: next[Math.floor(i / 2)] })
+        .eq('id', current[i]);
+    }
+  }
+
+  // Seed teams
+  const r1 = matchupIds[0];
+  const seedOrder = generatePlayoffSeedOrder(bracketSize);
+
+  for (let i = 0; i < r1.length; i++) {
+    const seedA = seedOrder[i * 2];
+    const seedB = seedOrder[i * 2 + 1];
+    const teamA = seedA <= n ? standings[seedA - 1]?.teamId : null;
+    const teamB = seedB <= n ? standings[seedB - 1]?.teamId : null;
+
+    if (teamA && teamB) {
+      await supabase.from('bracket_matchups').update({
+        team_a_id: teamA,
+        team_b_id: teamB,
+      }).eq('id', r1[i]);
+    } else if (teamA || teamB) {
+      const present = (teamA || teamB)!;
+      await supabase.from('bracket_matchups').update({
+        team_a_id: teamA,
+        team_b_id: teamB,
+        winner_id: present,
+        is_bye: true,
+        status: 'COMPLETED',
+      }).eq('id', r1[i]);
+
+      // Advance bye winner
+      const matchup = await supabase.from('bracket_matchups').select('feeds_into_matchup_id').eq('id', r1[i]).single();
+      if (matchup?.data?.feeds_into_matchup_id) {
+        const { data: next } = await supabase.from('bracket_matchups')
+          .select('id, team_a_id, team_b_id')
+          .eq('id', matchup.data.feeds_into_matchup_id)
+          .single();
+        if (next) {
+          const field = next.team_a_id ? 'team_b_id' : 'team_a_id';
+          await supabase.from('bracket_matchups').update({ [field]: present }).eq('id', next.id);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Standard bracket seed ordering (1v8, 4v5, 3v6, 2v7 for 8 teams, etc.).
+ */
+function generatePlayoffSeedOrder(bracketSize: number): number[] {
+  let rounds = Math.log2(bracketSize);
+  let matches = [1, 2];
+  for (let r = 1; r < rounds; r++) {
+    let nextMatches: number[] = [];
+    let sum = Math.pow(2, r + 1) + 1;
+    for (let i = 0; i < matches.length; i++) {
+      nextMatches.push(matches[i]);
+      nextMatches.push(sum - matches[i]);
+    }
+    matches = nextMatches;
+  }
+  return matches;
 }

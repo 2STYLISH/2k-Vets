@@ -10,7 +10,7 @@ const labelCls = 'block text-[10px] text-white uppercase font-mono tracking-wide
 
 export default function CreateTournamentForm() {
   const [name, setName] = useState('');
-  const [format, setFormat] = useState<'SINGLE_ELIM' | 'DOUBLE_ELIM' | 'PLAYOFFS'>('SINGLE_ELIM');
+  const [format, setFormat] = useState<'SINGLE_ELIM' | 'DOUBLE_ELIM' | 'PLAYOFFS' | 'VETERANS_LEAGUE'>('SINGLE_ELIM');
   const [numTeams, setNumTeams] = useState(8);
   const [matchFormat, setMatchFormat] = useState<'BO1' | 'BO3' | 'BO5' | 'BO7'>('BO3');
   const [startDate, setStartDate] = useState('');
@@ -48,18 +48,24 @@ export default function CreateTournamentForm() {
             <option value="SINGLE_ELIM">Single Elimination</option>
             <option value="DOUBLE_ELIM">Double Elimination</option>
             <option value="PLAYOFFS">Playoffs (10-Team)</option>
+            <option value="VETERANS_LEAGUE">Veterans League (Season)</option>
             <option value="ROUND_ROBIN">Round Robin</option>
             <option value="SWISS">Swiss</option>
             <option value="FREE_FOR_ALL">Free For All</option>
             <option value="LEADERBOARD">Leaderboard</option>
           </select>
+          {format === 'VETERANS_LEAGUE' && (
+            <p className="text-[9px] text-flag-gold font-mono mt-1.5 leading-relaxed">
+              Round-robin regular season → Play-in (seeds 7–10) → 8-team Playoff bracket. Regular season &amp; play-ins are BO1, playoffs are BO3.
+            </p>
+          )}
         </div>
         <div>
           <label className={labelCls}>Number of Teams</label>
           <input 
             type="number" 
             min="2"
-            max="32"
+            max={format === 'VETERANS_LEAGUE' ? 64 : 32}
             value={numTeams} 
             onChange={(e) => setNumTeams(Number(e.target.value))} 
             className={inputCls} 
