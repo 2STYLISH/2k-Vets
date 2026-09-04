@@ -148,7 +148,7 @@ export default function StandingsTable({
                     <span className="font-mono text-white/40 group-hover:text-white/60 transition-colors">{i + 1}</span>
                   </td>
                   <td className="px-3 sm:px-5 py-3">
-                    <Link href={`/${r.team.slug || r.team.name.toLowerCase().replace(/ /g, '-')}`} className="font-bold text-white group-hover:text-flag-gold transition-colors">
+                    <Link href={`/teams/${r.team.slug || r.team.name.toLowerCase().replace(/ /g, '-')}`} className="font-bold text-white group-hover:text-flag-gold transition-colors">
                       {r.team.name}
                     </Link>
                   </td>
