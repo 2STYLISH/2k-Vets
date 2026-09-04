@@ -7,11 +7,11 @@ import { useNotification } from '@/components/providers/NotificationProvider';
 import { parseError } from '@/lib/format';
 
 const STATUS_STYLES: Record<string, string> = {
-  SCHEDULED:  'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50',
-  LIVE:       'bg-yellow-900/40 text-yellow-300 border border-yellow-600/50 animate-pulse',
-  COMPLETED:  'bg-surface-700 text-silver-500 border border-surface-600',
-  POSTPONED:  'bg-orange-900/40 text-orange-400 border border-orange-700/50',
-  CANCELLED:  'bg-red-900/40 text-red-400 border border-red-700/50',
+  SCHEDULED:   'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50',
+  LIVE:        'bg-yellow-900/40 text-yellow-300 border border-yellow-600/50 animate-pulse',
+  COMPLETED:   'bg-surface-700 text-silver-500 border border-surface-600',
+  POSTPONED:   'bg-orange-900/40 text-orange-400 border border-orange-700/50',
+  CANCELLED:   'bg-red-900/40 text-red-400 border border-red-700/50',
 };
 
 export default function ScheduleManager({ games }: { games: any[] }) {
@@ -30,13 +30,13 @@ export default function ScheduleManager({ games }: { games: any[] }) {
         <div className="flex gap-2">
           <button 
             onClick={() => setTab('ACTIVE')}
-            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ACTIVE' ? 'bg-[#b8860b]/20 text-[#b8860b] border border-[#b8860b]/50' : 'bg-surface-800 text-silver-500 hover:text-white border border-surface-600'}`}
+            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ACTIVE' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
           >
             Active
           </button>
           <button 
             onClick={() => setTab('ARCHIVED')}
-            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ARCHIVED' ? 'bg-[#b8860b]/20 text-[#b8860b] border border-[#b8860b]/50' : 'bg-surface-800 text-silver-500 hover:text-white border border-surface-600'}`}
+            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ARCHIVED' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
           >
             Archived
           </button>
@@ -44,7 +44,7 @@ export default function ScheduleManager({ games }: { games: any[] }) {
       </div>
       
       <div className="space-y-3">
-        {filtered.length === 0 && <p className="text-silver-600 text-sm">No games found.</p>}
+        {filtered.length === 0 && <p className="text-white text-sm">No games found.</p>}
         {filtered.map((g) => (
           <GameRow key={g.id} game={g} />
         ))}

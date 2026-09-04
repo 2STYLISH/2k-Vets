@@ -4,6 +4,7 @@ import ScreenshotUploadPanel from '@/components/admin/ScreenshotUploadPanel';
 import VerifyStatsForm from '@/components/admin/VerifyStatsForm';
 import BackButton from '@/components/BackButton';
 import ManualStatsButton from '@/components/admin/ManualStatsButton';
+import DefaultWinButton from '@/components/admin/DefaultWinButton';
 import { formatDate, formatTime } from '@/lib/format';
 
 export const maxDuration = 60;
@@ -122,11 +123,18 @@ export default async function AdminGameDetailPage({ params }: { params: { schedu
             screenshotId={latestScreenshot?.id ?? null}
           />
         </div>
-        {!game && (
-          <div>
-            <ManualStatsButton scheduleId={schedule.id} />
-          </div>
-        )}
+        <div className="space-y-3">
+          {!game && <ManualStatsButton scheduleId={schedule.id} />}
+          {!isVerified && (
+            <DefaultWinButton 
+              scheduleId={schedule.id}
+              homeTeamId={schedule.home_team_id}
+              awayTeamId={schedule.away_team_id}
+              homeTeamName={homeTeamName}
+              awayTeamName={awayTeamName}
+            />
+          )}
+        </div>
       </div>
 
       {/* Stats form — shown when game exists */}

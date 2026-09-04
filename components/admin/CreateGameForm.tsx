@@ -9,14 +9,15 @@ export default function CreateGameForm({
   matchupsMap,
   schedules,
 }: {
-  tournaments: { id: string; name: string }[];
+  tournaments: { id: string; name: string; format?: string }[];
   rosterMap: Record<string, { id: string; name: string }[]>;
   matchupsMap?: Record<string, any[]>;
   schedules?: any[];
 }) {
   const [tournamentId, setTournamentId] = useState('');
   const [selectedMatchupId, setSelectedMatchupId] = useState('');
-  const [gameType, setGameType] = useState<'REGULAR' | 'PLAYOFF' | 'TOURNAMENT' | 'EXHIBITION'>('REGULAR');
+  const [roundFilter, setRoundFilter] = useState('');
+  const [uiGameType, setUiGameType] = useState<'REGULAR' | 'PLAYIN' | 'PLAYOFF' | 'TOURNAMENT' | 'EXHIBITION'>('REGULAR');
   const [home, setHome] = useState('');
   const [away, setAway] = useState('');
   const [roundLabel, setRoundLabel] = useState('');
@@ -68,7 +69,7 @@ export default function CreateGameForm({
 
       setRoundLabel(`${newRoundLabel} - Game ${gameNumber}`);
       setIsRoundLabelEditable(false);
-      setGameType(matchup.bracket_side === 'ROUND_ROBIN' ? 'REGULAR' : 'PLAYOFF');
+      setUiGameType(matchup.bracket_side === 'ROUND_ROBIN' ? 'REGULAR' : 'PLAYOFF');
     }
   }
 
@@ -81,10 +82,11 @@ export default function CreateGameForm({
   async function handleSubmit() {
     setSaving(true);
     try {
+      const dbGameType = uiGameType === 'PLAYIN' ? 'PLAYOFF' : uiGameType;
       await createScheduledGame({
         homeTeamId: home,
         awayTeamId: away,
-        gameType,
+        gameType: dbGameType,
         roundLabel: roundLabel || undefined,
         tournamentId: tournamentId || undefined,
         scheduledDate: date,
@@ -119,27 +121,82 @@ export default function CreateGameForm({
         </div>
         <div>
           <label className="block text-[10px] text-white font-bold uppercase font-mono tracking-widest mb-1.5">Game Type</label>
-          <select value={gameType} onChange={(e) => setGameType(e.target.value as any)} className={selectCls}>
-            <option value="REGULAR">Regular Season</option>
-            <option value="PLAYOFF">Playoff</option>
-            <option value="TOURNAMENT">Tournament</option>
-            <option value="EXHIBITION">Exhibition</option>
+          <select value={uiGameType} onChange={(e) => setUiGameType(e.target.value as any)} className={selectCls}>
+            {tournaments.find(t => t.id === tournamentId)?.format === 'VETERANS_LEAGUE' ? (
+              <>
+                <option value="REGULAR">Regular Season</option>
+                <option value="PLAYIN">Play-Ins</option>
+                <option value="PLAYOFF">Playoffs</option>
+              </>
+            ) : (
+              <>
+                <option value="REGULAR">Regular Season</option>
+                <option value="PLAYOFF">Playoffs</option>
+                <option value="TOURNAMENT">Tournament</option>
+                <option value="EXHIBITION">Exhibition</option>
+              </>
+            )}
           </select>
         </div>
       </div>
 
-      {tournamentId && (matchupsMap?.[tournamentId]?.length ?? 0) > 0 && (
-        <div className="bg-surface-800/50 p-3 rounded-lg border border-surface-700">
-          <select value={selectedMatchupId} onChange={(e) => handleMatchupChange(e.target.value)} className={selectCls}>
-            <option value="">— select a pending matchup —</option>
-            {matchupsMap![tournamentId].map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.team_a?.name} vs {m.team_b?.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {tournamentId && (matchupsMap?.[tournamentId]?.length ?? 0) > 0 && (() => {
+        const applicableMatchups = matchupsMap![tournamentId].filter(m => {
+          if (m.schedule_id) return false; // Hide already scheduled matchups
+          if (uiGameType === 'REGULAR') return m.bracket_side === 'ROUND_ROBIN' || m.bracket_side === 'SWISS';
+          if (uiGameType === 'PLAYIN') return m.bracket_side === 'PLAY_IN';
+          if (uiGameType === 'PLAYOFF') return m.bracket_side === 'WINNERS' || m.bracket_side === 'LOSERS' || m.bracket_side === 'GRAND_FINAL';
+          if (uiGameType === 'TOURNAMENT') return m.bracket_side !== 'ROUND_ROBIN' && m.bracket_side !== 'SWISS';
+          return true;
+        });
+        
+        const uniqueRounds = Array.from(new Set(applicableMatchups.map(m => m.round))).sort((a, b) => a - b);
+        
+        const filteredMatchups = roundFilter 
+          ? applicableMatchups.filter(m => m.round.toString() === roundFilter)
+          : applicableMatchups;
+
+        return (
+          <div className="bg-surface-800/50 p-3 rounded-lg border border-surface-700 space-y-3">
+            {uniqueRounds.length > 0 && (
+              <div className="flex items-center gap-3">
+                <label className="text-[10px] text-white font-bold uppercase font-mono tracking-widest whitespace-nowrap">Filter Round:</label>
+                <select 
+                  value={roundFilter} 
+                  onChange={(e) => {
+                    setRoundFilter(e.target.value);
+                    setSelectedMatchupId(''); // Reset matchup when filter changes
+                  }} 
+                  className={selectCls}
+                >
+                  <option value="">— Show All Rounds —</option>
+                  {uniqueRounds.map(r => (
+                    <option key={r} value={r}>Round {r}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            <select value={selectedMatchupId} onChange={(e) => handleMatchupChange(e.target.value)} className={selectCls}>
+              <option value="">— select a pending matchup —</option>
+              {filteredMatchups.map((m) => {
+                let prefix = `Round ${m.round}`;
+                if (m.bracket_side === 'ROUND_ROBIN') prefix = `Group Stage - R${m.round}`;
+                else if (m.bracket_side === 'PLAY_IN') prefix = `Play-In - R${m.round}`;
+                else if (m.bracket_side === 'WINNERS') prefix = `Playoffs - R${m.round}`;
+                else if (m.bracket_side === 'LOSERS') prefix = `Losers Bracket - R${m.round}`;
+                else if (m.bracket_side === 'GRAND_FINAL') prefix = 'Grand Final';
+
+                return (
+                  <option key={m.id} value={m.id}>
+                    [{prefix}] {m.team_a?.name || 'TBD'} vs {m.team_b?.name || 'TBD'}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        );
+      })()}
 
       {/* Step 2 — Teams (filtered to tournament roster) */}
       <div className="grid grid-cols-2 gap-3 relative">

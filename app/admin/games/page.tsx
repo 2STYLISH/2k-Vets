@@ -62,13 +62,13 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
       <div className="flex gap-2 mb-4">
         <Link 
           href="?tab=active" 
-          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'active' ? 'bg-[#b8860b]/20 text-[#b8860b] border border-[#b8860b]/50' : 'bg-surface-800 text-silver-500 hover:text-white border border-surface-600'}`}
+          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'active' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
         >
           Active
         </Link>
         <Link 
           href="?tab=archived" 
-          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'archived' ? 'bg-[#b8860b]/20 text-[#b8860b] border border-[#b8860b]/50' : 'bg-surface-800 text-silver-500 hover:text-white border border-surface-600'}`}
+          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'archived' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
         >
           Archived
         </Link>
@@ -89,7 +89,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
           if (currentList.length === 0) {
             return (
               <div className="card p-8 text-center">
-                <p className="text-white/40 text-sm">No games found in this view.</p>
+                <p className="text-white text-sm">No games found in this view.</p>
               </div>
             );
           }

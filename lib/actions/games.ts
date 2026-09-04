@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { parseGameScreenshot } from '@/lib/services/screenshot-parser';
 import { recomputeAwardCandidates } from '@/lib/actions/awards-compute';
 import { ensureScheduleForMatchup } from '@/lib/actions/bracket-scheduling';
+import { updateGameStatus } from '@/lib/actions/schedule';
 import { revalidatePath } from 'next/cache';
 import type { ScreenshotExtractionResult } from '@/lib/types';
 
@@ -463,4 +464,33 @@ export async function markGameLive(scheduleId: string) {
 
   revalidatePath('/schedule');
   revalidatePath('/admin/games');
+}
+
+/**
+ * ASSIGN DEFAULT WIN
+ * Skips player stats, records a 1-0 win for the selected team, and
+ * triggers the standard bracket advancement flow.
+ */
+export async function assignDefaultWin(input: {
+  scheduleId: string;
+  winnerTeamId: string;
+  homeTeamId: string;
+  awayTeamId: string;
+}) {
+  const { isAdmin, user } = await requireAdmin();
+  if (!isAdmin || !user) throw new Error('Admin authentication required.');
+
+  const gameId = await ensureGameForSchedule(input.scheduleId);
+
+  const homeScore = input.winnerTeamId === input.homeTeamId ? 1 : 0;
+  const awayScore = input.winnerTeamId === input.awayTeamId ? 1 : 0;
+
+  // Run the standard verification (will clear old stats if any, and advance bracket)
+  // This automatically sets the schedule status to 'COMPLETED'.
+  await saveVerifiedGameStats({
+    gameId,
+    homeScore,
+    awayScore,
+    players: [], // No player stats for default win
+  });
 }

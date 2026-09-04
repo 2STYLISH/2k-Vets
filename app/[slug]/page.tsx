@@ -419,7 +419,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                   )}
                   <div>
                     <p className="text-sm font-display text-white tracking-[0.1em] uppercase">{x.teamName}</p>
-                    <p className="text-[9px] font-mono text-white/40 uppercase mt-0.5 max-w-[150px] truncate" title={x.tournament?.name}>MEMBER / {x.tournament?.name}</p>
+                    <p className="text-[9px] font-mono text-white/40 uppercase mt-0.5 max-w-[150px] truncate" title={x.tournament?.name}>{x.tournament?.name}</p>
                   </div>
                 </div>
               ))}
@@ -438,7 +438,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                       )}
                       <div>
                         <p className="text-sm font-display text-white/70 tracking-[0.1em] uppercase">{x.teamName}</p>
-                        <p className="text-[9px] font-mono text-white/30 uppercase mt-0.5 max-w-[150px] truncate" title={x.tournament?.name}>COMPLETED / {x.tournament?.name}</p>
+                        <p className="text-[9px] font-mono text-white/30 uppercase mt-0.5 max-w-[150px] truncate" title={x.tournament?.name}>{x.tournament?.name}</p>
                       </div>
                     </div>
                   ))}
