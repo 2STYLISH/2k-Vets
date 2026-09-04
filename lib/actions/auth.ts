@@ -35,7 +35,7 @@ export async function loginWithUsername(username: string, password: string) {
     const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('id')
-      .eq('username', username)
+      .ilike('username', username)
       .single();
 
     if (profileError || !profile) {
