@@ -1250,7 +1250,25 @@ async function generateStandardPlayoffs(
 
   // Seed play-in teams
   await supabase.from('bracket_matchups').update({ team_a_id: seed(7), team_b_id: seed(8) }).eq('id', playInM1);
-  await supabase.from('bracket_matchups').update({ team_a_id: seed(9), team_b_id: seed(10) }).eq('id', playInM2);
+  
+  if (seed(9) && seed(10)) {
+    // Both 9 and 10 exist
+    await supabase.from('bracket_matchups').update({ team_a_id: seed(9), team_b_id: seed(10) }).eq('id', playInM2);
+  } else if (seed(9)) {
+    // Only 9 exists (9 teams total). 9th seed gets a bye in Match 2 and advances to Match 3.
+    await supabase.from('bracket_matchups').update({ 
+      team_a_id: seed(9), 
+      winner_id: seed(9), 
+      is_bye: true, 
+      status: 'COMPLETED' 
+    }).eq('id', playInM2);
+
+    // Feed 9th seed into Match 3 as team_b
+    await supabase.from('bracket_matchups').update({ team_b_id: seed(9) }).eq('id', playInM3);
+  } else {
+    // Neither 9 nor 10 exist (8 or fewer teams shouldn't reach here normally, but just in case)
+    await supabase.from('bracket_matchups').update({ is_bye: true, status: 'COMPLETED' }).eq('id', playInM2);
+  }
 
   // ── Playoff Bracket (WINNERS, 8-team single-elim) ──────
   // QF: 1v8slot, 4v5, 2v7slot, 3v6
