@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { generateLeaguePlayoffs } from '@/lib/actions/tournaments';
+import { generateLeaguePlayoffs, togglePlayoffsVisibility } from '@/lib/actions/tournaments';
 import { useNotification } from '@/components/providers/NotificationProvider';
 import { parseError } from '@/lib/format';
 
@@ -20,15 +20,18 @@ export default function LeaguePlayoffGenerator({
   seeds,
   matchups,
   hasPlayoffs,
+  playoffsVisible,
 }: {
   tournamentId: string;
   teams: { id: string; name: string }[];
   seeds: { team_id: string; seed: number; manual_wins?: number; manual_losses?: number; point_differential?: number }[];
   matchups: any[];
   hasPlayoffs: boolean;
+  playoffsVisible: boolean;
 }) {
   const { showConfirm, showToast } = useNotification();
   const [busy, setBusy] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
 
   // Compute standings from matchups (same logic as StandingsTable)
   const standings: StandingRow[] = teams.map(t => {
@@ -37,16 +40,14 @@ export default function LeaguePlayoffGenerator({
     let losses = s?.manual_losses ?? 0;
     let pd = s?.point_differential ?? 0;
 
-    // If no manual overrides, count from matchups
     if (s?.manual_wins == null && s?.manual_losses == null) {
       for (const m of matchups) {
         if (m.is_bye || m.status !== 'COMPLETED') continue;
         if (m.bracket_side !== 'ROUND_ROBIN') continue;
-        
+
         if (m.team_a?.id === t.id) {
           if (m.winner_id === t.id) wins++;
           else losses++;
-          
           if (m.schedule) {
             const scheds = Array.isArray(m.schedule) ? m.schedule : [m.schedule];
             for (const sched of scheds) {
@@ -62,7 +63,6 @@ export default function LeaguePlayoffGenerator({
         if (m.team_b?.id === t.id) {
           if (m.winner_id === t.id) wins++;
           else losses++;
-
           if (m.schedule) {
             const scheds = Array.isArray(m.schedule) ? m.schedule : [m.schedule];
             for (const sched of scheds) {
@@ -88,31 +88,33 @@ export default function LeaguePlayoffGenerator({
     };
   });
 
-  // Sort by wins desc → PD desc → losses asc
+  // Sort must exactly match generateLeaguePlayoffs: wins desc → PD desc → losses asc → teamId asc
   standings.sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (b.pd !== a.pd) return b.pd - a.pd;
-    return a.losses - b.losses;
+    if (a.losses !== b.losses) return a.losses - b.losses;
+    return a.teamId.localeCompare(b.teamId);
   });
 
   const totalTeams = standings.length;
 
-  // Determine playoff slots
-  let directSeeds = 6;
-  let playInSeeds = 4;
-  if (totalTeams >= 10) {
-    directSeeds = 6;
-    playInSeeds = 4;
-  } else if (totalTeams >= 8) {
-    directSeeds = 4;
-    playInSeeds = 4;
-  } else if (totalTeams >= 6) {
-    directSeeds = 2;
-    playInSeeds = Math.min(4, totalTeams - 2);
-  } else {
-    directSeeds = totalTeams;
-    playInSeeds = 0;
-  }
+  // ─── Playoff zone logic ───────────────────────────────────────────────────
+  //  ≤8  teams  → all direct (byes fill bracket)
+  //  9–10 teams → top 8 direct, seeds 9-10 eliminated
+  //  11+ teams  → 6 direct + 4 play-in (seeds 7-10) + rest eliminated
+  const hasPlayIn = totalTeams > 10;
+  const directSeeds = hasPlayIn ? 6 : Math.min(totalTeams, 8);
+  const playInSeeds = hasPlayIn ? Math.min(4, totalTeams - 6) : 0;
+
+  const bracketTeams = hasPlayIn ? 8 : Math.min(totalTeams, 8);
+  const bracketSize = Math.pow(2, Math.ceil(Math.log2(Math.max(bracketTeams, 2))));
+  const byeCount = !hasPlayIn && totalTeams <= 8 ? bracketSize - totalTeams : 0;
+
+  const descriptionText = hasPlayIn
+    ? `Seeds 1–6 go directly to playoffs. Seeds 7–10 compete in the play-in. Seeds 11+ are eliminated.`
+    : totalTeams >= 9
+    ? `Seeds 1–8 go directly to playoffs. Seed${totalTeams === 10 ? 's 9–10 are' : ' 9 is'} eliminated.`
+    : `All ${totalTeams} teams enter the playoffs directly.${byeCount > 0 ? ` Top ${byeCount} seed${byeCount > 1 ? 's' : ''} receive${byeCount === 1 ? 's' : ''} a first-round bye.` : ''}`;
 
   const getZoneColor = (rank: number) => {
     if (rank <= directSeeds) return 'border-l-emerald-500 bg-emerald-950/20';
@@ -125,6 +127,7 @@ export default function LeaguePlayoffGenerator({
     if (rank <= directSeeds + playInSeeds) return <span className="text-yellow-400 text-[9px] font-mono uppercase">Play-In</span>;
     return <span className="text-red-400 text-[9px] font-mono uppercase">Eliminated</span>;
   };
+
 
   const handleGenerate = async () => {
     const confirmed = await showConfirm(
@@ -144,6 +147,27 @@ export default function LeaguePlayoffGenerator({
     }
   };
 
+  const handleToggleVisibility = async () => {
+    const newVisible = !playoffsVisible;
+    const confirmed = await showConfirm(
+      newVisible ? 'Show Playoffs on Public Page' : 'Hide Playoffs from Public Page',
+      newVisible
+        ? 'The playoff bracket will become visible to everyone on the tournaments page. Continue?'
+        : 'The playoff bracket will be hidden from the public tournaments page. Continue?'
+    );
+    if (!confirmed) return;
+
+    setTogglingVisibility(true);
+    try {
+      await togglePlayoffsVisibility(tournamentId, newVisible);
+      showToast(newVisible ? 'Playoffs are now public.' : 'Playoffs hidden from public page.', 'success');
+    } catch (e: any) {
+      showToast(parseError(e), 'error');
+    } finally {
+      setTogglingVisibility(false);
+    }
+  };
+
   return (
     <div className="card p-5 border-flag-gold/30 shadow-[0_0_15px_rgba(255,215,0,0.05)] mt-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -151,23 +175,34 @@ export default function LeaguePlayoffGenerator({
           <h2 className="text-lg text-white uppercase tracking-widest font-display flex items-center gap-3">
             <span className="text-flag-gold">🏆</span> Playoff Picture
           </h2>
-          <p className="text-sm text-white/70 mt-1">
-            {totalTeams >= 10
-              ? 'Seeds 1–6 go directly to playoffs. Seeds 7–10 compete in the play-in. Seeds 11+ are eliminated.'
-              : totalTeams >= 8
-              ? 'Seeds 1–4 go directly to playoffs. Seeds 5–8 compete in the play-in.'
-              : totalTeams >= 6
-              ? `Seeds 1–${directSeeds} go directly to playoffs. Seeds ${directSeeds + 1}–${directSeeds + playInSeeds} compete in the play-in.`
-              : 'All teams enter the playoff bracket directly.'}
-          </p>
+          <p className="text-sm text-white/70 mt-1">{descriptionText}</p>
         </div>
-        <button
-          onClick={handleGenerate}
-          disabled={busy || totalTeams < 4}
-          className="btn-primary py-2.5 px-6 whitespace-nowrap"
-        >
-          {busy ? 'GENERATING...' : hasPlayoffs ? 'REGENERATE PLAYOFFS' : 'GENERATE PLAYOFFS'}
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+          {hasPlayoffs && (
+            <button
+              onClick={handleToggleVisibility}
+              disabled={togglingVisibility}
+              className={`py-2.5 px-5 text-xs font-mono uppercase tracking-widest rounded-lg border transition-all whitespace-nowrap ${
+                playoffsVisible
+                  ? 'border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-500/60'
+                  : 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/60'
+              }`}
+            >
+              {togglingVisibility
+                ? '...'
+                : playoffsVisible
+                ? '👁 Hide from Public'
+                : '👁 Show on Public Page'}
+            </button>
+          )}
+          <button
+            onClick={handleGenerate}
+            disabled={busy || totalTeams < 4}
+            className="btn-primary py-2.5 px-6 whitespace-nowrap"
+          >
+            {busy ? 'GENERATING...' : hasPlayoffs ? 'REGENERATE PLAYOFFS' : 'GENERATE PLAYOFFS'}
+          </button>
+        </div>
       </div>
 
       {/* Standings preview with zone coloring */}
@@ -210,7 +245,7 @@ export default function LeaguePlayoffGenerator({
       </div>
 
       {/* Legend */}
-      <div className="flex gap-6 mt-4 text-[10px] font-mono uppercase tracking-widest">
+      <div className="flex flex-wrap gap-6 mt-4 text-[10px] font-mono uppercase tracking-widest">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-sm bg-emerald-500/30 border border-emerald-500/50" />
           <span className="text-emerald-400">Direct Playoff</span>
@@ -228,6 +263,19 @@ export default function LeaguePlayoffGenerator({
           </div>
         )}
       </div>
+
+      {/* Visibility status badge */}
+      {hasPlayoffs && (
+        <div className={`mt-4 text-[10px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-lg inline-flex items-center gap-2 border ${
+          playoffsVisible
+            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            : 'bg-white/[0.04] text-white/40 border-white/[0.08]'
+        }`}>
+          <span>{playoffsVisible ? '●' : '○'}</span>
+          <span>{playoffsVisible ? 'Playoffs visible on public page' : 'Playoffs hidden from public page'}</span>
+        </div>
+      )}
     </div>
   );
 }
+

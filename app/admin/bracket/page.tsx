@@ -20,7 +20,7 @@ export default async function AdminBracketPage({
 
   const { data: tournaments } = await supabase
     .from('tournaments')
-    .select('id, name, status, format, match_format')
+    .select('id, name, status, format, match_format, playoffs_visible')
     .neq('status', 'COMPLETED')
     .order('created_at', { ascending: false });
 
@@ -83,19 +83,29 @@ export default async function AdminBracketPage({
             <p className="text-white/90">{active.name}</p>
             <p className="text-xs font-mono text-flag-gold uppercase">{active.status}</p>
           </div>
-          {(active.format === 'PLAYOFFS' || active.format === 'VETERANS_LEAGUE') && (
-            <SeedEditor 
-              tournamentId={active.id} 
-              teams={teams ?? []}
-              seeds={seeds ?? []}
-            />
-          )}
 
           {active.format === 'VETERANS_LEAGUE' ? (
             <>
+              {/* Seeder — on top for VETERANS_LEAGUE */}
+              <BracketSeeder
+                tournamentId={active.id}
+                format={active.format}
+                teams={teams ?? []}
+                rosterIds={rosterIds}
+                seededIds={seededIds}
+              />
+
+              {/* Seed Editor */}
+              <SeedEditor
+                tournamentId={active.id}
+                teams={teams ?? []}
+                seeds={seeds ?? []}
+              />
+
               {/* Round-robin standings */}
               <StandingsTable matchups={(matchups ?? []) as any} teams={teams ?? []} seeds={seeds ?? []} />
-              
+
+
               {/* Playoff picture & generator */}
               {active.status === 'IN_PROGRESS' && (
                 <LeaguePlayoffGenerator
@@ -104,6 +114,7 @@ export default async function AdminBracketPage({
                   seeds={seeds ?? []}
                   matchups={(matchups ?? []) as any}
                   hasPlayoffs={(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN')}
+                  playoffsVisible={(active as any).playoffs_visible ?? false}
                 />
               )}
 
@@ -141,8 +152,18 @@ export default async function AdminBracketPage({
               </div>
             </>
           ) : (
-            <AdminInteractiveBracket matchups={(matchups ?? []) as any} teams={(teams ?? []) as any} defaultMatchFormat={active.match_format} />
+            <>
+              {active.format === 'PLAYOFFS' && (
+                <SeedEditor
+                  tournamentId={active.id}
+                  teams={teams ?? []}
+                  seeds={seeds ?? []}
+                />
+              )}
+              <AdminInteractiveBracket matchups={(matchups ?? []) as any} teams={(teams ?? []) as any} defaultMatchFormat={active.match_format} />
+            </>
           )}
+
 
           {active.format === 'SWISS' && active.status === 'IN_PROGRESS' && (
             <SwissGenerator tournamentId={active.id} />

@@ -105,11 +105,12 @@ export default function StandingsTable({
     }
   }
 
-  // Sort by wins, then fewest losses, then PD
+  // Sort: wins desc → PD desc → losses asc → name asc (matches bracket generator exactly)
   rows.sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.pd !== a.pd) return b.pd - a.pd;
     if (a.losses !== b.losses) return a.losses - b.losses;
-    return b.pd - a.pd;
+    return a.team.name.localeCompare(b.team.name);
   });
 
   const rowsByGroup = new Map<string, StandingsRow[]>();

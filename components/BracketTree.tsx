@@ -84,10 +84,13 @@ export default function BracketTree({
   const grandFinal = visibleMatchups.filter((m) => m.bracket_side === 'GRAND_FINAL');
   const playIns = visibleMatchups.filter((m) => m.bracket_side === 'PLAY_IN');
 
+  const isRoundRobin = winners.length > 0 && winners.every(m => m.bracket_side === 'ROUND_ROBIN');
+  const bracketTitle = isRoundRobin ? 'REGULAR SEASON' : 'PLAYOFF BRACKET';
+
   return (
     <div className="space-y-12">
       {playIns.length > 0 && <BracketSection title="PLAY-IN STAGE" matchups={playIns} onMatchupClick={onMatchupClick} defaultMatchFormat={defaultMatchFormat} />}
-      <BracketSection title="PLAYOFF BRACKET" matchups={winners} onMatchupClick={onMatchupClick} defaultMatchFormat={defaultMatchFormat} />
+      {winners.length > 0 && <BracketSection title={bracketTitle} matchups={winners} onMatchupClick={onMatchupClick} defaultMatchFormat={defaultMatchFormat} />}
       {losers.length > 0 && <BracketSection title="LOWER BRACKET" matchups={losers} onMatchupClick={onMatchupClick} defaultMatchFormat={defaultMatchFormat} />}
       {grandFinal.length > 0 && <BracketSection title="GRAND FINAL" matchups={grandFinal} onMatchupClick={onMatchupClick} defaultMatchFormat={defaultMatchFormat} />}
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { updateSeedStats, randomizeBracket } from '@/lib/actions/tournaments';
+import { useState, useEffect } from 'react';
+import { updateSeedStats } from '@/lib/actions/tournaments';
 import { useNotification } from '@/components/providers/NotificationProvider';
 import { parseError } from '@/lib/format';
 
@@ -16,8 +16,7 @@ export default function SeedEditor({
 }) {
   const { showConfirm, showToast } = useNotification();
   const [busy, setBusy] = useState(false);
-  const [doubleRoundRobin, setDoubleRoundRobin] = useState(true);
-  const [localSeeds, setLocalSeeds] = useState(() => {
+  const buildMap = () => {
     const map = new Map<string, any>();
     for (const t of teams) {
       const s = seeds.find(x => x.team_id === t.id);
@@ -29,7 +28,15 @@ export default function SeedEditor({
       });
     }
     return map;
-  });
+  };
+
+  const [localSeeds, setLocalSeeds] = useState(() => buildMap());
+
+  // Re-sync from server after save (revalidatePath pushes fresh seeds prop)
+  useEffect(() => {
+    setLocalSeeds(buildMap());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seeds]);
 
   const handleUpdate = (teamId: string, field: string, value: string) => {
     const map = new Map(localSeeds);
@@ -62,20 +69,6 @@ export default function SeedEditor({
     }
   };
 
-  const handleSeedBracket = async () => {
-    const confirmed = await showConfirm('Generate Bracket', 'This will lock in the current seeds and push them to the bracket. Are you sure?');
-    if (!confirmed) return;
-    setBusy(true);
-    try {
-      await randomizeBracket(tournamentId, { randomizeSeeds: false, doubleRoundRobin });
-      showToast('Bracket seeded!', 'success');
-    } catch (e: any) {
-      showToast(parseError(e), 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   // Sort by seed if available, otherwise by name
   const sortedTeams = [...teams].sort((a, b) => {
     const sA = localSeeds.get(a.id)?.seed;
@@ -96,20 +89,8 @@ export default function SeedEditor({
           </p>
         </div>
         <div className="flex gap-3 items-center">
-          <label className="flex items-center gap-2 mr-2 cursor-pointer text-sm text-white/70 hover:text-white transition-colors">
-            <input 
-              type="checkbox" 
-              checked={doubleRoundRobin} 
-              onChange={(e) => setDoubleRoundRobin(e.target.checked)}
-              className="w-4 h-4 rounded bg-arena-900 border-white/20 text-flag-gold focus:ring-flag-gold"
-            />
-            Double Round Robin
-          </label>
           <button onClick={handleSaveAll} disabled={busy} className="btn-secondary py-2 px-6">
             {busy ? 'SAVING...' : 'SAVE STATS & SEEDS'}
-          </button>
-          <button onClick={handleSeedBracket} disabled={busy} className="btn-primary py-2 px-6">
-            GENERATE BRACKET
           </button>
         </div>
       </div>

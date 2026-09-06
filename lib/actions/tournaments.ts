@@ -502,7 +502,7 @@ function generateSeedOrder(bracketSize: number): number[] {
   return matches;
 }
 
-export async function randomizeBracket(tournamentId: string, options?: { randomizeSeeds?: boolean, doubleRoundRobin?: boolean }) {
+export async function randomizeBracket(tournamentId: string, options?: { randomizeSeeds?: boolean, doubleRoundRobin?: boolean, numGroups?: number }) {
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
 
@@ -576,8 +576,8 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
 
     if (tourney?.format === 'VETERANS_LEAGUE') {
       const total = sortedTeamIds.length;
-      let numGroups = Math.max(1, Math.round(total / 5.5));
-      if (total < 8) numGroups = 1;
+      // Use admin-specified numGroups, default to 1 (no groups)
+      const numGroups = options?.numGroups ?? 1;
 
       if (numGroups > 1) {
         groupsOfTeams = Array.from({ length: numGroups }, () => []);
@@ -596,6 +596,11 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
           for (const tId of groupsOfTeams[g]) {
             await supabase.from('teams').update({ group_name: groupName }).eq('id', tId);
           }
+        }
+      } else {
+        // No groups — clear any existing group_name
+        for (const tId of sortedTeamIds) {
+          await supabase.from('teams').update({ group_name: null }).eq('id', tId);
         }
       }
     }
@@ -1149,11 +1154,13 @@ export async function generateLeaguePlayoffs(tournamentId: string) {
     }
   }
 
-  // 4. Rank teams: wins desc → PD desc → losses asc
+  // 4. Rank teams: wins desc → PD desc → losses asc → teamId asc (stable tiebreaker, neutral)
   const standings = Array.from(standingsMap.values()).sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (b.pd !== a.pd) return b.pd - a.pd;
-    return a.losses - b.losses;
+    if (a.losses !== b.losses) return a.losses - b.losses;
+    // Stable neutral tiebreaker — does NOT use old pre-season seeds
+    return a.teamId.localeCompare(b.teamId);
   });
 
   // 5. Delete existing playoff matchups (keep round-robin)
@@ -1185,23 +1192,18 @@ export async function generateLeaguePlayoffs(tournamentId: string) {
 
   const totalTeams = standings.length;
 
-  // 7. Determine playoff structure based on team count
-  if (totalTeams >= 10) {
-    // ── Standard: 6 direct + 4 play-in ────────────────────────
+  // 7. Determine playoff structure based on team count:
+  //   ≤8  teams  → pure bracket (byes fill gaps to nearest power-of-2)
+  //   9–10 teams  → top-8 bracket only; seeds 9-10 are eliminated
+  //   11+ teams   → 6 direct + 4 play-in (seeds 7–10) + rest eliminated
+  if (totalTeams > 10) {
+    // ── >10 teams: 6 direct + 4 play-in ────────────────────────
     await generateStandardPlayoffs(supabase, tournamentId, standings);
-  } else if (totalTeams >= 8) {
-    // ── 8-9 teams: 4 direct + 4 play-in ──────────────────────
-    await generateSmallPlayoffs(supabase, tournamentId, standings, 4, 4);
-  } else if (totalTeams >= 6) {
-    // ── 6-7 teams: 2 direct + up to 4 play-in ────────────────
-    const playInCount = Math.min(4, totalTeams - 2);
-    if (playInCount >= 4) {
-      await generateSmallPlayoffs(supabase, tournamentId, standings, 2, playInCount);
-    } else {
-      await generateDirectBracket(supabase, tournamentId, standings.slice(0, totalTeams));
-    }
+  } else if (totalTeams >= 9) {
+    // ── 9-10 teams: top-8 bracket, rest eliminated ───────────
+    await generateDirectBracket(supabase, tournamentId, standings.slice(0, 8));
   } else {
-    // ── 4-5 teams: direct bracket ─────────────────────────────
+    // ── ≤8 teams: pure direct bracket (byes fill gaps) ────────
     await generateDirectBracket(supabase, tournamentId, standings.slice(0, totalTeams));
   }
 
@@ -1511,4 +1513,20 @@ function generatePlayoffSeedOrder(bracketSize: number): number[] {
     matches = nextMatches;
   }
   return matches;
+}
+
+export async function togglePlayoffsVisibility(tournamentId: string, visible: boolean) {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) throw new Error('Admin authentication required.');
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('tournaments')
+    .update({ playoffs_visible: visible })
+    .eq('id', tournamentId);
+  if (error) throw error;
+
+  revalidatePath('/admin/bracket');
+  revalidatePath('/tournaments');
+  revalidatePath('/bracket');
 }

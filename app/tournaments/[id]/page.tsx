@@ -216,8 +216,8 @@ export default async function TournamentDashboard({ params }: { params: { id: st
       {tournament.format === 'VETERANS_LEAGUE' ? (
         <>
 
-          {/* Playoff Bracket */}
-          {(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
+          {/* Playoff Bracket — only shown when admin makes it visible */}
+          {tournament.playoffs_visible && (matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
             <section className="card p-6 md:p-8 overflow-hidden">
 
               <div className="overflow-x-auto pb-4">
@@ -234,11 +234,10 @@ export default async function TournamentDashboard({ params }: { params: { id: st
                 {(seeds ?? []).map((s: any) => {
                   const rank = s.seed;
                   const totalTeams = (seeds ?? []).length;
-                  let directSeeds = 6, playInSeeds = 4;
-                  if (totalTeams >= 10) { directSeeds = 6; playInSeeds = 4; }
-                  else if (totalTeams >= 8) { directSeeds = 4; playInSeeds = 4; }
-                  else if (totalTeams >= 6) { directSeeds = 2; playInSeeds = Math.min(4, totalTeams - 2); }
-                  else { directSeeds = totalTeams; playInSeeds = 0; }
+                  // ≤8: all direct. 9-10: top 8 direct + rest eliminated. 11+: 6 direct + 4 play-in + rest eliminated.
+                  const hasPlayIn = totalTeams > 10;
+                  const directSeeds = hasPlayIn ? 6 : Math.min(totalTeams, 8);
+                  const playInSeeds = hasPlayIn ? Math.min(4, totalTeams - 6) : 0;
 
                   const color = rank <= directSeeds ? 'text-emerald-400' : rank <= directSeeds + playInSeeds ? 'text-yellow-400' : 'text-red-400';
                   return (
