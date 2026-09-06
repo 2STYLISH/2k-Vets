@@ -1114,7 +1114,7 @@ export async function generateLeaguePlayoffs(tournamentId: string, options?: { p
     .select('team_id, seed, manual_wins, manual_losses, point_differential')
     .eq('tournament_id', tournamentId);
 
-  type Standing = { teamId: string; wins: number; losses: number; pd: number };
+  type Standing = { teamId: string; wins: number; losses: number; pd: number; seed: number };
   const standingsMap = new Map<string, Standing>();
 
   for (const id of teamIds) {
@@ -1124,6 +1124,7 @@ export async function generateLeaguePlayoffs(tournamentId: string, options?: { p
       wins: seedData?.manual_wins ?? 0,
       losses: seedData?.manual_losses ?? 0,
       pd: seedData?.point_differential ?? 0,
+      seed: seedData?.seed ?? 999,
     });
   }
 
@@ -1154,12 +1155,12 @@ export async function generateLeaguePlayoffs(tournamentId: string, options?: { p
     }
   }
 
-  // 4. Rank teams: wins desc → PD desc → losses asc → teamId asc (stable tiebreaker, neutral)
+  // 4. Rank teams: wins desc → PD desc → losses asc → current seed asc → teamId asc
   const standings = Array.from(standingsMap.values()).sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (b.pd !== a.pd) return b.pd - a.pd;
     if (a.losses !== b.losses) return a.losses - b.losses;
-    // Stable neutral tiebreaker — does NOT use old pre-season seeds
+    if (a.seed !== b.seed) return a.seed - b.seed;
     return a.teamId.localeCompare(b.teamId);
   });
 

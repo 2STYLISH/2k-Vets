@@ -89,11 +89,12 @@ export default function LeaguePlayoffGenerator({
     };
   });
 
-  // Sort must exactly match generateLeaguePlayoffs: wins desc → PD desc → losses asc → teamId asc
+  // Sort must exactly match generateLeaguePlayoffs: wins desc → PD desc → losses asc → current seed asc → teamId asc
   standings.sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (b.pd !== a.pd) return b.pd - a.pd;
     if (a.losses !== b.losses) return a.losses - b.losses;
+    if (a.seed !== b.seed) return a.seed - b.seed;
     return a.teamId.localeCompare(b.teamId);
   });
 
