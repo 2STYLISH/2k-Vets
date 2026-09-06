@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { updateSeedStats } from '@/lib/actions/tournaments';
 import { useNotification } from '@/components/providers/NotificationProvider';
 import { parseError } from '@/lib/format';
@@ -15,6 +16,7 @@ export default function SeedEditor({
   seeds: { team_id: string, seed: number, manual_wins?: number, manual_losses?: number, point_differential?: number }[];
 }) {
   const { showConfirm, showToast } = useNotification();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const buildMap = () => {
     const map = new Map<string, any>();
@@ -31,12 +33,6 @@ export default function SeedEditor({
   };
 
   const [localSeeds, setLocalSeeds] = useState(() => buildMap());
-
-  // Re-sync from server after save (revalidatePath pushes fresh seeds prop)
-  useEffect(() => {
-    setLocalSeeds(buildMap());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seeds]);
 
   const handleUpdate = (teamId: string, field: string, value: string) => {
     const map = new Map(localSeeds);
@@ -61,7 +57,27 @@ export default function SeedEditor({
           point_differential: data.point_differential === '' ? null : parseInt(data.point_differential),
         });
       }
+      // After saving stats, auto-assign seed numbers to match standings order
+      const sorted = [...teams].sort((a, b) => {
+        const dA = localSeeds.get(a.id);
+        const dB = localSeeds.get(b.id);
+        const wA = dA?.manual_wins === '' ? 0 : parseInt(dA?.manual_wins || '0') || 0;
+        const wB = dB?.manual_wins === '' ? 0 : parseInt(dB?.manual_wins || '0') || 0;
+        const pdA = dA?.point_differential === '' ? 0 : parseInt(dA?.point_differential || '0') || 0;
+        const pdB = dB?.point_differential === '' ? 0 : parseInt(dB?.point_differential || '0') || 0;
+        const lA = dA?.manual_losses === '' ? 0 : parseInt(dA?.manual_losses || '0') || 0;
+        const lB = dB?.manual_losses === '' ? 0 : parseInt(dB?.manual_losses || '0') || 0;
+        if (wB !== wA) return wB - wA;
+        if (pdB !== pdA) return pdB - pdA;
+        if (lA !== lB) return lA - lB;
+        return a.name.localeCompare(b.name);
+      });
+      for (let i = 0; i < sorted.length; i++) {
+        await updateSeedStats({ tournamentId, teamId: sorted[i].id, seed: i + 1 });
+      }
+
       showToast('Saved successfully!', 'success');
+      router.refresh();
     } catch (e: any) {
       showToast(parseError(e), 'error');
     } finally {
@@ -69,13 +85,19 @@ export default function SeedEditor({
     }
   };
 
-  // Sort by seed if available, otherwise by name
+  // Sort rows by wins desc → PD desc → losses asc → name (matches StandingsTable)
   const sortedTeams = [...teams].sort((a, b) => {
-    const sA = localSeeds.get(a.id)?.seed;
-    const sB = localSeeds.get(b.id)?.seed;
-    if (sA && sB) return parseInt(sA) - parseInt(sB);
-    if (sA) return -1;
-    if (sB) return 1;
+    const dA = localSeeds.get(a.id);
+    const dB = localSeeds.get(b.id);
+    const wA = dA?.manual_wins === '' ? 0 : parseInt(dA?.manual_wins || '0') || 0;
+    const wB = dB?.manual_wins === '' ? 0 : parseInt(dB?.manual_wins || '0') || 0;
+    const pdA = dA?.point_differential === '' ? 0 : parseInt(dA?.point_differential || '0') || 0;
+    const pdB = dB?.point_differential === '' ? 0 : parseInt(dB?.point_differential || '0') || 0;
+    const lA = dA?.manual_losses === '' ? 0 : parseInt(dA?.manual_losses || '0') || 0;
+    const lB = dB?.manual_losses === '' ? 0 : parseInt(dB?.manual_losses || '0') || 0;
+    if (wB !== wA) return wB - wA;
+    if (pdB !== pdA) return pdB - pdA;
+    if (lA !== lB) return lA - lB;
     return a.name.localeCompare(b.name);
   });
 
@@ -85,7 +107,7 @@ export default function SeedEditor({
         <div>
           <h2 className="text-lg text-white uppercase tracking-widest font-display">Standings & Seed Editor</h2>
           <p className="text-sm text-white/70 mt-1">
-            Manually override team stats and assign seeds. Save your changes, then click "Generate Bracket From Seeds".
+            Manually override wins, losses, and PD. Seeds are auto-assigned by rank on save.
           </p>
         </div>
         <div className="flex gap-3 items-center">
@@ -100,7 +122,7 @@ export default function SeedEditor({
           <thead className="bg-arena-900 border-b border-arena-800 text-xs font-mono uppercase text-white">
             <tr>
               <th className="px-4 py-3 font-medium">Team</th>
-              <th className="px-4 py-3 font-medium">Seed (1-10)</th>
+              <th className="px-4 py-3 font-medium w-20 text-center">Rank</th>
               <th className="px-4 py-3 font-medium">Wins</th>
               <th className="px-4 py-3 font-medium">Losses</th>
               <th className="px-4 py-3 font-medium">Point Diff (PD)</th>
@@ -112,8 +134,11 @@ export default function SeedEditor({
               return (
                 <tr key={t.id} className="hover:bg-arena-800/50 transition-colors">
                   <td className="px-4 py-3 text-white font-medium">{t.name}</td>
-                  <td className="px-4 py-3">
-                    <input type="number" value={data?.seed} onChange={e => handleUpdate(t.id, 'seed', e.target.value)} className="input-field w-20 text-center py-1" />
+                  {/* Rank auto-computed from sort order */}
+                  <td className="px-4 py-3 w-20">
+                    <div className="w-10 h-8 flex items-center justify-center rounded-lg bg-flag-gold/10 border border-flag-gold/30 text-flag-gold font-mono text-sm font-bold mx-auto">
+                      {sortedTeams.indexOf(t) + 1}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <input type="number" value={data?.manual_wins} onChange={e => handleUpdate(t.id, 'manual_wins', e.target.value)} className="input-field w-20 text-center py-1" />

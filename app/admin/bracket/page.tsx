@@ -97,6 +97,7 @@ export default async function AdminBracketPage({
 
               {/* Seed Editor */}
               <SeedEditor
+                key={(seeds ?? []).map(s => `${s.team_id}:${s.seed}:${s.manual_wins}:${s.manual_losses}:${s.point_differential}`).join('|')}
                 tournamentId={active.id}
                 teams={teams ?? []}
                 seeds={seeds ?? []}
