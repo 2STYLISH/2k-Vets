@@ -86,13 +86,13 @@ export default async function AdminBracketPage({
 
           {active.format === 'VETERANS_LEAGUE' ? (
             <>
-              {/* Seeder — on top for VETERANS_LEAGUE */}
               <BracketSeeder
                 tournamentId={active.id}
                 format={active.format}
                 teams={teams ?? []}
                 rosterIds={rosterIds}
                 seededIds={seededIds}
+                hasScheduledGames={(matchups ?? []).some((m: any) => m.schedule && (Array.isArray(m.schedule) ? m.schedule.length > 0 : Object.keys(m.schedule).length > 0))}
               />
 
               {/* Seed Editor */}

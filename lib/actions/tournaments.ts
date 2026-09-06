@@ -1076,7 +1076,7 @@ export async function resetBracketSeeding(tournamentId: string) {
  *
  * Play-ins are always BO1, playoffs are always BO3.
  */
-export async function generateLeaguePlayoffs(tournamentId: string) {
+export async function generateLeaguePlayoffs(tournamentId: string, options?: { playoffSize?: 'TOP_10_PLAY_IN' | 'AUTO' | 'TOP_8' | 'TOP_6' | 'TOP_4' }) {
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
 
@@ -1193,18 +1193,28 @@ export async function generateLeaguePlayoffs(tournamentId: string) {
   const totalTeams = standings.length;
 
   // 7. Determine playoff structure based on team count:
-  //   ≤8  teams  → pure bracket (byes fill gaps to nearest power-of-2)
-  //   9–10 teams  → top-8 bracket only; seeds 9-10 are eliminated
-  //   11+ teams   → 6 direct + 4 play-in (seeds 7–10) + rest eliminated
-  if (totalTeams > 10) {
-    // ── >10 teams: 6 direct + 4 play-in ────────────────────────
-    await generateStandardPlayoffs(supabase, tournamentId, standings);
-  } else if (totalTeams >= 9) {
-    // ── 9-10 teams: top-8 bracket, rest eliminated ───────────
-    await generateDirectBracket(supabase, tournamentId, standings.slice(0, 8));
+  if (options?.playoffSize === 'TOP_10_PLAY_IN') {
+    await generateStandardPlayoffs(supabase, tournamentId, standings.slice(0, Math.min(10, totalTeams)));
+  } else if (options?.playoffSize === 'TOP_8') {
+    await generateDirectBracket(supabase, tournamentId, standings.slice(0, Math.min(8, totalTeams)));
+  } else if (options?.playoffSize === 'TOP_6') {
+    await generateDirectBracket(supabase, tournamentId, standings.slice(0, Math.min(6, totalTeams)));
+  } else if (options?.playoffSize === 'TOP_4') {
+    await generateDirectBracket(supabase, tournamentId, standings.slice(0, Math.min(4, totalTeams)));
   } else {
-    // ── ≤8 teams: pure direct bracket (byes fill gaps) ────────
-    await generateDirectBracket(supabase, tournamentId, standings.slice(0, totalTeams));
+    //   ≤8  teams  → pure bracket (byes fill gaps to nearest power-of-2)
+    //   9–10 teams  → top-8 bracket only; seeds 9-10 are eliminated
+    //   11+ teams   → 6 direct + 4 play-in (seeds 7–10) + rest eliminated
+    if (totalTeams > 10) {
+      // ── >10 teams: 6 direct + 4 play-in ────────────────────────
+      await generateStandardPlayoffs(supabase, tournamentId, standings);
+    } else if (totalTeams >= 9) {
+      // ── 9-10 teams: top-8 bracket, rest eliminated ───────────
+      await generateDirectBracket(supabase, tournamentId, standings.slice(0, 8));
+    } else {
+      // ── ≤8 teams: pure direct bracket (byes fill gaps) ────────
+      await generateDirectBracket(supabase, tournamentId, standings.slice(0, totalTeams));
+    }
   }
 
   revalidatePath('/admin/bracket');

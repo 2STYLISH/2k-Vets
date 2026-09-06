@@ -10,13 +10,15 @@ export default function BracketSeeder({
   format,
   teams, // all teams in DB
   rosterIds, // team IDs that are registered in tournament_rosters
-  seededIds // team IDs that have been assigned a seed
+  seededIds, // team IDs that have been assigned a seed
+  hasScheduledGames = false
 }: { 
   tournamentId: string;
   format?: string;
   teams: { id: string, name: string }[];
   rosterIds: string[];
   seededIds: string[];
+  hasScheduledGames?: boolean;
 }) {
   const { showConfirm, showToast } = useNotification();
   const [busy, setBusy] = useState(false);
@@ -32,6 +34,7 @@ export default function BracketSeeder({
   const seededTeams = teams.filter(t => seededIds.includes(t.id));
 
   async function handleRandomize() {
+    if (hasScheduledGames) return;
     const groupsText = isVeteransLeague && numGroups > 1 ? ` Teams will be split into ${numGroups} groups.` : '';
     const drrText = isVeteransLeague && doubleRoundRobin ? ' Double round-robin schedule will be generated.' : '';
     const confirmed = await showConfirm(
@@ -62,6 +65,11 @@ export default function BracketSeeder({
             <p className="text-sm text-white/50">
               Automatically shuffle all registered teams into the bracket slots.
             </p>
+            {hasScheduledGames && (
+              <p className="text-xs text-red-400 mt-2">
+                Note: Games have already been scheduled. You cannot re-seed or randomize the bracket anymore.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
@@ -74,7 +82,7 @@ export default function BracketSeeder({
                   <select
                     value={numGroups}
                     onChange={e => setNumGroups(Number(e.target.value))}
-                    disabled={busy}
+                    disabled={busy || hasScheduledGames}
                     style={{ colorScheme: 'dark' }}
                     className="bg-arena-800 border border-white/[0.15] text-white text-xs font-mono rounded-lg px-3 py-2 focus:outline-none focus:border-flag-gold/50 cursor-pointer appearance-none"
                   >
@@ -88,12 +96,12 @@ export default function BracketSeeder({
                 {/* Double Round Robin toggle */}
                 <button
                   onClick={() => setDoubleRoundRobin(v => !v)}
-                  disabled={busy}
+                  disabled={busy || hasScheduledGames}
                   className={`py-2 px-4 text-xs font-mono uppercase tracking-widest rounded-lg border transition-all whitespace-nowrap ${
                     doubleRoundRobin
                       ? 'border-flag-gold/40 text-flag-gold bg-flag-gold/10 hover:bg-flag-gold/15'
                       : 'border-white/[0.1] text-white/50 hover:border-white/20 hover:text-white/70'
-                  }`}
+                  } ${(busy || hasScheduledGames) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {doubleRoundRobin ? '✓ Double RR' : 'Single RR'}
                 </button>
@@ -102,6 +110,7 @@ export default function BracketSeeder({
 
             <button 
               onClick={async () => {
+                if (hasScheduledGames) return;
                 const confirmed = await showConfirm(
                   'Reset Seeding',
                   'This will wipe all matchups and return all teams to the available pool. Are you sure?'
@@ -115,14 +124,14 @@ export default function BracketSeeder({
                 catch (err: any) { showToast(parseError(err), 'error'); }
                 finally { setBusy(false); }
               }}
-              disabled={busy || seededIds.length === 0} 
+              disabled={busy || seededIds.length === 0 || hasScheduledGames} 
               className="btn-secondary py-2 px-5"
             >
               RESET SEEDING
             </button>
             <button 
               onClick={handleRandomize} 
-              disabled={busy || rosterIds.length === 0} 
+              disabled={busy || rosterIds.length === 0 || hasScheduledGames} 
               className="btn-primary py-2 px-5"
             >
               {busy ? 'RANDOMIZING...' : 'RANDOMIZE BRACKET'}

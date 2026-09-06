@@ -32,6 +32,7 @@ export default function LeaguePlayoffGenerator({
   const { showConfirm, showToast } = useNotification();
   const [busy, setBusy] = useState(false);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [playoffSize, setPlayoffSize] = useState<'TOP_10_PLAY_IN' | 'TOP_8' | 'TOP_6'>('TOP_8');
 
   // Compute standings from matchups (same logic as StandingsTable)
   const standings: StandingRow[] = teams.map(t => {
@@ -99,22 +100,22 @@ export default function LeaguePlayoffGenerator({
   const totalTeams = standings.length;
 
   // ─── Playoff zone logic ───────────────────────────────────────────────────
-  //  ≤8  teams  → all direct (byes fill bracket)
-  //  9–10 teams → top 8 direct, seeds 9-10 eliminated
-  //  11+ teams  → 6 direct + 4 play-in (seeds 7-10) + rest eliminated
-  const hasPlayIn = totalTeams > 10;
-  const directSeeds = hasPlayIn ? 6 : Math.min(totalTeams, 8);
-  const playInSeeds = hasPlayIn ? Math.min(4, totalTeams - 6) : 0;
+  let hasPlayIn = false;
+  let directSeeds = 0;
+  let playInSeeds = 0;
+  let descriptionText = '';
 
-  const bracketTeams = hasPlayIn ? 8 : Math.min(totalTeams, 8);
-  const bracketSize = Math.pow(2, Math.ceil(Math.log2(Math.max(bracketTeams, 2))));
-  const byeCount = !hasPlayIn && totalTeams <= 8 ? bracketSize - totalTeams : 0;
-
-  const descriptionText = hasPlayIn
-    ? `Seeds 1–6 go directly to playoffs. Seeds 7–10 compete in the play-in. Seeds 11+ are eliminated.`
-    : totalTeams >= 9
-    ? `Seeds 1–8 go directly to playoffs. Seed${totalTeams === 10 ? 's 9–10 are' : ' 9 is'} eliminated.`
-    : `All ${totalTeams} teams enter the playoffs directly.${byeCount > 0 ? ` Top ${byeCount} seed${byeCount > 1 ? 's' : ''} receive${byeCount === 1 ? 's' : ''} a first-round bye.` : ''}`;
+  if (playoffSize === 'TOP_10_PLAY_IN') {
+    directSeeds = Math.min(6, totalTeams);
+    playInSeeds = Math.min(4, Math.max(0, totalTeams - 6));
+    descriptionText = `Play-In Format: Seeds 1-6 advance directly. Seeds 7-10 compete in a play-in for the final 2 spots.`;
+  } else if (playoffSize === 'TOP_8') {
+    directSeeds = Math.min(8, totalTeams);
+    descriptionText = `Standard 8-Team Bracket format (1v8, 2v7, 3v6, 4v5).`;
+  } else if (playoffSize === 'TOP_6') {
+    directSeeds = Math.min(6, totalTeams);
+    descriptionText = `Bye Round Bracket format. 1st & 2nd seed get byes. 3v6 and 4v5 play in round 1.`;
+  }
 
   const getZoneColor = (rank: number) => {
     if (rank <= directSeeds) return 'border-l-emerald-500 bg-emerald-950/20';
@@ -128,7 +129,6 @@ export default function LeaguePlayoffGenerator({
     return <span className="text-red-400 text-[9px] font-mono uppercase">Eliminated</span>;
   };
 
-
   const handleGenerate = async () => {
     const confirmed = await showConfirm(
       'Generate Playoffs',
@@ -138,7 +138,7 @@ export default function LeaguePlayoffGenerator({
 
     setBusy(true);
     try {
-      await generateLeaguePlayoffs(tournamentId);
+      await generateLeaguePlayoffs(tournamentId, { playoffSize });
       showToast('Playoffs generated!', 'success');
     } catch (e: any) {
       showToast(parseError(e), 'error');
@@ -177,7 +177,19 @@ export default function LeaguePlayoffGenerator({
           </h2>
           <p className="text-sm text-white/70 mt-1">{descriptionText}</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row gap-3 shrink-0 items-center">
+          <div className="flex items-center gap-2 mr-2">
+            <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest whitespace-nowrap">Playoff Size</span>
+            <select
+              value={playoffSize}
+              onChange={(e) => setPlayoffSize(e.target.value as any)}
+              className="bg-gray-900 border border-white/[0.15] text-white text-xs font-mono rounded-lg px-3 py-2 focus:outline-none focus:border-flag-gold/50 cursor-pointer"
+            >
+              <option value="TOP_10_PLAY_IN" className="bg-gray-900 text-white">Play-In Bracket (Top 10)</option>
+              <option value="TOP_8" className="bg-gray-900 text-white">Default Bracket (Top 8)</option>
+              <option value="TOP_6" className="bg-gray-900 text-white">Bye Round Bracket (Top 6)</option>
+            </select>
+          </div>
           {hasPlayoffs && (
             <button
               onClick={handleToggleVisibility}

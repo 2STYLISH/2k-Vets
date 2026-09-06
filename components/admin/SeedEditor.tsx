@@ -51,7 +51,7 @@ export default function SeedEditor({
         await updateSeedStats({
           tournamentId,
           teamId,
-          seed: data.seed === '' ? null : parseInt(data.seed),
+          seed: data.seed === '' ? 999 : parseInt(data.seed),
           manual_wins: data.manual_wins === '' ? null : parseInt(data.manual_wins),
           manual_losses: data.manual_losses === '' ? null : parseInt(data.manual_losses),
           point_differential: data.point_differential === '' ? null : parseInt(data.point_differential),

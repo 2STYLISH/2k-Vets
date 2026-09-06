@@ -30,11 +30,13 @@ import Link from 'next/link';
 export default function BracketTree({ 
   matchups,
   defaultMatchFormat,
-  onMatchupClick
+  onMatchupClick,
+  layout
 }: { 
   matchups: Matchup[];
   defaultMatchFormat?: string;
   onMatchupClick?: (matchup: Matchup) => void;
+  layout?: 'compact' | 'tree';
 }) {
   const sortedMatchups = [...matchups].sort((a, b) => {
     const getOrder = (side?: string) => {
@@ -60,25 +62,28 @@ export default function BracketTree({
     ).sort((a, b) => (a.matchNumber || 0) - (b.matchNumber || 0));
 
     if (upstreams.length > 0) {
-      const emptySlots = (!m.team_a ? 1 : 0) + (!m.team_b ? 1 : 0);
-      
-      if (emptySlots === 2 && upstreams.length === 1) {
-        m.sourceB = upstreams[0].loser_feeds_into_matchup_id === m.id ? `Loser of ${upstreams[0].matchNumber}` : `Winner of ${upstreams[0].matchNumber}`;
-      } else {
-        let uIdx = 0;
-        if (!m.team_a && uIdx < upstreams.length) {
-          const u = upstreams[uIdx++];
-          m.sourceA = u.loser_feeds_into_matchup_id === m.id ? `Loser of ${u.matchNumber}` : `Winner of ${u.matchNumber}`;
-        }
-        if (!m.team_b && uIdx < upstreams.length) {
-          const u = upstreams[uIdx++];
-          m.sourceB = u.loser_feeds_into_matchup_id === m.id ? `Loser of ${u.matchNumber}` : `Winner of ${u.matchNumber}`;
+      if (upstreams.length === 2) {
+        if (!m.team_a) m.sourceA = upstreams[0].loser_feeds_into_matchup_id === m.id ? `Loser of ${upstreams[0].matchNumber}` : `Winner of ${upstreams[0].matchNumber}`;
+        if (!m.team_b) m.sourceB = upstreams[1].loser_feeds_into_matchup_id === m.id ? `Loser of ${upstreams[1].matchNumber}` : `Winner of ${upstreams[1].matchNumber}`;
+      } else if (upstreams.length === 1) {
+        // If there's only 1 upstream (e.g. play-in to specific slot)
+        const u = upstreams[0];
+        const text = u.loser_feeds_into_matchup_id === m.id ? `Loser of ${u.matchNumber}` : `Winner of ${u.matchNumber}`;
+        if (!m.team_a && !m.team_b) {
+          // If both are empty and only 1 upstream, we don't know which slot it feeds, but typically it feeds B in this system
+          m.sourceB = text;
+        } else {
+          if (!m.team_a) m.sourceA = text;
+          if (!m.team_b) m.sourceB = text;
         }
       }
     }
   });
 
-  const visibleMatchups = sortedMatchups.filter(m => !m.is_bye);
+  const hasByes = sortedMatchups.some((m) => m.is_bye);
+  const isTreeLayout = layout === 'tree' || (layout === undefined && hasByes);
+  const visibleMatchups = isTreeLayout ? sortedMatchups : sortedMatchups.filter(m => !m.is_bye);
+
   const winners = visibleMatchups.filter((m) => m.bracket_side !== 'LOSERS' && m.bracket_side !== 'GRAND_FINAL' && m.bracket_side !== 'PLAY_IN');
   const losers = visibleMatchups.filter((m) => m.bracket_side === 'LOSERS');
   const grandFinal = visibleMatchups.filter((m) => m.bracket_side === 'GRAND_FINAL');
@@ -198,7 +203,7 @@ function MatchCard({ matchup, onClick, defaultMatchFormat }: { matchup: Matchup;
   );
 
   return (
-    <div className="relative group/bracketcard ml-6">
+    <div className={`relative group/bracketcard ml-6 ${matchup.is_bye ? 'opacity-0 pointer-events-none' : ''}`}>
       <div className="absolute -left-7 top-1/2 -translate-y-1/2 text-sm font-mono font-bold transition-colors text-white/40 drop-shadow-md group-hover/bracketcard:text-flag-gold w-6 text-right pr-2">
         {matchup.matchNumber}
       </div>

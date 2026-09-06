@@ -5,6 +5,7 @@ import BackButton from '@/components/BackButton';
 import { averageStats } from '@/lib/stats';
 import type { PlayerGameStats } from '@/lib/types';
 import RecentMatchesList from './RecentMatchesList';
+import UpcomingSchedulesList from './UpcomingSchedulesList';
 
 export default async function TeamProfilePage({ params }: { params: { slug: string } }) {
   const supabase = createClient();
@@ -53,6 +54,16 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
     .in('status', ['VERIFIED', 'COMPLETED'])
     .order('played_at', { ascending: false })
     .limit(50);
+
+  // 6. Get upcoming schedules
+  const { data: upcomingSchedules } = await supabase
+    .from('schedules')
+    .select('id, scheduled_date, scheduled_time, round_label, home_team_id, away_team_id, home:teams!schedules_home_team_id_fkey(id, name, slug), away:teams!schedules_away_team_id_fkey(id, name, slug), tournament_id, tournament:tournaments(name)')
+    .or(teamIds.map(id => `home_team_id.eq.${id},away_team_id.eq.${id}`).join(','))
+    .eq('status', 'SCHEDULED')
+    .order('scheduled_date', { ascending: true })
+    .order('scheduled_time', { ascending: true })
+    .limit(20);
 
   // 6. Get player stats for this team (gets all stats, even for traded players)
   const { data: playerStats } = await supabase
@@ -288,6 +299,9 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
           </div>
         </section>
       )}
+
+      {/* --- UPCOMING SCHEDULES --- */}
+      <UpcomingSchedulesList schedules={upcomingSchedules ?? []} teamIds={teamIds} />
 
       {/* --- RECENT GAMES --- */}
       <RecentMatchesList games={recentGames ?? []} teamIds={teamIds} />
