@@ -226,58 +226,22 @@ export default async function TournamentDashboard({ params }: { params: { id: st
             </section>
           )}
 
-          {/* Seeds */}
-          <section className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-xl font-display text-white tracking-widest mb-3">SEEDS</h2>
-              <div className="border border-white/[0.06] card p-4 space-y-1 shadow-lg">
-                {(seeds ?? []).map((s: any) => {
-                  const rank = s.seed;
-                  const totalTeams = (seeds ?? []).length;
-                  // ≤8: all direct. 9-10: top 8 direct + rest eliminated. 11+: 6 direct + 4 play-in + rest eliminated.
-                  const hasPlayIn = totalTeams > 10;
-                  const directSeeds = hasPlayIn ? 6 : Math.min(totalTeams, 8);
-                  const playInSeeds = hasPlayIn ? Math.min(4, totalTeams - 6) : 0;
-
-                  const color = rank <= directSeeds ? 'text-emerald-400' : rank <= directSeeds + playInSeeds ? 'text-yellow-400' : 'text-red-400';
-                  return (
-                    <p key={s.seed} className={`text-sm font-mono ${color}`}>
-                      <span className="text-white/40 mr-2">#{s.seed}</span> {s.team?.name}
-                    </p>
-                  );
-                })}
-                {(seeds ?? []).length === 0 && <p className="text-white/40 text-sm font-mono uppercase tracking-widest">Seeding not set yet.</p>}
-              </div>
-            </div>
-            <div>
-              <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
-              <MatchesFilter 
-                rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
-                isUpcoming={true}
-              />
-            </div>
+          <section>
+            <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
+            <MatchesFilter 
+              rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
+              isUpcoming={true}
+            />
           </section>
         </>
       ) : (
         <>
-          <section className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-xl font-display text-white tracking-widest mb-3">SEEDS</h2>
-              <div className="border border-white/[0.06] card p-4 space-y-1 shadow-lg">
-                {(seeds ?? []).map((s: any) => (
-                  <p key={s.seed} className="text-sm font-mono text-white"><span className="text-white/40 mr-2">#{s.seed}</span> {s.team?.name}</p>
-                ))}
-                {(seeds ?? []).length === 0 && <p className="text-white/40 text-sm font-mono uppercase tracking-widest">Seeding not set yet.</p>}
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
-              <MatchesFilter 
-                rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
-                isUpcoming={true}
-              />
-            </div>
+          <section>
+            <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
+            <MatchesFilter 
+              rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
+              isUpcoming={true}
+            />
           </section>
         </>
       )}

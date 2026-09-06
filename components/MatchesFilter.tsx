@@ -57,7 +57,7 @@ export default function MatchesFilter({ rounds, isUpcoming = false }: { rounds: 
         ))}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
         {activeGames.length === 0 && (
           <p className="text-white/50 text-sm font-mono uppercase tracking-widest">No games found.</p>
         )}
