@@ -1,3 +1,4 @@
+import { slugify } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from '@/components/HiddenLink';
@@ -274,7 +275,7 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
                 {rosterPlayers.map(p => (
                   <tr key={p.id} className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.03] transition-colors">
                     <td className="px-5 py-3">
-                      <Link href={`/${p.slug || p.gamertag.toLowerCase()}`} className="text-white hover:text-flag-gold transition-colors hover:underline font-medium">
+                      <Link href={`/${p.slug || slugify(p.gamertag)}`} className="text-white hover:text-flag-gold transition-colors hover:underline font-medium">
                         {p.gamertag}
                       </Link>
                       {p.isPastPlayer && <span className="ml-2 text-[9px] text-white/30 font-mono uppercase bg-white/5 px-1.5 py-0.5 rounded">Traded</span>}

@@ -1,3 +1,4 @@
+import { slugify } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
@@ -60,7 +61,7 @@ export default async function PlayersPage({
         {players?.map((player) => (
           <Link
             key={player.id}
-            href={`/${player.slug || player.gamertag.toLowerCase()}`}
+            href={`/${player.slug || slugify(player.gamertag)}`}
             className="group card p-4 flex items-center gap-4 hover:border-flag-gold/40 hover:shadow-lg transition-all"
           >
             <div className="w-16 h-16 rounded-full border border-white/10 bg-navy-900 flex items-center justify-center shrink-0 overflow-hidden">

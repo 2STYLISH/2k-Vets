@@ -1,3 +1,4 @@
+import { slugify } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import BackButton from '@/components/BackButton';
@@ -163,7 +164,7 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
                         </span>
                       )}
                       <div className="flex items-center">
-                        <Link href={`/${p?.slug || p?.gamertag?.toLowerCase()}`} className={`font-body transition-colors font-medium ${isPotg ? 'text-flag-gold' : 'text-white/90 group-hover/row:text-flag-gold'}`}>
+                        <Link href={`/${p?.slug || slugify(p?.gamertag || '')}`} className={`font-body transition-colors font-medium ${isPotg ? 'text-flag-gold' : 'text-white/90 group-hover/row:text-flag-gold'}`}>
                           {p?.gamertag}
                         </Link>
 
@@ -261,7 +262,7 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
               </div>
               <div className="flex-1">
                 <p className="text-[10px] font-mono text-flag-gold uppercase tracking-[0.3em] mb-2 font-bold">Player of the Game</p>
-                <Link href={`/${potg.player?.slug || potg.player?.gamertag?.toLowerCase()}`} className="text-3xl md:text-4xl font-display tracking-[0.1em] text-white uppercase hover:text-flag-gold transition-colors">
+                <Link href={`/${potg.player?.slug || slugify(potg.player?.gamertag || '')}`} className="text-3xl md:text-4xl font-display tracking-[0.1em] text-white uppercase hover:text-flag-gold transition-colors">
                   {potg.player?.gamertag}
                 </Link>
                 <div className="flex flex-wrap gap-2 mt-4">

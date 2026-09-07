@@ -4,6 +4,8 @@ import { averageStats } from '@/lib/stats';
 import type { PlayerGameStats } from '@/lib/types';
 import TournamentDropdown from '@/components/TournamentDropdown';
 import { slugify } from '@/lib/format';
+import LeaderboardCard from '@/components/TournamentLeaders';
+import PaginatedPlayerTable from '@/components/PaginatedPlayerTable';
 
 export const metadata = {
   title: 'Player Stats — 2K Veterans League',
@@ -37,6 +39,32 @@ function TabHeader({ activeTab, activeTournamentSlug }: { activeTab: string; act
   );
 }
 
+function LeaderboardGrid({ rows }: { rows: { player: any; avg: any; teamName: string }[] }) {
+  if (rows.length === 0) return null;
+
+  const getTop = (key: string) => [...rows].sort((a, b) => b.avg[key] - a.avg[key]).slice(0, 5);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+      <LeaderboardCard title="Points Per Game" leaders={getTop('ppg')} dataKey="ppg" />
+      <LeaderboardCard title="Assists Per Game" leaders={getTop('apg')} dataKey="apg" />
+      <LeaderboardCard title="Rebounds Per Game" leaders={getTop('rpg')} dataKey="rpg" />
+      <LeaderboardCard title="Steals Per Game" leaders={getTop('spg')} dataKey="spg" />
+      <LeaderboardCard title="Blocks Per Game" leaders={getTop('bpg')} dataKey="bpg" />
+      <LeaderboardCard title="3PT Field Goals Pct" leaders={getTop('tpPct')} dataKey="tpPct" />
+      <LeaderboardCard title="Field Goals Pct" leaders={getTop('fgPct')} dataKey="fgPct" />
+      <LeaderboardCard title="Points" leaders={getTop('totalPts')} dataKey="totalPts" />
+      <LeaderboardCard title="Assists" leaders={getTop('totalAst')} dataKey="totalAst" />
+      <LeaderboardCard title="Rebounds" leaders={getTop('totalReb')} dataKey="totalReb" />
+      <LeaderboardCard title="Steals" leaders={getTop('totalStl')} dataKey="totalStl" />
+      <LeaderboardCard title="Blocks" leaders={getTop('totalBlk')} dataKey="totalBlk" />
+      <LeaderboardCard title="3PT Attempted Per Game" leaders={getTop('tpaPerGame')} dataKey="tpaPerGame" />
+      <LeaderboardCard title="Free Throws Attempted" leaders={getTop('totalFta')} dataKey="totalFta" />
+      <LeaderboardCard title="Free Throws Made" leaders={getTop('totalFtm')} dataKey="totalFtm" />
+    </div>
+  );
+}
+
 export default async function StatsPage({ searchParams }: { searchParams: { tab?: string; t?: string } }) {
   const supabase = createClient();
   const activeTab = searchParams.tab === 'all' ? 'all' : 'tournaments';
@@ -53,7 +81,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
 
   const { data: players } = await supabase
     .from('players')
-    .select('id, gamertag, position, slug');
+    .select('id, gamertag, position, slug, photo_path');
 
   // ── ALL PLAYERS TAB ──────────────────────────────────────────────────────────
   if (activeTab === 'all') {
@@ -96,59 +124,8 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     return (
       <div className="max-w-5xl mx-auto space-y-8">
         <TabHeader activeTab="all" activeTournamentSlug={activeTournamentSlug} />
-        <section>
-          <div className="relative card overflow-hidden">
-            <div className="accent-stripe" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs font-mono stat-mono">
-                <thead>
-                  <tr className="bg-navy text-[9px] text-white/80 uppercase tracking-widest">
-                    <th className="text-left px-6 py-4 w-10 font-medium">#</th>
-                    <th className="text-left px-4 py-4 font-medium">Player</th>
-                    <th className="text-left px-4 py-4 font-medium">Team</th>
-                    <th className="px-4 py-4 text-right font-medium">GP</th>
-                    <th className="px-4 py-4 text-right font-medium">PPG</th>
-                    <th className="px-4 py-4 text-right font-medium">RPG</th>
-                    <th className="px-4 py-4 text-right font-medium">APG</th>
-                    <th className="px-4 py-4 text-right font-medium">SPG</th>
-                    <th className="px-4 py-4 text-right font-medium">BPG</th>
-                    <th className="px-4 py-4 text-right font-medium">FG%</th>
-                    <th className="px-4 py-4 text-right font-medium">3P%</th>
-                    <th className="px-4 py-4 text-right font-medium">FT%</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-navy-100/20">
-                  {rows.length === 0 && (
-                    <tr><td colSpan={12} className="px-6 py-10 text-white/40 text-center uppercase tracking-widest text-[10px]">No verified stats yet.</td></tr>
-                  )}
-                  {rows.map(({ player, avg, teamName }, idx) => (
-                    <tr key={player.id} className="group/row transition-all hover:bg-white/[0.03]">
-                      <td className="px-6 py-3.5 text-flag-gold text-[10px] font-bold">{idx + 1}</td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <Link href={`/${player.slug || player.gamertag.toLowerCase()}`} className="text-white/90 font-body group-hover/row:text-white transition-colors font-medium">
-                            {player.gamertag}
-                          </Link>
-
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-white/40 font-mono text-[9px] uppercase tracking-widest group-hover/row:text-white/70 transition-colors">{teamName}</td>
-                      <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.gamesPlayed}</td>
-                      <td className="px-4 py-3.5 text-right text-white font-bold text-sm">{avg.ppg}</td>
-                      <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.rpg}</td>
-                      <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.apg}</td>
-                      <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.spg}</td>
-                      <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.bpg}</td>
-                      <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.fgPct}%</td>
-                      <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.tpPct}%</td>
-                      <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.ftPct}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+        <LeaderboardGrid rows={rows} />
+        <PaginatedPlayerTable rows={rows} showTeamSearch={false} />
       </div>
     );
   }
@@ -228,6 +205,13 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     team.players.sort((a, b) => (b.avg?.ppg ?? -1) - (a.avg?.ppg ?? -1));
   }
 
+  const tourneyRows: { player: any; avg: any; teamName: string }[] = [];
+  for (const team of teamMap.values()) {
+    for (const { player, avg } of team.players) {
+      if (avg) tourneyRows.push({ player, avg, teamName: team.teamName });
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <TabHeader activeTab="tournaments" activeTournamentSlug={activeTournamentSlug} />
@@ -238,7 +222,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
       </div>
 
       {activeTournament && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-6">
           <h2 className="text-2xl text-white font-display tracking-[0.1em]">{activeTournament.name}</h2>
           <span className={`text-[10px] font-mono px-2.5 py-1 rounded-lg uppercase tracking-widest border ${activeTournament.status === 'IN_PROGRESS' ? 'bg-flag-gold/10 text-flag-gold border-flag-gold/20' :
             activeTournament.status === 'COMPLETED' ? 'bg-green-50 text-green-600 border-green-200' :
@@ -247,72 +231,15 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
         </div>
       )}
 
+      {tourneyRows.length > 0 && <LeaderboardGrid rows={tourneyRows} />}
+
       {teamMap.size === 0 && (
         <div className="card p-8 text-center">
           <p className="text-white/40 font-mono uppercase tracking-widest text-sm">No player stats yet for this tournament.</p>
         </div>
       )}
 
-      <div className="space-y-10">
-        {[...teamMap.entries()].map(([teamId, { teamName, players: teamPlayers }]) => (
-          <section key={teamId}>
-            <h3 className="text-lg text-flag-gold font-display tracking-[0.12em] mb-3 font-bold">{teamName}</h3>
-            <div className="relative card overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs font-mono stat-mono">
-                  <thead>
-                    <tr className="bg-navy text-[9px] text-white/80 uppercase tracking-widest">
-                      <th className="text-left px-6 py-4 font-medium">Player</th>
-                      <th className="px-4 py-4 text-right font-medium">GP</th>
-                      <th className="px-4 py-4 text-right font-medium">PPG</th>
-                      <th className="px-4 py-4 text-right font-medium">RPG</th>
-                      <th className="px-4 py-4 text-right font-medium">APG</th>
-                      <th className="px-4 py-4 text-right font-medium">SPG</th>
-                      <th className="px-4 py-4 text-right font-medium">BPG</th>
-                      <th className="px-4 py-4 text-right font-medium">FG%</th>
-                      <th className="px-4 py-4 text-right font-medium">3P%</th>
-                      <th className="px-4 py-4 text-right font-medium">FT%</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-navy-100/20">
-                    {teamPlayers.length === 0 && (
-                      <tr><td colSpan={10} className="px-6 py-10 text-white/40 text-center uppercase tracking-widest text-[10px]">No stats yet.</td></tr>
-                    )}
-                    {teamPlayers.map(({ player, avg }) => (
-                      <tr key={player.id} className="group/row transition-all hover:bg-white/[0.03]">
-                        <td className="px-6 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            {player.position && <span className="w-7 text-center text-[9px] bg-white/[0.06] text-white/50 border border-white/[0.06] rounded-md px-1 py-1 uppercase tracking-widest font-bold group-hover/row:border-white/20 transition-colors">{player.position.slice(0, 2)}</span>}
-                            <Link href={`/${player.slug || player.gamertag.toLowerCase()}`} className="text-white/90 font-body group-hover/row:text-white transition-colors font-medium">
-                              {player.gamertag}
-                            </Link>
-
-                          </div>
-                        </td>
-                        {avg ? (
-                          <>
-                            <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.gamesPlayed}</td>
-                            <td className="px-4 py-3.5 text-right text-white font-bold text-sm">{avg.ppg}</td>
-                            <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.rpg}</td>
-                            <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.apg}</td>
-                            <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.spg}</td>
-                            <td className="px-4 py-3.5 text-right text-white/70 group-hover/row:text-white/90 transition-colors">{avg.bpg}</td>
-                            <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.fgPct}%</td>
-                            <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.tpPct}%</td>
-                            <td className="px-4 py-3.5 text-right text-white/50 group-hover/row:text-white/80 transition-colors">{avg.ftPct}%</td>
-                          </>
-                        ) : (
-                          <td colSpan={9} className="px-4 py-3.5 text-right text-white/30 italic group-hover/row:text-white/40 transition-colors">No games played</td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-        ))}
-      </div>
+      <PaginatedPlayerTable rows={tourneyRows} showTeamSearch={true} />
     </div>
   );
 }

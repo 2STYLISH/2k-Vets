@@ -42,6 +42,19 @@ export function averageStats(rows: PlayerGameStats[], wins: number, gamesPlayed:
     tpPct: pct(sum.tpm, sum.tpa),
     ftPct: pct(sum.ftm, sum.fta),
     winPct: gamesPlayed > 0 ? round1((wins / gamesPlayed) * 100) : 0,
+    totalPts: sum.pts,
+    totalReb: sum.reb,
+    totalAst: sum.ast,
+    totalStl: sum.stl,
+    totalBlk: sum.blk,
+    totalFgm: sum.fgm,
+    totalFga: sum.fga,
+    totalTpm: sum.tpm,
+    totalTpa: sum.tpa,
+    totalFtm: sum.ftm,
+    totalFta: sum.fta,
+    tpaPerGame: round1(sum.tpa / g),
+    ftaPerGame: round1(sum.fta / g),
   };
 }
 

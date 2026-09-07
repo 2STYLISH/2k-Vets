@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { slugify } from '@/lib/format';
 
 type PlayerStats = {
   player: any;
@@ -62,7 +63,7 @@ export default function TournamentPlayerStats({ teams }: { teams: TeamStats[] })
               {selectedTeam.players.map(({ player, avg }) => (
                 <tr key={player.id} className="hover:bg-white/[0.02] transition-colors group">
                   <td className="py-3 pr-4">
-                    <Link href={`/${player.slug || player.gamertag.toLowerCase()}`} className="flex items-center gap-3">
+                    <Link href={`/${player.slug || slugify(player.gamertag)}`} className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-navy-800 shrink-0">
                         {player.photo_path ? (
                           <img src={player.photo_path} alt={player.gamertag} className="w-full h-full object-cover" />

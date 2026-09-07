@@ -72,6 +72,19 @@ export interface AveragedStatLine {
   tpPct: number;
   ftPct: number;
   winPct: number;
+  totalPts: number;
+  totalReb: number;
+  totalAst: number;
+  totalStl: number;
+  totalBlk: number;
+  totalFgm: number;
+  totalFga: number;
+  totalTpm: number;
+  totalTpa: number;
+  totalFtm: number;
+  totalFta: number;
+  tpaPerGame: number;
+  ftaPerGame: number;
 }
 
 export interface AwardCandidate {

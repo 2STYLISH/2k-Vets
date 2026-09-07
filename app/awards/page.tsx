@@ -115,7 +115,7 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
             
             // For regular awards
             const teamName = playerTeams.get(a.winner_player_id);
-            const playerSlug = a.winner?.slug || a.winner?.gamertag?.toLowerCase();
+            const playerSlug = a.winner?.slug || slugify(a.winner?.gamertag || '');
             
             // For Mythical Team
             const mythicalWinners = isMythical && teamWinnersData ? teamWinnersData.filter((p: any) => a.winner_player_ids?.includes(p.id)) : [];
@@ -142,7 +142,7 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
                     mythicalWinners.length > 0 ? (
                       mythicalWinners.map((w: any) => {
                         const mTeamName = playerTeams.get(w.id);
-                        const mSlug = w.slug || w.gamertag.toLowerCase();
+                        const mSlug = w.slug || slugify(w.gamertag);
                         return (
                           <div key={w.id} className="flex flex-col items-center gap-3 text-center">
                             <div className="relative">
