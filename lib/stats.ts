@@ -24,9 +24,10 @@ export function averageStats(rows: PlayerGameStats[], wins: number, gamesPlayed:
       acc.tpa += r.tpa;
       acc.ftm += r.ftm;
       acc.fta += r.fta;
+      acc.turnovers += r.turnovers;
       return acc;
     },
-    { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0 }
+    { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0, turnovers: 0 }
   );
 
   return {
@@ -36,6 +37,7 @@ export function averageStats(rows: PlayerGameStats[], wins: number, gamesPlayed:
     apg: round1(sum.ast / g),
     spg: round1(sum.stl / g),
     bpg: round1(sum.blk / g),
+    topg: round1(sum.turnovers / g),
     fgPct: pct(sum.fgm, sum.fga),
     tpPct: pct(sum.tpm, sum.tpa),
     ftPct: pct(sum.ftm, sum.fta),

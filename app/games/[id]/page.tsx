@@ -28,8 +28,8 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
           schedule_id,
           home_score,
           away_score,
-          home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url),
-          away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url),
+          home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url, logo_path),
+          away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url, logo_path),
           schedules!inner(tournament_id, round_label, status, scheduled_date)
         `)
         .eq('home_team_id', homeTeam.id)
@@ -51,8 +51,8 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
         schedule_id,
         home_score,
         away_score,
-        home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url),
-        away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url),
+        home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url, logo_path),
+        away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url, logo_path),
         schedules!inner(tournament_id, round_label, status, scheduled_date)
       `)
       .eq('id', params.id)
@@ -207,8 +207,8 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
             {/* Home Team */}
             <div className="flex-1 text-center md:text-right flex flex-col items-center md:items-end w-full">
               <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-4 md:mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
-                {(game.home_team as any)?.logo_url ? (
-                  <img src={(game.home_team as any).logo_url} alt={(game.home_team as any).name} className="w-full h-full object-contain" />
+                {((game.home_team as any)?.logo_url || (game.home_team as any)?.logo_path) ? (
+                  <img src={(game.home_team as any).logo_url || (game.home_team as any).logo_path} alt={(game.home_team as any).name} className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-2xl text-white/30 font-display tracking-widest">{(game.home_team as any)?.name?.slice(0, 3).toUpperCase()}</span>
                 )}
@@ -230,8 +230,8 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
             {/* Away Team */}
             <div className="flex-1 text-center md:text-left flex flex-col items-center md:items-start w-full">
               <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-4 md:mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
-                {(game.away_team as any)?.logo_url ? (
-                  <img src={(game.away_team as any).logo_url} alt={(game.away_team as any).name} className="w-full h-full object-contain" />
+                {((game.away_team as any)?.logo_url || (game.away_team as any)?.logo_path) ? (
+                  <img src={(game.away_team as any).logo_url || (game.away_team as any).logo_path} alt={(game.away_team as any).name} className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-2xl text-white/30 font-display tracking-widest">{(game.away_team as any)?.name?.slice(0, 3).toUpperCase()}</span>
                 )}

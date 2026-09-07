@@ -77,7 +77,7 @@ export default function TournamentPlayerStats({ teams }: { teams: TeamStats[] })
                   </td>
                   {avg ? (
                     <>
-                      <td className="py-3 px-2 text-right font-mono text-sm text-white/70">{avg.gp ?? 0}</td>
+                      <td className="py-3 px-2 text-right font-mono text-sm text-white/70">{avg.gamesPlayed ?? 0}</td>
                       <td className="py-3 px-2 text-right font-mono text-sm text-white">{Number(avg.ppg ?? 0).toFixed(1)}</td>
                       <td className="py-3 px-2 text-right font-mono text-sm text-white">{Number(avg.rpg ?? 0).toFixed(1)}</td>
                       <td className="py-3 px-2 text-right font-mono text-sm text-white">{Number(avg.apg ?? 0).toFixed(1)}</td>

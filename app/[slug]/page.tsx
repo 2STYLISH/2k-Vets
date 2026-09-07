@@ -33,7 +33,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
   // 1. Current Teams / Roster Status
   const { data: currentRosters } = await supabase
     .from('tournament_rosters')
-    .select('team_id, tournament_id, team:teams(name, logo_url), tournament:tournaments(name, status, start_date)')
+    .select('team_id, tournament_id, team:teams(name, logo_url, logo_path), tournament:tournaments(name, status, start_date)')
     .eq('player_id', player.id)
     .order('created_at', { ascending: false });
 
@@ -43,7 +43,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
     return {
       tournament: t,
       teamName: team?.name ?? 'Unknown',
-      teamLogo: team?.logo_url ?? null,
+      teamLogo: team?.logo_url || team?.logo_path || null,
     };
   }).filter(x => x.tournament?.status === 'SEEDING' || x.tournament?.status === 'IN_PROGRESS');
 
@@ -53,7 +53,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
     return {
       tournament: t,
       teamName: team?.name ?? 'Unknown',
-      teamLogo: team?.logo_url ?? null,
+      teamLogo: team?.logo_url || team?.logo_path || null,
     };
   }).filter(x => x.tournament?.status === 'COMPLETED');
 
@@ -61,7 +61,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
   const { data: statsRaw } = await supabase
     .from('player_game_stats')
     .select(
-      'id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, position, game:games!player_game_stats_game_id_fkey(id, short_id, home_team_id, away_team_id, home_score, away_score, played_at, home:teams!games_home_team_id_fkey(name, logo_url), away:teams!games_away_team_id_fkey(name, logo_url), schedule:schedules(scheduled_date, scheduled_time, tournament_id, tournament:tournaments(id, name)))'
+      'id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, position, game:games!player_game_stats_game_id_fkey(id, short_id, home_team_id, away_team_id, home_score, away_score, played_at, home:teams!games_home_team_id_fkey(name, logo_url, logo_path), away:teams!games_away_team_id_fkey(name, logo_url, logo_path), schedule:schedules(scheduled_date, scheduled_time, tournament_id, tournament:tournaments(id, name)))'
     )
     .eq('player_id', player.id)
     .eq('is_verified', true);

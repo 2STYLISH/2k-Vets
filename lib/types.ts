@@ -67,6 +67,7 @@ export interface AveragedStatLine {
   apg: number;
   spg: number;
   bpg: number;
+  topg: number;
   fgPct: number;
   tpPct: number;
   ftPct: number;

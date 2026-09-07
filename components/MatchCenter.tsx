@@ -46,8 +46,8 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
 
   const fHome = featured.home?.name || 'TBD';
   const fAway = featured.away?.name || 'TBD';
-  const fHomeLogo = featured.home?.logo_url;
-  const fAwayLogo = featured.away?.logo_url;
+  const fHomeLogo = featured.home?.logo_url || featured.home?.logo_path;
+  const fAwayLogo = featured.away?.logo_url || featured.away?.logo_path;
   const fHomeScore = featured.home_score ?? 0;
   const fAwayScore = featured.away_score ?? 0;
   const fHomeWin = fHomeScore > fAwayScore;
@@ -160,8 +160,8 @@ function GridMatch({ game }: { game: any }) {
 
   const hName = game.home?.name || 'TBD';
   const aName = game.away?.name || 'TBD';
-  const hLogo = game.home?.logo_url;
-  const aLogo = game.away?.logo_url;
+  const hLogo = game.home?.logo_url || game.home?.logo_path;
+  const aLogo = game.away?.logo_url || game.away?.logo_path;
   const hScore = game.home_score ?? 0;
   const aScore = game.away_score ?? 0;
   const hWin = hScore > aScore;
