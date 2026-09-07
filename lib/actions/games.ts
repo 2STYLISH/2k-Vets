@@ -406,10 +406,21 @@ export async function saveVerifiedGameStats(input: {
           }
         }
 
-        // If it's single elimination and it's the final match
+        // If it's the final match of a bracket-based tournament
         if (!matchup.feeds_into_matchup_id && !matchup.loser_feeds_into_matchup_id && matchup.bracket_side !== 'GRAND_FINAL') {
+          // Check the tournament format before declaring a champion
+          const { data: tourney } = await supabase
+            .from('tournaments')
+            .select('format')
+            .eq('id', matchup.tournament_id)
+            .single();
+            
           // If there is no next match, this might be the finals of a single elim
-          isChampionDeclared = true;
+          // We only do this for bracket formats. For Round Robin, Veterans League, etc.
+          // the admin manually ends the tournament or it's based on standings.
+          if (tourney && ['SINGLE_ELIM', 'DOUBLE_ELIM'].includes(tourney.format)) {
+            isChampionDeclared = true;
+          }
         }
 
         if (isChampionDeclared) {
