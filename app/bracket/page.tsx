@@ -15,13 +15,13 @@ export default async function PublicBracketPage() {
   const { data: matchups } = tournament
     ? await supabase
         .from('bracket_matchups')
-        .select('id, round, slot, status, winner_id, is_bye, bracket_side, match_format, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug), series(team_a_wins, team_b_wins), schedule:schedules(games(home_score, away_score, status))')
+        .select('id, round, slot, status, winner_id, is_bye, bracket_side, match_format, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,group_name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,group_name), series(team_a_wins, team_b_wins), schedule:schedules(home_team_id, away_team_id, games(home_score, away_score, status))')
         .eq('tournament_id', tournament.id)
         .order('round', { ascending: true })
         .order('slot', { ascending: true })
     : { data: [] };
 
-  const { data: teams } = await supabase.from('teams').select('id, name').order('name');
+  const { data: teams } = await supabase.from('teams').select('id, name, slug, group_name').order('name');
 
   const { data: seeds } = tournament
     ? await supabase.from('tournament_seeds').select('*').eq('tournament_id', tournament.id)

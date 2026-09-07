@@ -9,11 +9,13 @@ import { parseError } from '@/lib/format';
 export default function SeedEditor({
   tournamentId,
   teams,
-  seeds
+  seeds,
+  matchups
 }: {
   tournamentId: string;
   teams: { id: string, name: string }[];
   seeds: { team_id: string, seed: number, manual_wins?: number, manual_losses?: number, point_differential?: number }[];
+  matchups?: any[];
 }) {
   const { showConfirm, showToast } = useNotification();
   const router = useRouter();
@@ -34,6 +36,40 @@ export default function SeedEditor({
 
   const [localSeeds, setLocalSeeds] = useState(() => buildMap());
 
+  // Compute dynamic stats from matchups
+  const getDynamicStats = (teamId: string) => {
+    let dWins = 0;
+    let dLosses = 0;
+    let dPd = 0;
+    if (matchups) {
+      for (const m of matchups) {
+        if (m.status !== 'COMPLETED' || m.is_bye) continue;
+        
+        const isTeamA = m.team_a?.id === teamId;
+        const isTeamB = m.team_b?.id === teamId;
+        if (!isTeamA && !isTeamB) continue;
+
+        if (m.winner_id === teamId) dWins++;
+        else dLosses++;
+
+        if (m.schedule) {
+          let teamPd = 0;
+          const scheds = Array.isArray(m.schedule) ? m.schedule : [m.schedule];
+          for (const sched of scheds) {
+            for (const g of sched.games || []) {
+              if (g.home_score != null && g.away_score != null) {
+                if (sched.home_team_id === teamId) teamPd += (g.home_score - g.away_score);
+                else teamPd += (g.away_score - g.home_score);
+              }
+            }
+          }
+          dPd += teamPd;
+        }
+      }
+    }
+    return { dWins, dLosses, dPd };
+  };
+
   const handleUpdate = (teamId: string, field: string, value: string) => {
     const map = new Map(localSeeds);
     const data = map.get(teamId);
@@ -42,6 +78,14 @@ export default function SeedEditor({
       map.set(teamId, data);
       setLocalSeeds(map);
     }
+  };
+
+  const getEffectiveStats = (teamId: string, data: any) => {
+    const dyn = getDynamicStats(teamId);
+    const w = data?.manual_wins === '' ? dyn.dWins : parseInt(data?.manual_wins || '0') || 0;
+    const l = data?.manual_losses === '' ? dyn.dLosses : parseInt(data?.manual_losses || '0') || 0;
+    const pd = data?.point_differential === '' ? dyn.dPd : parseInt(data?.point_differential || '0') || 0;
+    return { w, l, pd };
   };
 
   const handleSaveAll = async () => {
@@ -63,15 +107,12 @@ export default function SeedEditor({
       const sorted = [...teams].sort((a, b) => {
         const dA = localSeeds.get(a.id);
         const dB = localSeeds.get(b.id);
-        const wA = dA?.manual_wins === '' ? 0 : parseInt(dA?.manual_wins || '0') || 0;
-        const wB = dB?.manual_wins === '' ? 0 : parseInt(dB?.manual_wins || '0') || 0;
-        const pdA = dA?.point_differential === '' ? 0 : parseInt(dA?.point_differential || '0') || 0;
-        const pdB = dB?.point_differential === '' ? 0 : parseInt(dB?.point_differential || '0') || 0;
-        const lA = dA?.manual_losses === '' ? 0 : parseInt(dA?.manual_losses || '0') || 0;
-        const lB = dB?.manual_losses === '' ? 0 : parseInt(dB?.manual_losses || '0') || 0;
-        if (wB !== wA) return wB - wA;
-        if (pdB !== pdA) return pdB - pdA;
-        if (lA !== lB) return lA - lB;
+        const sA = getEffectiveStats(a.id, dA);
+        const sB = getEffectiveStats(b.id, dB);
+        
+        if (sB.w !== sA.w) return sB.w - sA.w;
+        if (sB.pd !== sA.pd) return sB.pd - sA.pd;
+        if (sA.l !== sB.l) return sA.l - sB.l;
         return a.name.localeCompare(b.name);
       });
       for (let i = 0; i < sorted.length; i++) {
@@ -91,15 +132,12 @@ export default function SeedEditor({
   const sortedTeams = [...teams].sort((a, b) => {
     const dA = localSeeds.get(a.id);
     const dB = localSeeds.get(b.id);
-    const wA = dA?.manual_wins === '' ? 0 : parseInt(dA?.manual_wins || '0') || 0;
-    const wB = dB?.manual_wins === '' ? 0 : parseInt(dB?.manual_wins || '0') || 0;
-    const pdA = dA?.point_differential === '' ? 0 : parseInt(dA?.point_differential || '0') || 0;
-    const pdB = dB?.point_differential === '' ? 0 : parseInt(dB?.point_differential || '0') || 0;
-    const lA = dA?.manual_losses === '' ? 0 : parseInt(dA?.manual_losses || '0') || 0;
-    const lB = dB?.manual_losses === '' ? 0 : parseInt(dB?.manual_losses || '0') || 0;
-    if (wB !== wA) return wB - wA;
-    if (pdB !== pdA) return pdB - pdA;
-    if (lA !== lB) return lA - lB;
+    const sA = getEffectiveStats(a.id, dA);
+    const sB = getEffectiveStats(b.id, dB);
+
+    if (sB.w !== sA.w) return sB.w - sA.w;
+    if (sB.pd !== sA.pd) return sB.pd - sA.pd;
+    if (sA.l !== sB.l) return sA.l - sB.l;
     return a.name.localeCompare(b.name);
   });
 

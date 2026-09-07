@@ -31,7 +31,7 @@ export default async function AdminBracketPage({
   const activeTournamentSlug = active ? slugify(active.name) : '';
 
   const { data: teams } = active 
-    ? await supabase.from('teams').select('id, name, group_name').eq('tournament_id', active.id).order('name')
+    ? await supabase.from('teams').select('id, name, slug, group_name').eq('tournament_id', active.id).order('name')
     : { data: [] };
 
   const { data: matchups } = active
@@ -101,6 +101,7 @@ export default async function AdminBracketPage({
                 tournamentId={active.id}
                 teams={teams ?? []}
                 seeds={seeds ?? []}
+                matchups={(matchups ?? []) as any}
               />
 
               {/* Round-robin standings */}
@@ -159,6 +160,7 @@ export default async function AdminBracketPage({
                   tournamentId={active.id}
                   teams={teams ?? []}
                   seeds={seeds ?? []}
+                  matchups={(matchups ?? []) as any}
                 />
               )}
               <AdminInteractiveBracket matchups={(matchups ?? []) as any} teams={(teams ?? []) as any} defaultMatchFormat={active.match_format} />
