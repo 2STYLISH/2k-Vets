@@ -47,18 +47,19 @@ export default function SeedEditor({
   const handleSaveAll = async () => {
     setBusy(true);
     try {
-      let tempSeed = 1000;
+      // Pass 1: Save stats and move all seeds out of the 1-N range to prevent unique constraint collisions
+      let tempSeed = 10000;
       for (const [teamId, data] of Array.from(localSeeds.entries())) {
         await updateSeedStats({
           tournamentId,
           teamId,
-          seed: data.seed === '' ? tempSeed++ : parseInt(data.seed),
+          seed: tempSeed++, // temporarily shift everyone to 10000+
           manual_wins: data.manual_wins === '' ? null : parseInt(data.manual_wins),
           manual_losses: data.manual_losses === '' ? null : parseInt(data.manual_losses),
           point_differential: data.point_differential === '' ? null : parseInt(data.point_differential),
         });
       }
-      // After saving stats, auto-assign seed numbers to match standings order
+      // Pass 2: Now that the 1-N slots are completely empty, assign the final seeds safely
       const sorted = [...teams].sort((a, b) => {
         const dA = localSeeds.get(a.id);
         const dB = localSeeds.get(b.id);
