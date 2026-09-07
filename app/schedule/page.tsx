@@ -71,14 +71,14 @@ export default async function SchedulePage({ searchParams }: { searchParams: { f
       </div>
 
       {/* Filter Tabs */}
-      <div className="inline-flex flex-wrap gap-1 bg-white/[0.04] rounded-xl p-1 border border-white/[0.06]">
+      <div className="inline-flex flex-wrap gap-1 bg-[#1f2937] rounded-xl p-1 border border-white/10">
         {filters.map((f) => (
           <a
             key={f.key}
             href={`/schedule?filter=${f.key}`}
-            className={`px-5 py-2.5 rounded-lg text-xs font-body font-medium uppercase tracking-[0.12em] transition-all duration-200 ${filter === f.key
-                ? 'bg-flag-red text-white shadow-md'
-                : 'text-white/50 hover:text-white hover:bg-navy-900/50'
+            className={`px-5 py-2.5 rounded-lg text-[10px] font-mono font-medium uppercase tracking-widest transition-all duration-200 ${filter === f.key
+                ? 'bg-flag-red text-white'
+                : 'text-white/50 hover:text-white hover:bg-white/5'
               }`}
           >
             {f.label}
@@ -87,7 +87,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: { f
       </div>
 
       {(games ?? []).length === 0 && (
-        <div className="card p-8 text-center">
+        <div className="surface-elevated rounded-xl p-8 text-center border border-white/10">
           <p className="text-white/40 font-mono text-sm uppercase tracking-widest">No games scheduled for this filter.</p>
         </div>
       )}

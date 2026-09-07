@@ -10,10 +10,10 @@ const AWARD_TYPES = [
 ];
 
 const STATUS_LABEL: Record<string, { label: string; style: string }> = {
-  DRAFT:        { label: 'Draft',        style: 'text-white/40 bg-white/[0.03]' },
-  UNDER_REVIEW: { label: 'Under Review', style: 'text-white/30 bg-white/[0.03]' },
-  FINALIZED:    { label: 'Finalized',    style: 'text-silver-200 bg-navy-50' },
-  PUBLISHED:    { label: 'Published',    style: 'text-white bg-navy-50' },
+  DRAFT:        { label: 'Draft',        style: 'text-white/40 bg-white/[0.03] border border-white/10' },
+  UNDER_REVIEW: { label: 'Under Review', style: 'text-white/30 bg-white/[0.03] border border-white/10' },
+  FINALIZED:    { label: 'Finalized',    style: 'text-white/70 bg-[#1f2937] border border-white/20' },
+  PUBLISHED:    { label: 'Published',    style: 'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20' },
 };
 
 export default async function AdminAwardsPage({ searchParams }: { searchParams: { tournament_id?: string } }) {
@@ -47,18 +47,22 @@ export default async function AdminAwardsPage({ searchParams }: { searchParams: 
   return (
     <div className="space-y-6">
       <BackButton />
-      <div className="pb-6 border-b border-white/[0.06]">
-        <h1 className="text-4xl text-white mb-2">AWARDS</h1>
-        <p className="text-sm text-white/40 mb-6">
+      <div className="section-header !mb-6 !pb-0 !border-b-0">
+        <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Awards</p>
+        <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase mb-4">AWARDS</h1>
+        <p className="text-white/40 text-sm mt-4 max-w-2xl mb-6">
           Candidate rankings auto-update every time you verify a game. The final winner is
           always selected manually — nothing publishes automatically.
         </p>
 
-        <TournamentSelect 
-          tournaments={tournaments ?? []} 
-          activeId={activeTournamentId} 
-          basePath="/admin/awards" 
-        />
+        <div className="flex items-center gap-4 bg-[#1f2937] p-2 rounded-xl border border-white/10 w-fit">
+          <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest font-bold pl-2">Tournament</p>
+          <TournamentSelect 
+            tournaments={tournaments ?? []} 
+            activeId={activeTournamentId} 
+            basePath="/admin/awards" 
+          />
+        </div>
       </div>
 
       {!activeTournamentId ? (
@@ -73,17 +77,17 @@ export default async function AdminAwardsPage({ searchParams }: { searchParams: 
             const candidateCount = awardId ? (countByAward.get(awardId) ?? 0) : 0;
 
             return (
-              <div key={type} className="card p-5 flex items-center justify-between gap-4">
+              <div key={type} className="surface-elevated rounded-xl border border-white/10 p-5 flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-3 mb-1">
                     <p className="text-sm text-white font-display tracking-widest">
                       {type.replace(/_/g, ' ')}
                     </p>
-                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-xl ${style}`}>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${style}`}>
                       {label}
                     </span>
                   </div>
-                  <p className="text-xs text-white/40 font-mono">
+                  <p className="text-[10px] text-white/40 font-mono tracking-widest uppercase">
                     {status === 'PUBLISHED' || status === 'FINALIZED'
                       ? `Winner: ${record?.winner?.gamertag ?? 'Unknown'}`
                       : 'No candidates yet'}
@@ -91,7 +95,7 @@ export default async function AdminAwardsPage({ searchParams }: { searchParams: 
                 </div>
                 <Link
                   href={`/admin/awards/${type}?tournament_id=${activeTournamentSlug}`}
-                  className="btn-secondary text-xs px-3 py-1.5 whitespace-nowrap"
+                  className="btn-secondary text-xs px-4 py-2 whitespace-nowrap"
                 >
                   MANAGE →
                 </Link>

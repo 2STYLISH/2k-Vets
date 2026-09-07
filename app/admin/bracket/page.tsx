@@ -59,29 +59,30 @@ export default async function AdminBracketPage({
       <BackButton />
       
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl text-white/90">BRACKET MANAGEMENT</h1>
-          <p className="text-white/40 text-sm mt-1">
+        <div className="section-header !mb-0 !pb-0 !border-b-0">
+          <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Bracket</p>
+          <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">BRACKET MANAGEMENT</h1>
+          <p className="text-white/40 text-sm mt-4 max-w-2xl">
             Verified series results advance teams automatically. The system never invents a winner —
             use Admin Override below for manual corrections.
           </p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-3 bg-surface-900/50 p-2 rounded-xl border border-white/[0.06]">
-            <span className="text-[10px] font-mono text-silver-400 uppercase tracking-widest pl-2">Tournament</span>
+          <div className="flex items-center gap-3 bg-[#1f2937] p-2 rounded-xl border border-white/10">
+            <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest pl-2 font-bold">Tournament</span>
             <TournamentFilter tournaments={tournaments ?? []} activeId={activeTournamentSlug} basePath="/admin/bracket" />
           </div>
         </div>
       </div>
 
       {!active ? (
-        <p className="card p-6 text-white/40 text-sm">No tournaments yet.</p>
+        <p className="surface-elevated rounded-xl p-6 text-white/40 text-sm border border-white/10 text-center uppercase tracking-widest font-mono">No tournaments yet.</p>
       ) : (
         <>
-          <div className="card p-4 flex items-center justify-between">
-            <p className="text-white/90">{active.name}</p>
-            <p className="text-xs font-mono text-flag-gold uppercase">{active.status}</p>
+          <div className="surface-elevated rounded-xl border border-flag-gold/40 shadow-[0_0_15px_rgba(212,160,23,0.1)] p-4 flex items-center justify-between">
+            <p className="text-white font-display tracking-widest">{active.name}</p>
+            <p className="text-[10px] font-mono font-bold text-flag-gold uppercase tracking-widest px-2 py-1 bg-flag-gold/10 rounded-full border border-flag-gold/20">{active.status}</p>
           </div>
 
           {active.format === 'VETERANS_LEAGUE' ? (

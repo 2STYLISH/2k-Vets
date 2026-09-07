@@ -125,41 +125,41 @@ export default function StandingsTable({
   return (
     <div className="space-y-6">
       {groupEntries.map(([groupName, groupRows]) => (
-        <div key={groupName} className="card overflow-hidden">
+        <div key={groupName} className="surface-elevated rounded-xl overflow-hidden">
           {groupEntries.length > 1 && (
-            <div className="bg-navy-900/80 px-5 py-3 border-b border-white/[0.06]">
+            <div className="bg-[#111827] px-5 py-3 border-b border-white/10">
               <h3 className="text-white font-display uppercase tracking-widest text-sm">{groupName}</h3>
             </div>
           )}
           <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-white/70">
-            <thead className="bg-navy-800 text-white text-xs font-mono uppercase tracking-widest">
+            <thead className="bg-[#111827] text-white/50 text-[10px] font-mono uppercase tracking-widest border-b border-white/10">
               <tr>
-                <th className="px-3 sm:px-5 py-3.5 font-medium">Rank</th>
-                <th className="px-3 sm:px-5 py-3.5 font-medium">Team</th>
-                <th className="px-3 sm:px-5 py-3.5 font-medium text-center">W-L</th>
-                <th className="px-3 sm:px-5 py-3.5 font-medium text-center">PD</th>
-                <th className="px-3 sm:px-5 py-3.5 font-medium text-right">PCT</th>
+                <th className="px-5 py-4 font-bold">Rank</th>
+                <th className="px-5 py-4 font-bold">Team</th>
+                <th className="px-5 py-4 font-bold text-center">W-L</th>
+                <th className="px-5 py-4 font-bold text-center">PD</th>
+                <th className="px-5 py-4 font-bold text-right">PCT</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-navy-100/20">
+            <tbody className="divide-y divide-white/5">
               {groupRows.map((r, i) => (
-                <tr key={r.team.id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="px-3 sm:px-5 py-3">
+                <tr key={r.team.id} className="hover:bg-white/5 transition-colors group">
+                  <td className="px-5 py-4">
                     <span className="font-mono text-white/40 group-hover:text-white/60 transition-colors">{i + 1}</span>
                   </td>
-                  <td className="px-3 sm:px-5 py-3">
+                  <td className="px-5 py-4">
                     <Link href={`/teams/${r.team.slug || r.team.name.toLowerCase().replace(/ /g, '-')}`} className="font-bold text-white group-hover:text-flag-gold transition-colors">
                       {r.team.name}
                     </Link>
                   </td>
-                  <td className="px-3 sm:px-5 py-3 font-mono text-center">
-                    <span className="text-emerald-400 font-bold">{r.wins}</span>-<span className="text-red-400 font-bold">{r.losses}</span>
+                  <td className="px-5 py-4 font-mono text-center text-base">
+                    <span className="text-white font-bold">{r.wins}</span><span className="text-white/30 mx-1">-</span><span className="text-white/60">{r.losses}</span>
                   </td>
-                  <td className={`px-3 sm:px-5 py-3 font-mono text-center ${r.pd > 0 ? 'text-green-400' : r.pd < 0 ? 'text-flag-red' : 'text-white/50'}`}>
+                  <td className={`px-5 py-4 font-mono text-center text-base ${r.pd > 0 ? 'text-green-400' : r.pd < 0 ? 'text-flag-red' : 'text-white/50'}`}>
                     {r.pd > 0 ? '+' : ''}{r.pd}
                   </td>
-                  <td className="px-3 sm:px-5 py-3 text-right font-mono text-white">
+                  <td className="px-5 py-4 text-right font-mono text-white text-base font-bold">
                     {r.winPct}
                   </td>
                 </tr>

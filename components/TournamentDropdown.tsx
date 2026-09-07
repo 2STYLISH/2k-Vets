@@ -24,11 +24,11 @@ export default function TournamentDropdown({
             router.push(`/playerstats?tab=tournaments`);
           }
         }}
-        className="w-full appearance-none bg-navy-900 border border-white/[0.08] text-white text-sm font-mono uppercase tracking-widest rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-flag-red/50 focus:border-flag-red/50 transition-colors cursor-pointer"
+        className="w-full appearance-none bg-[#1f2937] border border-white/20 text-white text-[10px] font-mono uppercase tracking-widest rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-1 focus:ring-flag-red focus:border-flag-red transition-colors cursor-pointer"
       >
-        <option value="" disabled>Select Tournament</option>
+        <option value="" disabled className="bg-[#1f2937] text-white">Select Tournament</option>
         {tournaments.map((t) => (
-          <option key={t.id} value={slugify(t.name)}>
+          <option key={t.id} value={slugify(t.name)} className="bg-[#1f2937] text-white">
             {t.name}
           </option>
         ))}

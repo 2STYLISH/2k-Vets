@@ -3,82 +3,95 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
-  @apply text-navy-900 font-body;
-  background: #0d1b3e;
+  @apply text-white font-body;
+  background-color: #111827;
 }
 
-h1,
-h2,
-h3,
-h4 {
-  @apply font-display tracking-wide;
+h1, h2, h3, h4 {
+  @apply font-display tracking-wide text-white;
 }
 
 /* ═══════════════════════════════════════════════
    ARENA DESIGN SYSTEM — 2K Veterans League
-   Deep navy base with frosted glass panels
+   Premium, structured, non-AI aesthetic
    ═══════════════════════════════════════════════ */
 
-/* ── Card Surfaces ────────────────────────────── */
+/* ── Typography Scale ─────────────────────────── */
+.text-hero {
+  @apply text-5xl md:text-7xl font-display tracking-[0.05em] uppercase leading-none;
+}
+.text-h1 {
+  @apply text-4xl md:text-5xl font-display tracking-[0.05em] uppercase leading-tight;
+}
+.text-h2 {
+  @apply text-2xl md:text-3xl font-display tracking-[0.05em] uppercase;
+}
+.text-h3 {
+  @apply text-xl font-display tracking-[0.05em] uppercase;
+}
+.text-metadata {
+  @apply text-[10px] md:text-xs font-mono uppercase tracking-[0.1em] text-white/50;
+}
+.text-accent {
+  @apply text-flag-gold font-bold;
+}
+
+/* ── Surface Scale (Replacing .card) ──────────── */
+/* Use solid colors instead of heavy backdrop-blur for a professional feel */
+.surface-base {
+  @apply bg-[#111827] border border-white/10;
+}
+
+.surface-elevated {
+  @apply bg-[#1f2937] border border-white/10;
+}
+
+/* Keep .card for backward compatibility while we refactor, but redefine it to be solid */
 .card {
-  @apply bg-navy-900/70 backdrop-blur-xl border border-white/[0.08] rounded-2xl;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.2),
-    0 8px 24px rgba(0, 0, 0, 0.15);
+  @apply surface-base rounded-xl;
 }
 
 .card-hover {
   @apply card transition-all duration-300;
 }
-
 .card-hover:hover {
-  @apply border-white/[0.15] bg-navy-900/80 -translate-y-0.5;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.25),
-    0 20px 40px rgba(0, 0, 0, 0.20);
+  @apply border-white/30 -translate-y-1 bg-[#1f2937];
 }
 
-/* ── Glass Panels ─────────────────────────────── */
-.glass-panel {
-  @apply bg-navy-900/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.15),
-    0 12px 40px rgba(0, 0, 0, 0.12);
+/* ── Structural Layouts ───────────────────────── */
+/* The layout for scoreboards */
+.scoreboard-panel {
+  @apply flex flex-col md:flex-row items-center justify-between surface-base p-4 md:p-6 rounded-lg;
+}
+
+/* The layout for vertical player cards */
+.trading-card {
+  @apply surface-base flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:border-white/30;
 }
 
 /* ── Page Section Headers ─────────────────────── */
 .section-header {
-  @apply relative pl-5 mb-8;
-}
-
-.section-header::before {
-  content: '';
-  @apply absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-flag-red via-flag-gold to-navy;
+  @apply mb-12 border-b border-white/10 pb-6;
 }
 
 /* ── Accent Stripe (flag tricolor) ────────────── */
 .accent-stripe {
-  height: 3px;
+  height: 4px;
   background: linear-gradient(90deg, #0033a0 0%, #0033a0 33%, #ce1126 33%, #ce1126 66%, #d4a017 66%, #d4a017 100%);
-  border-radius: 2px;
 }
 
-/* ── Text Effects ─────────────────────────────── */
-.text-glow {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-.title-glow {
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+.accent-stripe-vertical {
+  width: 4px;
+  background: linear-gradient(180deg, #0033a0 0%, #0033a0 33%, #ce1126 33%, #ce1126 66%, #d4a017 66%, #d4a017 100%);
 }
 
 /* ── Hairline Divider ─────────────────────────── */
 .hairline {
-  @apply border-white/[0.08];
+  @apply border-white/10;
 }
 
 /* ── Stat Number Cells ────────────────────────── */
@@ -88,235 +101,101 @@ h4 {
 
 /* ── Badge Pill ───────────────────────────────── */
 .pin-badge {
-  @apply inline-flex items-center justify-center rounded-full border border-white/10 text-white/70 bg-navy-800/80 text-[10px] font-mono uppercase tracking-widest px-3 py-1 shadow-sm;
+  @apply inline-flex items-center justify-center bg-[#1f2937] border border-white/20 text-white text-[10px] font-mono uppercase tracking-[0.15em] px-2.5 py-1;
+}
+
+.pin-badge.live {
+  @apply bg-flag-red/20 border-flag-red text-white font-bold shadow-[0_0_10px_rgba(206,17,38,0.3)];
 }
 
 /* ── Global Footer & Sponsor Marquee ────────────── */
 .footer-container {
-  margin-top: 1rem;
-  padding-bottom: 0;
-  padding-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: rgba(13, 27, 62, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  width: 100%;
-  position: relative;
+  @apply mt-12 pt-8 border-t border-white/10 bg-[#111827] flex flex-col items-center;
 }
 
 .footer-sponsors-section {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.footer-sponsors-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-  padding: 0 1rem;
-}
-
-.footer-sponsors-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-}
-
-.footer-sponsors-title {
-  font-size: 10px;
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.25em;
-  color: rgba(255,255,255,0.6);
-  white-space: nowrap;
+  @apply w-full max-w-7xl flex flex-col gap-4 mb-6 px-6;
 }
 
 .footer-marquee-container {
-  width: 100%;
-  position: relative;
+  @apply w-full overflow-hidden;
 }
 
 .footer-marquee-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  flex-wrap: wrap; /* allow wrapping on tiny mobile screens */
+  @apply flex items-center justify-center gap-8 flex-wrap;
 }
 
 .footer-sponsor-logo {
-  width: 150px;
-  height: 60px;
-  margin: 0 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.footer-sponsor-logo:hover {
-  transform: translateY(-4px) scale(1.05);
-  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+  @apply w-[120px] h-[45px] transition-transform duration-300;
 }
 
 .footer-sponsor-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.footer-sponsor-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-}
-
-.footer-sponsor-placeholder span {
-  font-size: 8px;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: rgba(255, 255, 255, 0.15);
+  @apply w-full h-full object-contain opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-300;
 }
 
 .footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  width: 100%;
-  background: transparent;
+  @apply w-full border-t border-white/10 py-4 text-center;
 }
 
-.footer-bottom-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+/* ── Utilities ────────────────────────────────── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
-.footer-copyright {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
-  font-family: var(--font-body);
-}
-
-
-/* ── Text Selection ───────────────────────────── */
 ::selection {
-  background: rgba(206, 17, 38, 0.3);
+  background: rgba(206, 17, 38, 0.5);
+  color: white;
 }
 
 /* ── Custom Scrollbar ─────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: #111827;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.2);
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* ── Form Inputs ──────────────────────────────── */
 .input-field {
-  @apply w-full bg-navy-800/80 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-flag-red/30 focus:border-flag-red/50 transition-all duration-200;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) inset;
+  @apply w-full bg-[#1f2937] border border-white/20 px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-flag-red transition-colors rounded-none;
 }
 
-/* ── Primary Button ───────────────────────────── */
+/* ── Buttons ──────────────────────────────────── */
+/* Removing pills, moving to sharp or slightly rounded corners for a premium feel */
 .btn-primary {
-  @apply px-6 py-2.5 bg-flag-red text-white rounded-xl font-display tracking-[0.15em] text-sm uppercase hover:bg-flag-red-400 active:scale-[0.97] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed;
-  box-shadow: 0 2px 8px rgba(206, 17, 38, 0.35);
+  @apply px-6 py-3 bg-flag-red text-white font-display tracking-[0.1em] uppercase hover:bg-[#a90e1f] active:scale-95 transition-all disabled:opacity-50;
 }
 
-.btn-primary:hover {
-  box-shadow: 0 4px 16px rgba(206, 17, 38, 0.45);
-}
-
-/* ── Secondary Button ─────────────────────────── */
 .btn-secondary {
-  @apply px-6 py-2.5 border border-white/15 text-white/80 rounded-xl font-display tracking-[0.15em] text-sm uppercase bg-white/[0.05] hover:border-white/30 hover:text-white hover:bg-white/10 active:scale-[0.97] transition-all duration-200 disabled:opacity-40;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* ── Danger Button ────────────────────────────── */
-.btn-danger {
-  @apply px-6 py-2.5 bg-flag-red text-white rounded-xl font-display tracking-[0.15em] text-sm uppercase hover:bg-flag-red-400 active:scale-[0.97] transition-all duration-200 disabled:opacity-40;
-  box-shadow: 0 2px 8px rgba(206, 17, 38, 0.25);
-}
-
-/* ── Stat Card (for stat highlights) ──────────── */
-.stat-card {
-  @apply bg-navy-800/60 border border-white/[0.06] rounded-xl p-4 text-center transition-all duration-300;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.stat-card:hover {
-  @apply border-white/[0.12] -translate-y-0.5;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  @apply px-6 py-3 border border-white/20 text-white font-display tracking-[0.1em] uppercase bg-transparent hover:bg-white/10 active:scale-95 transition-all disabled:opacity-50;
 }
 
 /* ── Animations ───────────────────────────────── */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-
-  100% {
-    background-position: 200% center;
-  }
-}
-
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out both;
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.animate-slide-up {
-  animation: slideUp 0.5s ease-out both;
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; box-shadow: 0 0 15px rgba(206, 17, 38, 0.5); }
+}
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
 }
 
 /* ── Reduced Motion ───────────────────────────── */
@@ -328,104 +207,19 @@ h4 {
   }
 }
 
-/* ═══════════════════════════════════════════════
-   MOBILE OPTIMIZATION
-   Touch targets, safe areas, responsive fixes
-   ═══════════════════════════════════════════════ */
-
-/* ── Remove 300ms tap delay on all interactive elements ── */
-a,
-button,
-[role="button"],
-input,
-select,
-textarea,
-label {
+/* ── Mobile Optimization ──────────────────────── */
+a, button, [role="button"], input, select {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── Minimum touch targets on mobile (44px recommended) ── */
 @media (max-width: 767px) {
-
-  /* Ensure buttons and links have minimum touch size */
-  button,
-  a,
-  [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
+  button, a, [role="button"] {
+    min-height: 48px;
+    min-width: 48px;
   }
-
-  /* Exception for inline text links */
-  p a,
-  td a,
-  span a,
-  li a {
+  nav a, p a, td a, span a, .inline-flex a {
     min-height: auto;
     min-width: auto;
   }
-
-  /* Exception for nav pills that have padding */
-  nav a,
-  .inline-flex a {
-    min-height: auto;
-    min-width: auto;
-  }
-
-  /* Improve mobile table scrolling with momentum */
-  .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  /* Prevent horizontal overflow on mobile */
-  main {
-    overflow-x: hidden;
-  }
-
-  /* Better text rendering on mobile */
-  body {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
-}
-
-/* ── Safe area insets for notched devices ─────── */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  header {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-}
-
-/* ── Mobile stat table card scroll hint ──────── */
-@media (max-width: 767px) {
-  .card .overflow-x-auto {
-    position: relative;
-  }
-
-  .card .overflow-x-auto::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 24px;
-    background: linear-gradient(90deg, transparent, rgba(10, 15, 46, 0.8));
-    pointer-events: none;
-    z-index: 1;
-    opacity: 1;
-    transition: opacity 0.3s;
-  }
-}
-
-/* ── Prevent body scroll when mobile menu is open ── */
-body.menu-open {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
 }

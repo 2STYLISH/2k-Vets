@@ -205,33 +205,31 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
       <BackButton />
 
       {/* --- MASTHEAD --- */}
-      <div className="card p-6 md:p-10 relative overflow-hidden">
+      <div className="surface-elevated rounded-xl p-6 md:p-10 relative overflow-hidden">
         {/* Accent stripe top */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-navy via-flag-red to-flag-gold" />
-        {/* Subtle grid background */}
-        <div className="absolute inset-0 bg-grid-subtle opacity-20 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-flag-red" />
 
         <div className="relative z-10">
           <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-4 font-bold">PLAYER</p>
 
           <div className="flex flex-col md:flex-row gap-8 items-start md:items-end">
             {/* Player Photo Box */}
-            <div className="w-32 h-32 md:w-48 md:h-48 border-2 border-white/[0.06] bg-navy-900 rounded-2xl shrink-0 relative overflow-hidden shadow-lg">
+            <div className="w-32 h-32 md:w-48 md:h-48 border border-white/10 bg-[#111827] rounded-xl shrink-0 relative overflow-hidden shadow-lg flex items-center justify-center">
               {player.photo_path ? (
                 <img src={player.photo_path} alt={player.gamertag} className="w-full h-full object-cover" />
               ) : (
-                <img src="/logo.png" alt={player.gamertag} className="w-full h-full object-cover opacity-60" />
+                <img src="/bg-logo.png" alt={player.gamertag} className="w-full h-full object-contain p-6 opacity-40" />
               )}
             </div>
 
             {/* Gamertag & Info */}
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-end gap-4 mb-3">
-                <h1 className="text-3xl sm:text-5xl md:text-7xl text-white font-display uppercase tracking-[0.1em] leading-none title-glow break-words">
+                <h1 className="text-3xl sm:text-5xl md:text-7xl text-white font-display uppercase tracking-[0.1em] leading-none break-words">
                   {player.gamertag}
                 </h1>
                 {(roleDisplay || player.position) && (
-                  <span className="mb-1 inline-block px-4 py-1.5 bg-white/[0.05] border border-white/[0.06] rounded-xl text-xl md:text-3xl font-display text-flag-gold uppercase tracking-widest">
+                  <span className="mb-1 inline-block px-4 py-1.5 bg-[#111827] border border-white/10 rounded-xl text-xl md:text-3xl font-display text-flag-gold uppercase tracking-widest">
                     {roleDisplay || player.position}
                   </span>
                 )}
@@ -241,7 +239,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
           </div>
 
           {/* Masthead Stats Ribbon */}
-          <div className="mt-8 pt-6 border-t border-white/[0.06] grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+          <div className="mt-8 pt-6 border-t border-white/10 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
             <div>
               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">RECORD</p>
               <p className="text-xl sm:text-2xl font-mono text-flag-gold leading-none">{wins}-{losses}</p>
@@ -283,91 +281,92 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
         <div className="lg:col-span-2 space-y-6">
 
           {/* Career Totals */}
-          <div className="card p-6">
+          <div className="surface-elevated rounded-xl p-8">
             <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] mb-4 font-bold">CAREER STATS</p>
             <h2 className="text-2xl font-display text-white uppercase tracking-[0.1em] mb-6">FULL CAREER TOTALS</h2>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-navy-100/30 border border-white/[0.06] rounded-xl overflow-hidden mb-6">
-              <div className="bg-navy-900/70 p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/10 border border-white/10 rounded-xl overflow-hidden mb-6">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">GP</p>
                 <p className="text-xl font-mono text-flag-gold">{gamesPlayed}</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">{wins}-{losses}</p>
               </div>
-              <div className="bg-navy-900/70 p-4">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">PPG</p>
                 <p className="text-xl font-mono text-white">{ppg}</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">POINTS</p>
               </div>
-              <div className="bg-navy-900/70 p-4">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">RPG</p>
                 <p className="text-xl font-mono text-white">{rpg}</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">BOARDS</p>
               </div>
-              <div className="bg-navy-900/70 p-4">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">APG</p>
                 <p className="text-xl font-mono text-white">{apg}</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">CREATION</p>
               </div>
 
-              <div className="bg-navy-900/70 p-4">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">BPG</p>
                 <p className="text-xl font-mono text-white">{bpg}</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">BLOCKS</p>
               </div>
-              <div className="bg-navy-900/70 p-4">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">TOV</p>
                 <p className="text-xl font-mono text-white">{topg}</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">PER GAME</p>
               </div>
-              <div className="bg-navy-900/70 p-4">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">FG%</p>
                 <p className="text-xl font-mono text-white">{fgPct}%</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">{totalFgm}/{totalFga}</p>
               </div>
-              <div className="bg-navy-900/70 p-4">
+              <div className="bg-[#111827] p-4">
                 <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">3P%</p>
                 <p className="text-xl font-mono text-white">{tpPct}%</p>
                 <p className="text-[9px] font-mono text-white/30 mt-1">{totalTpm}/{totalTpa}</p>
               </div>
             </div>
 
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 relative overflow-hidden">
-              <p className="text-[9px] text-white/40 font-mono uppercase tracking-widest mb-4">BOX SCORE ROLLUP</p>
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-4">
-                <div>
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">PTS</p>
+            <div>
+              <p className="text-[10px] text-white/50 font-mono uppercase tracking-[0.1em] mb-4 font-bold">BOX SCORE ROLLUP</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-white/10 border border-white/10 rounded-xl overflow-hidden">
+                <div className="bg-[#111827] p-4">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">PTS</p>
                   <p className="text-xl font-mono text-flag-gold">{totalPts}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">REB</p>
+                <div className="bg-[#111827] p-4">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">REB</p>
                   <p className="text-xl font-mono text-flag-gold">{totalReb}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">AST</p>
+                <div className="bg-[#111827] p-4">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">AST</p>
                   <p className="text-xl font-mono text-white">{totalAst}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">STL</p>
+                <div className="bg-[#111827] p-4">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">STL</p>
                   <p className="text-xl font-mono text-white">{totalStl}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">BLK</p>
+                <div className="bg-[#111827] p-4">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">BLK</p>
                   <p className="text-xl font-mono text-white">{totalBlk}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">TO</p>
+                
+                <div className="bg-[#111827] p-4">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">TO</p>
                   <p className="text-xl font-mono text-white">{totalTov}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">FOUL</p>
+                <div className="bg-[#111827] p-4">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">FOUL</p>
                   <p className="text-xl font-mono text-white">-</p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">FGM/FGA</p>
+                <div className="bg-[#111827] p-4 col-span-2 sm:col-span-2">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">FGM/FGA</p>
                   <p className="text-xl font-mono text-white">{totalFgm}/{totalFga}</p>
                 </div>
-                <div className="col-span-1">
-                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1">3PM/3PA</p>
+                <div className="bg-[#111827] p-4 col-span-2 sm:col-span-1">
+                  <p className="text-[9px] font-mono text-white/40 uppercase mb-1 font-bold tracking-widest">3PM/3PA</p>
                   <p className="text-xl font-mono text-white">{totalTpm}/{totalTpa}</p>
                 </div>
               </div>
@@ -375,7 +374,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
           </div>
 
           {/* Peak Games */}
-          <div className="card p-6">
+          <div className="surface-elevated rounded-xl p-8">
             <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] mb-4 font-bold">CAREER HIGHS</p>
             <h2 className="text-2xl font-display text-white uppercase tracking-[0.1em] mb-6">PEAK GAMES</h2>
 
@@ -397,7 +396,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
 
         {/* Right Column (Teams, Accolades) */}
         <div className="space-y-6">
-          <div className="card p-6">
+          <div className="surface-elevated rounded-xl p-8">
             <div className="flex justify-between items-center mb-4">
               <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] font-bold">ROSTER ACTIVITY</p>
               <span className="text-[10px] font-mono bg-white/[0.05] border border-white/[0.06] text-white/50 px-2 py-0.5 rounded-lg">{activeLeagues.length} ACTIVE</span>
@@ -411,11 +410,11 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                 </div>
               )}
               {activeLeagues.map((x, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl">
+                <div key={idx} className="flex items-center gap-3 p-3 bg-[#1f2937] border border-white/10 rounded-xl">
                   {x.teamLogo ? (
-                    <img src={x.teamLogo} className="w-10 h-10 object-cover rounded-lg bg-navy-900 border border-white/[0.06]" />
+                    <img src={x.teamLogo} className="w-10 h-10 object-contain p-1.5 rounded-lg bg-[#111827] border border-white/10" />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center"><span className="text-[8px] font-mono text-white/40">TEAM</span></div>
+                    <div className="w-10 h-10 rounded-lg bg-[#111827] border border-white/10 flex items-center justify-center"><span className="text-[8px] font-mono text-white/40">TEAM</span></div>
                   )}
                   <div>
                     <p className="text-sm font-display text-white tracking-[0.1em] uppercase">{x.teamName}</p>
@@ -430,11 +429,11 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                 <h2 className="text-lg font-display text-white/40 uppercase tracking-[0.1em] mb-4">PAST TEAMS</h2>
                 <div className="space-y-3 opacity-60 hover:opacity-100 transition-opacity">
                   {pastLeagues.map((x, idx) => (
-                    <div key={'past' + idx} className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+                    <div key={'past' + idx} className="flex items-center gap-3 p-3 bg-[#111827] border border-white/5 rounded-xl">
                       {x.teamLogo ? (
-                        <img src={x.teamLogo} className="w-10 h-10 object-cover rounded-lg bg-navy-900 border border-white/[0.06] grayscale" />
+                        <img src={x.teamLogo} className="w-10 h-10 object-contain p-1.5 rounded-lg bg-[#111827] border border-white/10 opacity-70" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center"><span className="text-[8px] font-mono text-white/30">TEAM</span></div>
+                        <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center"><span className="text-[8px] font-mono text-white/30">TEAM</span></div>
                       )}
                       <div>
                         <p className="text-sm font-display text-white/70 tracking-[0.1em] uppercase">{x.teamName}</p>
@@ -448,7 +447,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
           </div>
 
           {/* Accolades & Milestones */}
-          <div className="card p-6">
+          <div className="surface-elevated rounded-xl p-8">
             <h2 className="text-2xl font-display text-white tracking-widest mb-4">TROPHY CASE</h2>
             <div className="space-y-3 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
               {champWins.length === 0 && runnerUps.length === 0 && (awards?.length ?? 0) === 0 ? (
@@ -481,7 +480,7 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
                     const icon = AWARD_LABELS[a.award_type]?.icon || '🏅';
                     const tName = Array.isArray(a.tournament) ? (a.tournament[0] as any)?.name : (a.tournament as any)?.name;
                     return (
-                      <div key={'aw' + idx} className="flex items-center gap-3 p-3 bg-white/[0.03] border border-white/10 rounded-lg">
+                      <div key={'aw' + idx} className="flex items-center gap-3 p-3 bg-[#111827] border border-white/10 rounded-lg">
                         <span className="text-2xl">{icon}</span>
                         <div>
                           <p className="text-white font-bold font-mono uppercase text-sm tracking-widest">{label}</p>
@@ -529,14 +528,14 @@ function HighCard({ label, val, row, playerTeamId }: { label: string, val: numbe
   const oppName = isHome ? awayTeam?.name : homeTeam?.name;
 
   return (
-    <div className="bg-navy-900/60 border border-white/[0.06] p-4 rounded-xl group hover:border-white/15 hover:-translate-y-0.5 transition-all">
-      <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-3xl font-mono text-flag-gold mb-3">{val}</p>
+    <div className="bg-[#111827] border border-white/10 p-5 rounded-xl group hover:border-flag-red hover:-translate-y-0.5 transition-all">
+      <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-2 font-bold">{label}</p>
+      <p className="text-4xl font-mono text-flag-gold mb-4">{val}</p>
       <p className="text-[10px] font-mono text-white uppercase truncate mb-1" title={oppName}>{oppName || 'TBD'} <span className="text-white/20">/</span> {myScore}-{oppScore}</p>
-      <p className="text-[9px] font-mono text-white/40 uppercase truncate mb-3" title={tournament?.name}>
+      <p className="text-[9px] font-mono text-white/40 uppercase truncate mb-4" title={tournament?.name}>
         {formatDate(schedule?.scheduled_date)} <span className="text-white/20">/</span> {tournament?.name}
       </p>
-      <Link href={formatGameUrl(game.id, game.short_id, game.home_team?.name, game.away_team?.name)} className="inline-block bg-flag-red text-white hover:bg-navy-600 border border-flag-red px-3 py-1.5 rounded-lg text-[9px] font-mono uppercase tracking-widest transition-colors shadow-sm">
+      <Link href={formatGameUrl(game.id, game.short_id, game.home_team?.name, game.away_team?.name)} className="inline-block bg-flag-red text-white hover:bg-red-700 border border-flag-red px-3 py-1.5 rounded text-[9px] font-mono uppercase tracking-widest transition-colors shadow-sm font-bold">
         VIEW MATCH
       </Link>
     </div>

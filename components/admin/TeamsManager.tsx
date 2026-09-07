@@ -99,7 +99,7 @@ export default function TeamsManager({
     <div className="space-y-6">
       {/* Top controls: Create Team & Select Tournament */}
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="card p-5">
+        <div className="surface-elevated rounded-xl border border-white/10 p-6">
           <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest mb-4">New Team</h2>
           <form className="flex gap-3" onSubmit={handleCreateTeam}>
             <input
@@ -114,18 +114,18 @@ export default function TeamsManager({
           </form>
         </div>
 
-        <div className="card p-5 border-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.05)]">
+        <div className="surface-elevated rounded-xl border border-flag-gold/40 p-6 shadow-[0_0_15px_rgba(212,160,23,0.1)]">
           <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest mb-4">Active Tournament Rosters</h2>
           <div className="flex items-center gap-3">
             <label htmlFor="tourney-logo-upload" className="relative cursor-pointer group shrink-0" title="Click to upload tournament logo">
-              <div className="w-10 h-10 rounded border border-surface-600 bg-surface-800 flex items-center justify-center overflow-hidden group-hover:border-gold/50 transition-colors">
+              <div className="w-10 h-10 rounded border border-white/10 bg-[#111827] flex items-center justify-center overflow-hidden group-hover:border-flag-gold/50 transition-colors">
                 {uploadingTourney ? (
                   <span className="text-[9px] text-mute font-mono">...</span>
                 ) : tournaments.find(t => t.id === activeTournament)?.logo_url ? (
                   <img 
                     src={tournaments.find(t => t.id === activeTournament)?.logo_url!} 
                     alt="Tournament Logo" 
-                    className="w-full h-full object-cover bg-surface-800"
+                    className="w-full h-full object-cover bg-[#111827]"
                   />
                 ) : (
                   <span className="text-[9px] text-mute font-mono group-hover:text-silver-300 transition-colors">LOGO</span>
@@ -270,13 +270,13 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
   }
 
   return (
-    <div className="card p-5 flex flex-col">
+    <div className="surface-elevated rounded-xl border border-white/10 p-6 flex flex-col">
       {/* Team header */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-surface-700">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
         <div className="flex items-center gap-3">
           {/* Logo preview / upload */}
           <label htmlFor={`logo-upload-${team.id}`} className="relative cursor-pointer group" title="Click to upload logo">
-            <div className="w-10 h-10 rounded-lg bg-surface-800 border border-surface-600 group-hover:border-silver-400 transition-colors overflow-hidden flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-[#111827] border border-white/10 group-hover:border-white/40 transition-colors overflow-hidden flex items-center justify-center">
               {logoUrl ? (
                 <img src={logoUrl} alt={team.name} className="w-full h-full object-cover" />
               ) : (
@@ -321,7 +321,7 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
       </div>
 
       {/* Add player */}
-      <div className="pt-3 border-t border-surface-700">
+      <div className="pt-3 border-t border-white/10">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] font-mono text-white font-bold uppercase tracking-widest">Register Player</span>
         </div>
@@ -332,7 +332,7 @@ function TeamCard({ team, roster, tournamentId, unassignedPlayers }: { team: Tea
             placeholder="Type to search player..." 
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="flex-1 bg-surface-900 border border-surface-600 rounded-lg px-2 py-1.5 text-sm text-white font-bold focus:outline-none"
+            className="flex-1 bg-[#1f2937] border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-flag-red"
           />
           <datalist id={`players-${team.id}`}>
             {unassignedPlayers.map(p => (

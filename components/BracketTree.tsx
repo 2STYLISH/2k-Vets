@@ -107,7 +107,7 @@ function BracketSection({ title, matchups, onMatchupClick, defaultMatchFormat }:
 
   return (
     <div>
-      <h3 className="text-xl font-display text-flag-gold tracking-[0.2em] mb-4 drop-shadow-sm">{title}</h3>
+      <h3 className="text-xl font-display text-flag-gold tracking-[0.2em] mb-4">{title}</h3>
       <div className="flex gap-6 overflow-x-auto pb-4 pl-6">
         {rounds.map((round) => {
           let label = `ROUND ${round}`;
@@ -208,11 +208,11 @@ function MatchCard({ matchup, onClick, defaultMatchFormat }: { matchup: Matchup;
         {matchup.matchNumber}
       </div>
       {onClick ? (
-        <button onClick={() => onClick(matchup)} className="w-full text-left relative card p-4 block hover:border-flag-gold/50 hover:shadow-[0_4px_16px_rgba(212,160,23,0.15)] transition-all cursor-pointer z-10">
+        <button onClick={() => onClick(matchup)} className="w-full text-left relative surface-elevated rounded-xl border border-white/10 p-4 block hover:border-flag-gold hover:-translate-y-0.5 transition-all cursor-pointer z-10">
           {innerContent}
         </button>
       ) : (
-        <a href={href} className="w-full text-left relative card p-4 block hover:border-flag-red/50 hover:shadow-[0_4px_16px_rgba(206,17,38,0.15)] transition-all z-10">
+        <a href={href} className="w-full text-left relative surface-elevated rounded-xl border border-white/10 p-4 block hover:border-flag-red hover:-translate-y-0.5 transition-all z-10">
           {innerContent}
         </a>
       )}

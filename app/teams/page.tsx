@@ -44,11 +44,12 @@ export default async function TeamsPage({
     <div className="space-y-6 max-w-5xl mx-auto px-4 sm:px-0">
       
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl md:text-5xl font-display text-white tracking-widest title-glow uppercase">
+        <div className="section-header">
+          <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">2K Veterans League</p>
+          <h1 className="text-3xl md:text-5xl font-display text-white tracking-widest uppercase">
             Teams
           </h1>
-          <p className="text-white/50 font-mono text-sm mt-2 uppercase tracking-widest">
+          <p className="text-white/50 font-mono text-sm mt-2 uppercase tracking-widest font-bold">
             {totalItems} Teams Total
           </p>
         </div>
@@ -63,7 +64,7 @@ export default async function TeamsPage({
             name="q"
             defaultValue={q}
             placeholder="Search teams..."
-            className="w-full bg-navy-900 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-flag-red focus:ring-1 focus:ring-flag-red transition-all"
+            className="w-full bg-[#1f2937] border border-white/10 rounded px-10 py-3 text-sm text-white font-mono uppercase tracking-widest focus:outline-none focus:border-flag-red transition-all placeholder:text-white/30"
           />
         </form>
       </div>
@@ -74,21 +75,21 @@ export default async function TeamsPage({
           <Link
             key={team.slug}
             href={`/teams/${team.slug}`}
-            className="group card p-4 flex items-center gap-4 hover:border-flag-red/50 hover:shadow-lg transition-all"
+            className="group surface-elevated rounded-xl flex items-center overflow-hidden hover:border-flag-red hover:-translate-y-1 transition-all border border-white/10"
           >
-            <div className="w-16 h-16 rounded-xl border border-white/10 bg-navy-900 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-[#111827] border-r border-white/10 flex items-center justify-center shrink-0 p-4">
               {team.logo_url || team.logo_path ? (
-                <img src={team.logo_url || team.logo_path} alt={team.name} className="w-full h-full object-cover" />
+                <img src={team.logo_url || team.logo_path} alt={team.name} className="w-full h-full object-contain" />
               ) : (
-                <span className="text-2xl font-display text-white/20 uppercase">{team.short_name || team.name.charAt(0)}</span>
+                <span className="text-3xl font-display text-white/20 uppercase">{team.short_name || team.name.charAt(0)}</span>
               )}
             </div>
-            <div>
-              <h2 className="text-lg font-display text-white uppercase tracking-widest group-hover:text-flag-gold transition-colors">
+            <div className="p-6 flex-1 min-w-0">
+              <h2 className="text-xl sm:text-2xl font-display text-white uppercase tracking-widest group-hover:text-flag-red transition-colors truncate">
                 {team.name}
               </h2>
               {team.short_name && (
-                <p className="text-xs font-mono text-white/40 uppercase tracking-widest mt-1">
+                <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.2em] mt-2 font-bold">
                   {team.short_name}
                 </p>
               )}
@@ -104,21 +105,21 @@ export default async function TeamsPage({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
+        <div className="flex items-center justify-center gap-3 mt-12">
           <Link
             href={`/teams?q=${encodeURIComponent(q)}&page=${Math.max(1, page - 1)}`}
-            className={`px-4 py-2 rounded-lg border border-white/10 font-mono text-sm transition-colors ${page <= 1 ? 'pointer-events-none opacity-50 bg-navy-900 text-white/30' : 'bg-navy-800 text-white hover:bg-navy-700 hover:border-white/20'}`}
+            className={`px-6 py-3 rounded font-mono text-[10px] uppercase tracking-widest transition-colors ${page <= 1 ? 'pointer-events-none opacity-30 bg-[#1f2937] text-white/30' : 'bg-[#111827] text-white/50 border border-white/10 hover:text-white hover:bg-white/5'}`}
           >
-            PREV
+            Previous
           </Link>
-          <span className="font-mono text-sm text-white/50 px-4">
-            {page} / {totalPages}
+          <span className="font-mono text-[10px] text-white/40 tracking-widest uppercase px-4 font-bold">
+            Page {page} of {totalPages}
           </span>
           <Link
             href={`/teams?q=${encodeURIComponent(q)}&page=${Math.min(totalPages, page + 1)}`}
-            className={`px-4 py-2 rounded-lg border border-white/10 font-mono text-sm transition-colors ${page >= totalPages ? 'pointer-events-none opacity-50 bg-navy-900 text-white/30' : 'bg-navy-800 text-white hover:bg-navy-700 hover:border-white/20'}`}
+            className={`px-6 py-3 rounded font-mono text-[10px] uppercase tracking-widest transition-colors ${page >= totalPages ? 'pointer-events-none opacity-30 bg-[#1f2937] text-white/30' : 'bg-[#111827] text-white/50 border border-white/10 hover:text-white hover:bg-white/5'}`}
           >
-            NEXT
+            Next
           </Link>
         </div>
       )}

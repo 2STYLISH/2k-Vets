@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: '2K Veterans League',
   description: 'NBA 2K Pro-Am league — stats, brackets, schedules, awards.',
   icons: {
-    icon: '/bg-logo.png',
+    icon: '/2k_veterans_favicon.svg',
   },
 };
 

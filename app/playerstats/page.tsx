@@ -2,7 +2,6 @@ import Link from '@/components/HiddenLink';
 import { createClient } from '@/lib/supabase/server';
 import { averageStats } from '@/lib/stats';
 import type { PlayerGameStats } from '@/lib/types';
-import TournamentDropdown from '@/components/TournamentDropdown';
 import { slugify } from '@/lib/format';
 import LeaderboardCard from '@/components/TournamentLeaders';
 import PaginatedPlayerTable from '@/components/PaginatedPlayerTable';
@@ -17,19 +16,19 @@ function TabHeader({ activeTab, activeTournamentSlug }: { activeTab: string; act
     <div className="mb-6">
       <div className="section-header">
         <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">2K Veterans League Leaderboards</p>
-        <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase title-glow">Player Stats</h1>
+        <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">Player Stats</h1>
       </div>
-      <div className="inline-flex flex-wrap gap-1 bg-white/[0.04] rounded-xl p-1 border border-white/[0.06] mt-6">
+      <div className="inline-flex flex-wrap gap-1 bg-[#111827] rounded-xl p-1.5 border border-white/10 mt-6">
         <Link
           href={`/playerstats?tab=tournaments${activeTournamentSlug ? `&t=${activeTournamentSlug}` : ''}`}
-          className={`px-5 py-2.5 text-xs font-body font-medium uppercase tracking-[0.12em] rounded-lg transition-all duration-200 ${activeTab === 'tournaments' ? 'bg-flag-red text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-navy-900/50'
+          className={`px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${activeTab === 'tournaments' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'
             }`}
         >
           Tournaments
         </Link>
         <Link
           href={`/playerstats?tab=all`}
-          className={`px-5 py-2.5 text-xs font-body font-medium uppercase tracking-[0.12em] rounded-lg transition-all duration-200 ${activeTab === 'all' ? 'bg-flag-red text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-navy-900/50'
+          className={`px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${activeTab === 'all' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'
             }`}
         >
           Overall Stats
@@ -140,7 +139,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
           {(tournaments ?? []).length === 0 && <p className="text-white/40 font-mono text-sm uppercase">No tournaments yet.</p>}
           {(tournaments ?? []).map(t => (
             <Link key={t.id} href={`/playerstats?tab=tournaments&t=${slugify(t.name)}`}
-              className="block card-hover p-6 group">
+              className="block surface-elevated rounded-xl p-6 group hover:border-flag-red hover:-translate-y-1 transition-all border border-white/10">
               <div className="flex justify-between items-start mb-4">
                 <p className="text-lg font-display text-white tracking-[0.1em] uppercase group-hover:text-flag-red transition-colors truncate">{t.name}</p>
               </div>
@@ -216,9 +215,29 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     <div className="max-w-5xl mx-auto space-y-8">
       <TabHeader activeTab="tournaments" activeTournamentSlug={activeTournamentSlug} />
 
-      {/* Tournament Dropdown */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <TournamentDropdown tournaments={tournaments ?? []} activeTournamentSlug={activeTournamentSlug} />
+      {/* Tournament Selection Pills */}
+      <div className="mt-6 mb-4">
+        {(tournaments ?? []).length > 0 && (
+          <div className="inline-flex flex-wrap gap-1 bg-[#1f2937] rounded-xl p-1 border border-white/10">
+            {(tournaments ?? []).map((t) => {
+              const slug = slugify(t.name);
+              const isActive = activeTournamentSlug === slug;
+              return (
+                <a
+                  key={t.id}
+                  href={`/playerstats?tab=tournaments&t=${slug}`}
+                  className={`px-5 py-2.5 rounded-lg text-[10px] font-mono font-medium uppercase tracking-widest transition-all duration-200 ${
+                    isActive
+                      ? 'bg-flag-red text-white'
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {t.name}
+                </a>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {activeTournament && (
@@ -234,8 +253,8 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
       {tourneyRows.length > 0 && <LeaderboardGrid rows={tourneyRows} />}
 
       {teamMap.size === 0 && (
-        <div className="card p-8 text-center">
-          <p className="text-white/40 font-mono uppercase tracking-widest text-sm">No player stats yet for this tournament.</p>
+        <div className="surface-elevated rounded-xl p-8 text-center border border-white/10">
+          <p className="text-white/40 font-mono uppercase tracking-widest text-sm font-bold">No player stats yet for this tournament.</p>
         </div>
       )}
 

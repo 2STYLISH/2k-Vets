@@ -130,26 +130,26 @@ export default async function TournamentDashboard({ params }: { params: { id: st
     <div className="space-y-10">
       <BackButton />
       {/* Header Panel */}
-      <div className="card p-6 md:p-8 relative overflow-hidden">
+      <div className="surface-elevated rounded-xl p-6 md:p-8 relative overflow-hidden">
         {/* Subtle accent glow */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-flag-red via-flag-gold to-navy" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-flag-red" />
         
         <p className="text-xs font-mono text-flag-red font-bold uppercase tracking-widest mb-2">{tournament.status.replace(/_/g, ' ')}</p>
-        <h1 className="text-3xl md:text-5xl text-white font-display tracking-widest title-glow">{tournament.name}</h1>
-        <p className="text-white/50 font-mono text-xs md:text-sm mt-3 uppercase tracking-widest">
+        <h1 className="text-3xl md:text-5xl text-white font-display tracking-widest">{tournament.name}</h1>
+        <p className="text-white/50 font-mono text-xs md:text-sm mt-3 uppercase tracking-widest font-bold">
           {tournament.format.replace(/_/g, ' ')} · {tournament.match_format} · {tournament.start_date ? new Date(tournament.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'} – {tournament.end_date ? new Date(tournament.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'}
         </p>
       </div>
 
       {/* Champion banner */}
       {champ && (
-        <div className="card border-flag-gold/50 bg-flag-gold/10 p-6 flex items-center gap-5 shadow-[0_4px_24px_rgba(212,160,23,0.2)]">
-          <div className="w-16 h-16 rounded-full bg-flag-gold/20 flex items-center justify-center border border-flag-gold/30 shrink-0">
+        <div className="surface-elevated rounded-xl border border-flag-gold/30 bg-[#1f2937] p-6 flex items-center gap-5">
+          <div className="w-16 h-16 rounded-full bg-[#111827] flex items-center justify-center border border-flag-gold/30 shrink-0">
             <span className="text-3xl">🏆</span>
           </div>
           <div>
             <p className="text-[10px] font-mono text-flag-gold uppercase tracking-[0.2em] mb-1 font-bold">Champion</p>
-            <p className="text-2xl md:text-3xl text-white font-display tracking-widest title-glow">{champ.champion?.name}</p>
+            <p className="text-2xl md:text-3xl text-white font-display tracking-widest">{champ.champion?.name}</p>
             {champ.runner_up?.name && (
               <p className="text-xs text-white/50 font-mono mt-1 uppercase tracking-widest">RUNNER-UP: <span className="text-white/80">{champ.runner_up.name}</span></p>
             )}
@@ -168,7 +168,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
 
           {/* Center Content (Standings) */}
           <div className="flex-1 min-w-0">
-            <section className="card p-6 md:p-8 overflow-hidden h-full">
+          <section className="surface-elevated rounded-xl p-6 md:p-8 overflow-hidden">
               <h2 className="text-xl font-display text-white tracking-widest mb-6">STANDINGS</h2>
               <StandingsTable matchups={(matchups ?? []) as any} teams={(() => {
                 const teamMap = new Map<string, any>();
@@ -198,7 +198,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
             <LeaderboardCard title="Assists Per Game" leaders={topAst} dataKey="apg" />
           </div>
 
-          <section className="card p-6 md:p-8 overflow-hidden">
+          <section className="surface-elevated rounded-xl p-6 md:p-8 overflow-hidden">
             <h2 className="text-xl font-display text-white tracking-widest mb-6">BRACKET</h2>
             <div className="overflow-x-auto pb-4">
               <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} />
@@ -218,7 +218,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
 
           {/* Playoff Bracket — only shown when admin makes it visible */}
           {tournament.playoffs_visible && (matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
-            <section className="card p-6 md:p-8 overflow-hidden">
+            <section className="surface-elevated rounded-xl p-6 md:p-8 overflow-hidden">
 
               <div className="overflow-x-auto pb-4">
                 <BracketTree matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} defaultMatchFormat={tournament.match_format} />

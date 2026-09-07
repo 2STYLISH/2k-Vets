@@ -24,14 +24,9 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
   const itemsPerPage = 4;
   const totalPages = Math.ceil(games.length / itemsPerPage);
 
-  // Fill from the end: the last page should be full first, meaning any remainder goes to the first page.
-  const remainder = games.length % itemsPerPage;
-  const firstPageCount = remainder === 0 || games.length === 0 ? itemsPerPage : remainder;
-
-  const startIndex = page === 0 ? 0 : firstPageCount + (page - 1) * itemsPerPage;
-  const currentCount = page === 0 ? firstPageCount : itemsPerPage;
-
-  const currentGames = games.slice(startIndex, startIndex + currentCount);
+  // First page is always full; the remainder (if any) goes on the last page.
+  const startIndex = page * itemsPerPage;
+  const currentGames = games.slice(startIndex, startIndex + itemsPerPage);
 
   if (currentGames.length === 0) {
     return (
@@ -55,32 +50,32 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
   const fTournament = featured.schedule?.tournament?.name || 'PRO-AM LEAGUE';
 
   return (
-    <div className="w-full card overflow-hidden">
+    <div className="w-full surface-elevated rounded-xl overflow-hidden">
       {/* Header with accent stripe */}
       <div className="accent-stripe" />
-      <div className="flex items-center justify-between p-4 md:px-6 border-b border-white/[0.06]">
+      <div className="flex items-center justify-between p-4 md:px-6 border-b border-white/10 bg-[#1f2937]">
         <div>
           <h2 className="text-2xl font-display text-white uppercase tracking-[0.12em]">MATCH CENTER</h2>
-          <p className="text-[9px] text-white/40 font-mono uppercase tracking-[0.2em] mt-0.5">RECENT RESULTS</p>
+          <p className="text-[9px] text-white/50 font-mono uppercase tracking-[0.2em] mt-0.5 font-bold">RECENT RESULTS</p>
         </div>
 
         {/* Pagination Controls */}
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-white/50 font-mono bg-white/[0.04] px-2.5 py-1 rounded-lg border border-white/[0.06]">
+          <span className="text-[10px] text-white/50 font-mono bg-[#111827] px-3 py-1 rounded border border-white/10">
             {page + 1}/{totalPages || 1}
           </span>
           <div className="flex">
             <button
               onClick={() => setPage(Math.max(0, page - 1))}
               disabled={page === 0}
-              className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-white/50 border border-white/[0.08] rounded-l-lg hover:bg-white/[0.04] hover:text-white transition-all disabled:opacity-25"
+              className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-white/50 border border-white/10 rounded-l hover:bg-white/5 hover:text-white transition-all disabled:opacity-25"
             >
               ◀
             </button>
             <button
               onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
               disabled={page >= totalPages - 1}
-              className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-white/50 border border-white/[0.08] border-l-0 rounded-r-lg hover:bg-white/[0.04] hover:text-white transition-all disabled:opacity-25"
+              className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-white/50 border border-white/10 border-l-0 rounded-r hover:bg-white/5 hover:text-white transition-all disabled:opacity-25"
             >
               ▶
             </button>
@@ -88,66 +83,72 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-col lg:flex-row bg-[#1f2937]">
         {/* Featured Game */}
-        <div className="flex-1 p-6 md:p-8 flex flex-col justify-center gap-6 min-h-[260px] relative border-b lg:border-b-0 lg:border-r border-white/[0.06] group/featured overflow-hidden">
-          {/* Subtle radial glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-white/[0.02] rounded-full blur-[80px] pointer-events-none group-hover/featured:bg-white/[0.04] transition-colors duration-500" />
+        <div className="flex-1 p-6 md:p-8 flex flex-col justify-center gap-8 min-h-[300px] relative border-b lg:border-b-0 lg:border-r border-white/10 group/featured overflow-hidden">
 
           <div className="flex justify-between items-start relative z-10">
-            <span className="text-[10px] bg-flag-red/10 text-flag-red px-3 py-1.5 rounded-lg border border-flag-red/15 font-mono uppercase tracking-[0.15em] font-bold">FINAL</span>
+            <span className="pin-badge">FINAL</span>
             <div className="text-right">
-              <span className="text-[10px] text-white font-mono uppercase tracking-[0.15em] block font-semibold">{fTournament}</span>
-              <span className="text-[9px] text-white/40 font-mono uppercase tracking-[0.15em] block mt-0.5">{formatDateHuman(featured.schedule?.scheduled_date)}</span>
+              <span className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.15em] block font-bold">{fTournament}</span>
+              <span className="text-[10px] text-white/50 font-mono uppercase tracking-[0.15em] block mt-1">{formatDateHuman(featured.schedule?.scheduled_date)}</span>
             </div>
           </div>
 
           {/* Score block */}
-          <div className="flex items-center justify-between flex-col sm:flex-row gap-4 relative z-10 w-full">
-            <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-4 flex-1 text-center sm:text-left min-w-0 w-full sm:w-auto">
-              {fHomeLogo ? (
-                <img src={fHomeLogo} className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-cover rounded-xl border-2 border-white/[0.06] bg-navy-900 shadow-md shrink-0" />
-              ) : (
-                <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl bg-white/[0.06] border-2 border-white/[0.06] shadow-md shrink-0" />
-              )}
-              <span className="text-lg sm:text-xl lg:text-2xl font-display text-white tracking-[0.1em] leading-tight truncate min-w-0">{fHome}</span>
+          <div className="flex items-center justify-center flex-col sm:flex-row gap-6 relative z-10 w-full mt-4">
+
+            {/* Home Team */}
+            <div className="flex flex-col items-center gap-4 flex-1">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-[#111827] border border-white/10 flex items-center justify-center p-2 rounded-lg shadow-lg">
+                {fHomeLogo ? (
+                  <img src={fHomeLogo} className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-white/20 font-mono text-xs">TBD</span>
+                )}
+              </div>
+              <span className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center">{fHome}</span>
             </div>
 
-            <div className="flex items-center gap-3 sm:gap-5 px-2 sm:px-4 shrink-0">
-              <div className={`text-3xl lg:text-5xl font-mono px-3 py-2 sm:px-4 lg:px-5 lg:py-3 rounded-xl border-2 shadow-md transition-colors ${fHomeWin ? 'bg-flag-red text-white border-flag-red' : 'bg-navy-900 text-white/70 border-white/[0.08]'}`}>
+            {/* Scores */}
+            <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+              <span className={`text-5xl sm:text-6xl lg:text-7xl font-display tracking-wider ${fHomeWin ? 'text-white' : 'text-white/40'}`}>
                 {fHomeScore}
-              </div>
-              <span className="text-xs text-white/30 font-mono uppercase tracking-widest font-bold">VS</span>
-              <div className={`text-3xl lg:text-5xl font-mono px-3 py-2 sm:px-4 lg:px-5 lg:py-3 rounded-xl border-2 shadow-md transition-colors ${fAwayWin ? 'bg-flag-red text-white border-flag-red' : 'bg-navy-900 text-white/70 border-white/[0.08]'}`}>
+              </span>
+              <span className="text-xs text-white/20 font-mono uppercase tracking-widest font-bold pt-4">-</span>
+              <span className={`text-5xl sm:text-6xl lg:text-7xl font-display tracking-wider ${fAwayWin ? 'text-white' : 'text-white/40'}`}>
                 {fAwayScore}
-              </div>
+              </span>
             </div>
 
-            <div className="flex flex-row-reverse sm:flex-col items-center gap-3 sm:gap-4 flex-1 justify-start sm:justify-end text-center sm:text-right min-w-0 w-full sm:w-auto">
-              <span className="text-lg sm:text-xl lg:text-2xl font-display text-white tracking-[0.1em] leading-tight truncate min-w-0">{fAway}</span>
-              {fAwayLogo ? (
-                <img src={fAwayLogo} className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 object-cover rounded-xl border-2 border-white/[0.06] bg-navy-900 shadow-md shrink-0" />
-              ) : (
-                <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl bg-white/[0.06] border-2 border-white/[0.06] shadow-md shrink-0" />
-              )}
+            {/* Away Team */}
+            <div className="flex flex-col items-center gap-4 flex-1">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-[#111827] border border-white/10 flex items-center justify-center p-2 rounded-lg shadow-lg">
+                {fAwayLogo ? (
+                  <img src={fAwayLogo} className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-white/20 font-mono text-xs">TBD</span>
+                )}
+              </div>
+              <span className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center">{fAway}</span>
             </div>
           </div>
 
-          <div className="flex justify-between items-end border-t border-white/[0.06] pt-4 mt-auto relative z-10">
-            <span className="text-[11px] font-mono text-flag-gold uppercase tracking-[0.15em] font-bold">
-              {fHomeWin ? `${fHome} WINS` : fAwayWin ? `${fAway} WINS` : 'TIE'}
+          <div className="flex justify-between items-end border-t border-white/10 pt-6 mt-auto relative z-10">
+            <span className="text-xs font-mono text-white/40 uppercase tracking-[0.15em]">
+              {fHomeWin ? <span className="text-white"><span className="text-flag-gold"></span> {fHome} WINS</span> : fAwayWin ? <span className="text-white"><span className="text-flag-gold"></span> {fAway} WINS</span> : 'TIE'}
             </span>
-            <div
+            <button
               onClick={() => router.push(formatGameUrl(featured.id, featured.short_id, featured.home?.name, featured.away?.name))}
-              className="cursor-pointer text-[10px] font-mono text-white/70 bg-navy-900 hover:bg-flag-red hover:text-white border border-white/10 px-4 py-2 rounded-xl uppercase tracking-[0.15em] transition-all duration-300 flex items-center gap-2 shadow-sm"
+              className="btn-secondary py-2 text-xs"
             >
-              BOX SCORE <span className="transition-colors">→</span>
-            </div>
+              BOX SCORE
+            </button>
           </div>
         </div>
 
         {/* Right: Recent Matches List */}
-        <div className="w-full lg:w-[360px] xl:w-[400px] flex flex-col divide-y divide-navy-100/30 bg-navy-900/30 shrink-0">
+        <div className="w-full lg:w-[360px] xl:w-[400px] flex flex-col divide-y divide-white/10 bg-[#1f2937] shrink-0">
           {gridGames.map(g => <GridMatch key={g.id} game={g} />)}
         </div>
       </div>
@@ -168,38 +169,33 @@ function GridMatch({ game }: { game: any }) {
   const aWin = aScore > hScore;
 
   return (
-    <div onClick={() => router.push(formatGameUrl(game.id, game.short_id, hName, aName))} className="cursor-pointer flex-1 p-4 bg-transparent hover:bg-white/[0.03] transition-all duration-300 flex flex-col justify-center min-h-[110px] relative group">
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-navy rounded-r scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center" />
+    <div onClick={() => router.push(formatGameUrl(game.id, game.short_id, hName, aName))} className="cursor-pointer flex-1 p-5 hover:bg-white/5 transition-all duration-200 flex flex-col justify-center relative group">
 
-      <div className="flex justify-between items-center mb-3">
-        <span className="text-[9px] font-mono text-flag-red uppercase tracking-[0.15em] font-bold">
-          FINAL <span className="text-white/30 font-normal tracking-widest ml-1">· {formatDateHuman(game.schedule?.scheduled_date)}</span>
+      <div className="flex justify-between items-center mb-4">
+        <span className="text-[9px] font-mono text-white/40 uppercase tracking-[0.15em] font-bold">
+          FINAL <span className="text-white/20 mx-1">/</span> {formatDateHuman(game.schedule?.scheduled_date)}
         </span>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between items-center gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            {hLogo ? (
-              <img src={hLogo} className="w-6 h-6 rounded-lg border border-white/[0.06] bg-navy-900 object-cover shrink-0 shadow-sm" />
-            ) : (
-              <div className="w-6 h-6 rounded-lg bg-white/[0.06] border border-white/[0.06] shrink-0 shadow-sm" />
-            )}
-            <span className={`text-sm font-display tracking-[0.1em] truncate ${hWin ? 'text-white font-bold' : 'text-white/50'}`}>{hName}</span>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-8 h-8 bg-[#111827] border border-white/10 rounded flex items-center justify-center p-1 shrink-0">
+              {hLogo ? <img src={hLogo} className="w-full h-full object-contain" /> : <span className="text-[8px] text-white/20 font-mono">TBD</span>}
+            </div>
+            <span className={`text-base font-display tracking-[0.1em] truncate ${hWin ? 'text-white' : 'text-white/50'}`}>{hName}</span>
           </div>
-          <span className={`text-sm font-mono px-2.5 py-1 rounded-lg shadow-sm shrink-0 ${hWin ? 'bg-flag-red text-white font-bold' : 'bg-navy-900 text-white/40 border border-white/[0.06]'}`}>{hScore}</span>
+          <span className={`text-xl font-display tracking-wide shrink-0 ${hWin ? 'text-white' : 'text-white/40'}`}>{hScore}</span>
         </div>
 
-        <div className="flex justify-between items-center gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            {aLogo ? (
-              <img src={aLogo} className="w-6 h-6 rounded-lg border border-white/[0.06] bg-navy-900 object-cover shrink-0 shadow-sm" />
-            ) : (
-              <div className="w-6 h-6 rounded-lg bg-white/[0.06] border border-white/[0.06] shrink-0 shadow-sm" />
-            )}
-            <span className={`text-sm font-display tracking-[0.1em] truncate ${aWin ? 'text-white font-bold' : 'text-white/50'}`}>{aName}</span>
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-8 h-8 bg-[#111827] border border-white/10 rounded flex items-center justify-center p-1 shrink-0">
+              {aLogo ? <img src={aLogo} className="w-full h-full object-contain" /> : <span className="text-[8px] text-white/20 font-mono">TBD</span>}
+            </div>
+            <span className={`text-base font-display tracking-[0.1em] truncate ${aWin ? 'text-white' : 'text-white/50'}`}>{aName}</span>
           </div>
-          <span className={`text-sm font-mono px-2.5 py-1 rounded-lg shadow-sm shrink-0 ${aWin ? 'bg-flag-red text-white font-bold' : 'bg-navy-900 text-white/40 border border-white/[0.06]'}`}>{aScore}</span>
+          <span className={`text-xl font-display tracking-wide shrink-0 ${aWin ? 'text-white' : 'text-white/40'}`}>{aScore}</span>
         </div>
       </div>
     </div>

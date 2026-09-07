@@ -32,11 +32,12 @@ export default async function PlayersPage({
     <div className="space-y-6 max-w-5xl mx-auto px-4 sm:px-0">
       
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl md:text-5xl font-display text-white tracking-widest title-glow uppercase">
+        <div className="section-header">
+          <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">2K Veterans League</p>
+          <h1 className="text-3xl md:text-5xl font-display text-white tracking-widest uppercase">
             Players
           </h1>
-          <p className="text-white/50 font-mono text-sm mt-2 uppercase tracking-widest">
+          <p className="text-white/50 font-mono text-sm mt-2 uppercase tracking-widest font-bold">
             {totalItems} Players Total
           </p>
         </div>
@@ -51,7 +52,7 @@ export default async function PlayersPage({
             name="q"
             defaultValue={q}
             placeholder="Search players..."
-            className="w-full bg-navy-900 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-flag-red focus:ring-1 focus:ring-flag-red transition-all"
+            className="w-full bg-[#1f2937] border border-white/10 rounded px-10 py-3 text-sm text-white font-mono uppercase tracking-widest focus:outline-none focus:border-flag-red transition-all placeholder:text-white/30"
           />
         </form>
       </div>
@@ -62,21 +63,22 @@ export default async function PlayersPage({
           <Link
             key={player.id}
             href={`/${player.slug || slugify(player.gamertag)}`}
-            className="group card p-4 flex items-center gap-4 hover:border-flag-gold/40 hover:shadow-lg transition-all"
+            className="group surface-elevated rounded-xl p-6 flex flex-col items-center text-center gap-4 hover:border-flag-gold hover:-translate-y-1 transition-all overflow-hidden relative"
           >
-            <div className="w-16 h-16 rounded-full border border-white/10 bg-navy-900 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:via-flag-gold/50 transition-colors" />
+            <div className="w-24 h-24 rounded-full border border-white/10 bg-[#111827] flex items-center justify-center shrink-0 overflow-hidden shadow-lg group-hover:border-flag-gold transition-colors p-1">
               {player.photo_path ? (
-                <img src={player.photo_path} alt={player.gamertag} className="w-full h-full object-cover" />
+                <img src={player.photo_path} alt={player.gamertag} className="w-full h-full object-cover rounded-full" />
               ) : (
-                <span className="text-2xl font-display text-white/20 uppercase">{player.gamertag.charAt(0)}</span>
+                <span className="text-3xl font-display text-white/20 uppercase">{player.gamertag.charAt(0)}</span>
               )}
             </div>
             <div>
-              <h2 className="text-lg font-display text-white uppercase tracking-widest group-hover:text-flag-gold transition-colors">
+              <h2 className="text-xl font-display text-white uppercase tracking-widest group-hover:text-flag-gold transition-colors leading-tight">
                 {player.gamertag}
               </h2>
               {player.position && (
-                <p className="text-xs font-mono text-white/40 uppercase tracking-widest mt-1">
+                <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.2em] mt-2 font-bold">
                   {player.position}
                 </p>
               )}
@@ -92,21 +94,21 @@ export default async function PlayersPage({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
+        <div className="flex items-center justify-center gap-3 mt-12">
           <Link
             href={`/players?q=${encodeURIComponent(q)}&page=${Math.max(1, page - 1)}`}
-            className={`px-4 py-2 rounded-lg border border-white/10 font-mono text-sm transition-colors ${page <= 1 ? 'pointer-events-none opacity-50 bg-navy-900 text-white/30' : 'bg-navy-800 text-white hover:bg-navy-700 hover:border-white/20'}`}
+            className={`px-6 py-3 rounded font-mono text-[10px] uppercase tracking-widest transition-colors ${page <= 1 ? 'pointer-events-none opacity-30 bg-[#1f2937] text-white/30' : 'bg-[#111827] text-white/50 border border-white/10 hover:text-white hover:bg-white/5'}`}
           >
-            PREV
+            Previous
           </Link>
-          <span className="font-mono text-sm text-white/50 px-4">
-            {page} / {totalPages}
+          <span className="font-mono text-[10px] text-white/40 tracking-widest uppercase px-4 font-bold">
+            Page {page} of {totalPages}
           </span>
           <Link
             href={`/players?q=${encodeURIComponent(q)}&page=${Math.min(totalPages, page + 1)}`}
-            className={`px-4 py-2 rounded-lg border border-white/10 font-mono text-sm transition-colors ${page >= totalPages ? 'pointer-events-none opacity-50 bg-navy-900 text-white/30' : 'bg-navy-800 text-white hover:bg-navy-700 hover:border-white/20'}`}
+            className={`px-6 py-3 rounded font-mono text-[10px] uppercase tracking-widest transition-colors ${page >= totalPages ? 'pointer-events-none opacity-30 bg-[#1f2937] text-white/30' : 'bg-[#111827] text-white/50 border border-white/10 hover:text-white hover:bg-white/5'}`}
           >
-            NEXT
+            Next
           </Link>
         </div>
       )}

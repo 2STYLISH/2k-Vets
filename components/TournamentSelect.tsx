@@ -23,16 +23,16 @@ export default function TournamentSelect({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 card p-4 w-full sm:w-auto">
-      <p className="text-sm font-mono text-white uppercase tracking-[0.12em] shrink-0 font-bold">Select Tournament:</p>
+    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+      <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest shrink-0 font-bold">Select Tournament:</p>
       <div className="relative w-full sm:w-64">
         <select
           value={activeId}
           onChange={handleChange}
-          className="w-full appearance-none bg-navy-900 border border-white/[0.08] rounded-xl px-4 py-2.5 pr-10 text-white text-xs font-mono uppercase tracking-widest focus:outline-none focus:border-flag-red focus:ring-2 focus:ring-flag-red/25 transition-all shadow-sm hover:border-white/15 cursor-pointer"
+          className="w-full appearance-none bg-[#1f2937] border border-white/20 rounded-xl px-4 py-2.5 pr-10 text-white text-[10px] font-mono uppercase tracking-widest focus:outline-none focus:border-flag-red focus:ring-1 focus:ring-flag-red transition-all cursor-pointer"
         >
           {tournaments.map((t) => (
-            <option key={t.id} value={slugify(t.name)} className="bg-navy-900 text-white">
+            <option key={t.id} value={slugify(t.name)} className="bg-[#1f2937] text-white">
               {t.name}
             </option>
           ))}

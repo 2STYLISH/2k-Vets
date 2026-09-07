@@ -81,7 +81,7 @@ export default function Navbar() {
   function renderProfileDropdown(positionClasses: string) {
     if (!profileOpen) return null;
     return (
-      <div className={`${positionClasses} w-56 bg-navy-900/95 backdrop-blur-xl border border-white/[0.08] rounded-xl overflow-hidden z-[60] shadow-[0_12px_40px_rgba(0,0,0,0.5)]`}>
+      <div className={`${positionClasses} w-56 bg-[#1f2937]/95 backdrop-blur-xl border border-white/[0.08] rounded-xl overflow-hidden z-[60] shadow-[0_12px_40px_rgba(0,0,0,0.5)]`}>
         {username ? (
           <>
             <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.03]">
@@ -119,29 +119,31 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-navy-900/80 backdrop-blur-2xl border-b border-white/[0.06]">
+    <header className="sticky top-0 z-50 bg-[#111827] border-b border-white/10">
       <div className="accent-stripe w-full" />
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 h-20 flex items-center justify-between gap-6">
 
         {/* Logo */}
         <div className="flex-1 flex items-center justify-start">
-          <Link href="/" className="flex items-center gap-3 shrink-0 group">
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-white/10 bg-navy-800 flex items-center justify-center group-hover:border-flag-red/50 transition-colors shadow-sm">
-              <Image src="/bg-logo.png" alt="2K Veterans League Logo" fill className="object-cover" />
+          <Link href="/" className="flex items-center gap-4 shrink-0 group">
+            <div className="relative w-12 h-12 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <Image src="/bg-logo.png" alt="2K Veterans League Logo" fill className="object-contain" />
             </div>
-            <span className="hidden sm:block text-lg font-display text-white tracking-[0.12em] uppercase group-hover:text-flag-red transition-colors">
-              2K VETERANS LEAGUE
-            </span>
+            <div className="hidden sm:flex flex-col">
+              <span className="text-xl font-display text-white tracking-[0.1em] uppercase leading-none group-hover:text-flag-red transition-colors">
+                2K VETERANS LEAGUE
+              </span>
+            </div>
           </Link>
         </div>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1 bg-white/[0.04] rounded-xl p-1 border border-white/[0.06]">
+        <nav className="hidden lg:flex items-center gap-1 bg-[#1f2937] p-1 rounded-xl border border-white/10 h-10 my-auto">
           {LINKS.map((l) => {
             const active = pathname === l.href || pathname.startsWith(l.href + '/');
             return (
               <Link key={l.href} href={l.href}
-                className={`relative px-5 py-2 rounded-lg text-xs font-body font-medium uppercase tracking-[0.12em] transition-all duration-200 ${active ? 'bg-flag-red text-white shadow-md' : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
+                className={`px-4 h-full flex items-center rounded-lg text-[10px] font-mono font-medium uppercase tracking-widest transition-colors ${active ? 'bg-flag-red text-white' : 'text-white/50 hover:text-white hover:bg-white/5'
                   }`}
               >
                 {l.label}
@@ -151,28 +153,16 @@ export default function Navbar() {
         </nav>
 
         {/* Desktop Right */}
-        <div className="hidden md:flex items-center gap-4 flex-1 justify-end">
-
-          {/* SBP Sponsor Image */}
-          <div className="flex items-center justify-center mr-auto ml-4">
-            <Image
-              src="/sponsors/sbp.png"
-              alt="SBP Sponsor"
-              width={56}
-              height={56}
-              className="object-contain h-10 w-auto opacity-90 hover:opacity-100 transition-opacity"
-            />
-          </div>
-
+        <div className="hidden md:flex items-center gap-6 flex-1 justify-end">
           {/* Desktop Profile Button + Dropdown */}
           <div ref={desktopProfileRef} className="relative">
             <button onClick={() => setProfileOpen(!profileOpen)}
-              className="w-9 h-9 rounded-xl border-2 border-white/10 bg-white/[0.04] hover:border-flag-red/40 hover:bg-white/[0.08] transition-all duration-200 flex items-center justify-center shadow-sm"
+              className="w-10 h-10 rounded border border-white/10 hover:border-flag-red/50 transition-all duration-200 flex items-center justify-center bg-[#1f2937]"
               title={username ?? 'Account'}>
               {username ? (
-                <span className="text-xs font-display text-white uppercase">{username.charAt(0)}</span>
+                <span className="text-sm font-display text-white uppercase">{username.charAt(0)}</span>
               ) : (
-                <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-5 h-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                 </svg>
               )}
@@ -182,57 +172,48 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Right Buttons */}
-        <div className="flex items-center gap-3 md:hidden" ref={mobileProfileBtnRef}>
+        <div className="flex items-center gap-4 md:hidden" ref={mobileProfileBtnRef}>
           <button onClick={() => { setProfileOpen(!profileOpen); setMobileMenuOpen(false); }}
-            className="relative w-10 h-10 rounded-xl border-2 border-white/10 bg-white/[0.04] active:bg-white/[0.10] transition-colors flex items-center justify-center shadow-sm"
+            className="w-10 h-10 rounded border border-white/10 transition-colors flex items-center justify-center bg-[#1f2937]"
             aria-label={username ? 'Profile menu' : 'Login'}>
-            {username ? <span className="text-xs font-display text-white uppercase">{username.charAt(0)}</span>
-              : <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>}
+            {username ? <span className="text-sm font-display text-white uppercase">{username.charAt(0)}</span>
+              : <svg className="w-5 h-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>}
           </button>
-          <button className="w-10 h-10 rounded-xl border-2 border-white/10 bg-white/[0.04] active:bg-white/[0.10] transition-colors flex items-center justify-center shadow-sm text-white/60"
+          <button className="w-10 h-10 flex items-center justify-center text-white"
             onClick={() => { setMobileMenuOpen(!mobileMenuOpen); setProfileOpen(false); }}
             aria-label="Menu">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />}
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Mobile Profile Dropdown — positioned below header */}
+      {/* Mobile Profile Dropdown */}
       {profileOpen && (
-        <div ref={mobileProfilePanelRef} className="md:hidden border-t border-white/[0.06] bg-navy-900/95 backdrop-blur-2xl animate-fade-in">
+        <div ref={mobileProfilePanelRef} className="md:hidden border-t border-white/10 bg-[#1f2937] animate-fade-in">
           <div className="p-4">
             {username ? (
               <div className="space-y-1">
-                <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.03] rounded-t-xl">
-                  <p className="text-[9px] font-mono text-white/40 uppercase tracking-[0.2em]">Signed in as</p>
-                  <p className="text-sm text-white truncate mt-0.5 font-semibold">{username}</p>
+                <div className="px-4 py-3 border-b border-white/10">
+                  <p className="text-[10px] font-mono text-white/50 uppercase tracking-[0.2em]">Signed in as</p>
+                  <p className="text-sm text-white truncate mt-1 font-bold">{username}</p>
                 </div>
                 {isAdmin && (
                   <Link href="/admin" onClick={() => { setProfileOpen(false); setMobileMenuOpen(false); }}
-                    className="flex items-center gap-3 w-full text-left px-4 py-3.5 text-sm text-white/60 hover:bg-white/[0.06] active:bg-white/[0.08] hover:text-flag-gold transition-colors rounded-xl">
-                    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-                    </svg>
+                    className="flex items-center gap-3 w-full text-left px-4 py-4 text-sm text-white hover:text-flag-gold transition-colors">
                     Admin Panel
                   </Link>
                 )}
                 <button onClick={handleLogout}
-                  className="flex items-center gap-3 w-full text-left px-4 py-3.5 text-sm text-white/60 hover:text-flag-red hover:bg-flag-red/10 active:bg-flag-red/15 transition-colors rounded-xl">
-                  <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-                  </svg>
+                  className="flex items-center gap-3 w-full text-left px-4 py-4 text-sm text-white/50 hover:text-flag-red transition-colors">
                   Logout
                 </button>
               </div>
             ) : (
               <Link href="/login" onClick={() => { setProfileOpen(false); setMobileMenuOpen(false); }}
-                className="flex items-center gap-3 w-full text-left px-4 py-4 text-sm text-white/70 hover:text-flag-gold hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
-                </svg>
+                className="flex items-center gap-3 w-full text-left px-4 py-4 text-sm text-white transition-colors">
                 Login to Admin
               </Link>
             )}
@@ -240,22 +221,19 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Mobile Navigation Menu */}
+      {/* Full-Screen Mobile Navigation Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/[0.06] bg-navy-900/95 backdrop-blur-2xl animate-fade-in">
-          <div className="p-4 space-y-3">
-
-            <nav className="flex flex-col gap-1">
-              {LINKS.map((l) => {
-                const active = pathname === l.href || pathname.startsWith(l.href + '/');
-                return (
-                  <Link key={l.href} href={l.href} onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-3 rounded-xl text-sm font-body font-medium uppercase tracking-[0.1em] transition-all ${active ? 'bg-flag-red text-white shadow-md' : 'text-white/60 hover:text-white hover:bg-white/[0.06] active:bg-white/[0.08]'
-                      }`}>{l.label}</Link>
-                );
-              })}
-            </nav>
-          </div>
+        <div className="md:hidden fixed inset-0 top-[84px] bg-[#111827] z-40 overflow-y-auto animate-fade-in pb-20">
+          <nav className="flex flex-col p-6 space-y-6">
+            {LINKS.map((l) => {
+              const active = pathname === l.href || pathname.startsWith(l.href + '/');
+              return (
+                <Link key={l.href} href={l.href} onClick={() => setMobileMenuOpen(false)}
+                  className={`text-4xl font-display tracking-[0.1em] uppercase transition-colors ${active ? 'text-flag-red' : 'text-white/70 active:text-white'
+                    }`}>{l.label}</Link>
+              );
+            })}
+          </nav>
         </div>
       )}
     </header>

@@ -6,14 +6,16 @@ function SponsorImage({ src }: { src: string }) {
   const [failed, setFailed] = useState(false);
 
   return (
-    <div className="sponsor-slot">
-      <div className="sponsor-label">Sponsor</div>
-      <div className="flex-1 bg-navy-900/60 p-2 flex items-center justify-center">
+    <div className="flex flex-col surface-elevated rounded-xl overflow-hidden border border-white/10 w-full mb-6">
+      <div className="bg-[#111827] px-4 py-2 border-b border-white/10 text-center">
+        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/40">Sponsor</span>
+      </div>
+      <div className="flex-1 bg-[#1f2937] p-4 flex items-center justify-center min-h-[250px]">
         {!failed && (
           <img
             src={src}
             alt="Sponsor"
-            className="w-full h-auto block"
+            className="w-full h-auto max-w-[200px] block object-contain"
             onError={() => setFailed(true)}
           />
         )}
@@ -31,10 +33,10 @@ export default function SponsorRails() {
   return (
     <>
       {/* Desktop Edge Rails (hidden on < 1440px) */}
-      <div className="sponsor-edge-rail left-0">
+      <div className="hidden min-[1440px]:flex flex-col fixed top-[20vh] w-[200px] left-4 z-40">
         <SponsorImage src="/sponsors/sponsor-left-1.png" />
       </div>
-      <div className="sponsor-edge-rail right-0">
+      <div className="hidden min-[1440px]:flex flex-col fixed top-[20vh] w-[200px] right-4 z-40">
         <SponsorImage src="/sponsors/sponsor-right-1.png" />
       </div>
 

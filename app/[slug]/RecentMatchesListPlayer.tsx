@@ -11,7 +11,7 @@ export default function RecentMatchesListPlayer({ games, playerTeamId }: { games
   const hasMore = visibleCount < games.length;
 
   return (
-    <div className="card p-6">
+    <div className="surface-elevated rounded-xl p-6 md:p-8">
       <div className="flex justify-between items-center mb-4">
         <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] font-bold">
           MATCH HISTORY / {games.length} RECENT
@@ -34,27 +34,28 @@ export default function RecentMatchesListPlayer({ games, playerTeamId }: { games
           const myScore = isHome ? game.home_score : game.away_score;
           const oppScore = isHome ? game.away_score : game.home_score;
           const oppName = isHome ? awayTeam?.name : homeTeam?.name;
+          const myTeam = isHome ? homeTeam : awayTeam;
           const didWin = myScore > oppScore;
 
           return (
-            <Link href={formatGameUrl(game.id, game.short_id, isHome ? homeTeam?.name : awayTeam?.name, isHome ? awayTeam?.name : homeTeam?.name)} key={game.id + idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-white/[0.06] bg-navy-900/60 hover:bg-white/[0.03] transition-colors rounded-xl group">
-              <div className="flex items-center gap-3">
-                <div className={`w-6 h-6 flex items-center justify-center rounded-lg font-mono text-[10px] font-bold ${didWin ? 'bg-green-600 text-white' : 'bg-flag-red text-white'}`}>
+            <Link href={formatGameUrl(game.id, game.short_id, isHome ? homeTeam?.name : awayTeam?.name, isHome ? awayTeam?.name : homeTeam?.name)} key={game.id + idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-white/10 bg-[#111827] group hover:border-white/30 transition-all rounded-xl">
+              <div className="flex items-center gap-4">
+                <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded-lg border shrink-0 flex items-center justify-center ${didWin ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                   {didWin ? 'W' : 'L'}
-                </div>
+                </span>
                 <div>
-                  <p className="text-sm font-display tracking-[0.1em] text-white group-hover:text-flag-gold transition-colors uppercase">{oppName || 'TBD'}</p>
-                  <p className="text-[9px] font-mono text-white/40 uppercase">{tournament?.name} / {formatDate(schedule?.scheduled_date)}</p>
+                  <p className="text-white text-base font-display tracking-[0.1em] uppercase group-hover:text-flag-gold transition-colors">
+                    {myTeam?.name || 'Unknown'} <span className="text-white/30 mx-2 text-xs font-mono font-bold">VS</span> {oppName || 'Unknown'}
+                  </p>
+                  <p className="text-[10px] font-mono text-white/30 uppercase mt-1">{tournament?.name} / {formatDate(schedule?.scheduled_date)}</p>
                 </div>
               </div>
-              <div className="mt-2 sm:mt-0 flex items-center gap-4">
-                <p className="font-mono text-lg text-white">
-                  <span className={didWin ? 'text-navy' : 'text-white/40'}>{myScore}</span>
-                  <span className="text-white/20 mx-1">-</span>
-                  <span className={didWin ? 'text-white/40' : 'text-navy'}>{oppScore}</span>
-                </p>
-                <p className="text-[9px] font-mono text-white/40 max-w-[120px] text-right">
+              <div className="mt-4 sm:mt-0 flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto border-t sm:border-t-0 border-white/10 pt-4 sm:pt-0">
+                <p className="text-[9px] font-mono text-white/40 max-w-[120px] text-left sm:text-right">
                   {row.pts} PTS / {row.reb} REB / {row.ast} AST / {row.stl} STL
+                </p>
+                <p className="font-mono text-lg font-bold text-white group-hover:text-flag-gold transition-colors text-right">
+                  {myScore ?? '?'}<span className="text-white/30 mx-1">-</span>{oppScore ?? '?'}
                 </p>
               </div>
             </Link>
@@ -65,7 +66,7 @@ export default function RecentMatchesListPlayer({ games, playerTeamId }: { games
         {hasMore && (
           <button 
             onClick={() => setVisibleCount(prev => prev + 5)}
-            className="text-[10px] font-mono px-4 py-2 bg-navy-800 border border-white/10 rounded-lg text-flag-gold hover:text-white hover:border-flag-gold/50 uppercase tracking-widest transition-all"
+            className="text-[10px] font-mono px-4 py-2 bg-[#111827] border border-white/10 rounded-lg text-flag-gold hover:text-white hover:border-flag-gold/50 uppercase tracking-widest transition-all"
           >
             Show More
           </button>
@@ -73,7 +74,7 @@ export default function RecentMatchesListPlayer({ games, playerTeamId }: { games
         {visibleCount > 5 && (
           <button 
             onClick={() => setVisibleCount(5)}
-            className="text-[10px] font-mono px-4 py-2 bg-navy-800/50 border border-white/5 rounded-lg text-white/40 hover:text-white hover:border-white/20 uppercase tracking-widest transition-all"
+            className="text-[10px] font-mono px-4 py-2 bg-[#111827] border border-white/5 rounded-lg text-white/40 hover:text-white hover:border-white/20 uppercase tracking-widest transition-all"
           >
             Show Less
           </button>

@@ -78,9 +78,9 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
       <BackButton />
 
       {/* Header */}
-      <div className="pb-6 border-b border-white/[0.06]">
-        <p className="text-[10px] font-mono text-white/40 uppercase tracking-[0.3em] mb-2">Admin View</p>
-        <h1 className="text-4xl text-white mb-2">PLAYER STATS</h1>
+      <div className="section-header !mb-6 !pb-0 !border-b-0">
+        <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Stats</p>
+        <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase mb-4">PLAYER STATS</h1>
         <div className="flex gap-6 text-sm text-white/40 mb-6">
           <span>
             <span className="text-white font-mono">{totalVerifiedGames}</span> verified games
@@ -92,15 +92,15 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <p className="text-xs font-mono text-white/40 uppercase tracking-widest font-bold">Tournament:</p>
+        <div className="flex items-center gap-4 bg-[#1f2937] p-2 rounded-xl border border-white/10 w-fit mt-6">
+          <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest font-bold pl-2">Tournament</p>
           <TournamentFilter tournaments={tournaments ?? []} activeId={activeTournamentSlug} basePath="/admin/stats" />
         </div>
       </div>
 
       {(!teams || teams.length === 0) && (
-        <div className="card p-8 text-center">
-          <p className="text-white/40">No teams registered yet.</p>
+        <div className="surface-elevated rounded-xl p-8 text-center border border-white/10">
+          <p className="text-white/40 font-mono text-[10px] uppercase font-bold tracking-widest">No teams registered yet.</p>
         </div>
       )}
 
@@ -136,11 +136,11 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
               </Link>
             </div>
 
-            <div className="relative rounded-2xl overflow-hidden bg-navy-900/70 backdrop-blur-md border border-white/[0.06] shadow-2xl transition-all">
+            <div className="surface-elevated rounded-xl border border-white/10 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs stat-mono">
                   <thead>
-                    <tr className="bg-navy-900/60 border-b border-white/[0.08] text-white/40 uppercase tracking-widest text-[9px]">
+                    <tr className="bg-[#111827] border-b border-white/10 text-white/50 uppercase tracking-widest text-[9px] font-bold">
                       <th className="text-left px-6 py-4 font-bold">Player</th>
                       <th className="px-4 py-4 text-right">GP</th>
                       <th className="px-4 py-4 text-right">PPG</th>
@@ -156,7 +156,7 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
                   <tbody>
                     {!hasAnyStats && (
                       <tr>
-                        <td colSpan={10} className="px-5 py-6 text-silver-700 text-center">
+                        <td colSpan={10} className="px-5 py-6 text-white/40 text-[10px] font-bold text-center font-mono uppercase tracking-widest">
                           No game stats recorded yet.
                         </td>
                       </tr>
@@ -166,11 +166,11 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: {
                       if (!avg) return null;
                       const isPending = !verifiedAvg && !!pendingAvg;
                       return (
-                        <tr key={player.id} className={`border-b border-surface-800 last:border-b-0 hover:bg-white/[0.03] transition-colors group/row ${isPending ? 'opacity-60' : ''}`}>
+                        <tr key={player.id} className={`border-b border-white/5 last:border-b-0 hover:bg-white/[0.03] transition-colors group/row ${isPending ? 'opacity-60' : ''}`}>
                           <td className="px-6 py-4">
                             <Link href={`/${player.slug}`} className="text-white font-bold font-body hover:text-flag-gold transition-colors">{player.gamertag}</Link>
                             {player.position && (
-                              <span className="ml-3 px-1.5 py-0.5 bg-navy-900/60 border border-white/[0.06] rounded-xl text-[9px] text-white/30 uppercase">{player.position}</span>
+                              <span className="ml-3 px-1.5 py-0.5 bg-[#111827] border border-white/10 rounded-xl text-[9px] text-white/30 uppercase">{player.position}</span>
                             )}
                           </td>
                           <td className="px-4 py-4 text-right text-white/30">{avg.gamesPlayed}</td>

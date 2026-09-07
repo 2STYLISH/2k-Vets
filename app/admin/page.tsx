@@ -67,10 +67,10 @@ export default function AdminHomePage() {
           <Link
             key={s.href}
             href={s.href}
-            className="relative group card p-6 hover:border-white/15 hover:shadow-[0_8px_32px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex items-start gap-5"
+            className="relative group surface-elevated rounded-xl p-6 border border-white/10 hover:border-flag-red hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex items-start gap-5"
           >
             {/* Hover accent stripe */}
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-navy scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-flag-red scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
             <div className="relative z-10 w-12 h-12 shrink-0 rounded-xl bg-white/[0.05] border border-white/[0.06] flex items-center justify-center text-2xl group-hover:scale-110 group-hover:bg-white/[0.06] group-hover:border-white/15 transition-all duration-300 shadow-sm">
               <span className="opacity-80 group-hover:opacity-100 transition-opacity">

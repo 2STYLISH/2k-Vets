@@ -13,7 +13,7 @@ export default function RecentMatchesList({ games, teamIds }: { games: any[], te
   if (games.length === 0) return null;
 
   return (
-    <section className="card p-6 md:p-8">
+    <section className="surface-elevated rounded-xl p-6 md:p-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-display text-white tracking-widest">RECENT MATCHES</h2>
       </div>
@@ -27,28 +27,29 @@ export default function RecentMatchesList({ games, teamIds }: { games: any[], te
           const myScore = isHome ? g.home_score : g.away_score;
           const oppScore = isHome ? g.away_score : g.home_score;
           const won = myScore != null && oppScore != null && myScore > oppScore;
+          const myTeam = isHome ? home : away;
           const opponent = isHome ? away : home;
           const oppSlug = opponent?.slug;
 
           return (
-            <Link href={formatGameUrl(g.id, g.short_id, isHome ? home?.name : away?.name, isHome ? away?.name : home?.name)} key={g.id} className={`flex items-center justify-between p-3 rounded-lg border group hover:shadow-md transition-all ${won ? 'border-emerald-500/20 bg-emerald-950/10 hover:border-emerald-500/50' : 'border-red-500/20 bg-red-950/10 hover:border-red-500/50'}`}>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs font-mono font-bold px-2 py-1 rounded ${won ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+            <Link href={formatGameUrl(g.id, g.short_id, isHome ? home?.name : away?.name, isHome ? away?.name : home?.name)} key={g.id} className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-[#111827] group hover:border-white/30 transition-all">
+              <div className="flex items-center gap-4">
+                <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded-lg border ${won ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                   {won ? 'W' : 'L'}
                 </span>
                 <div>
-                  <p className="text-white text-sm group-hover:text-flag-gold transition-colors">
-                    vs {opponent?.name || 'Unknown'}
+                  <p className="text-white text-base font-display tracking-[0.1em] uppercase group-hover:text-flag-gold transition-colors">
+                    {myTeam?.name || 'Unknown'} <span className="text-white/30 mx-2 text-xs font-mono font-bold">VS</span> {opponent?.name || 'Unknown'}
                   </p>
-                  {tourney && <p className="text-[10px] text-white/30 font-mono uppercase">{tourney.name} · {sched?.round_label || ''}</p>}
+                  {tourney && <p className="text-[10px] text-white/30 font-mono uppercase mt-1">{tourney.name} {sched?.round_label ? `· ${sched?.round_label}` : ''}</p>}
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-mono font-bold text-white">
+                <p className="text-lg font-mono font-bold text-white group-hover:text-flag-gold transition-colors">
                   {myScore ?? '?'}<span className="text-white/30 mx-1">-</span>{oppScore ?? '?'}
                 </p>
                 {sched?.scheduled_date && (
-                  <p className="text-[10px] text-white/30 font-mono">{formatDate(sched.scheduled_date)}</p>
+                  <p className="text-[10px] text-white/30 font-mono uppercase tracking-widest mt-0.5">{formatDate(sched.scheduled_date)}</p>
                 )}
               </div>
             </Link>
@@ -59,7 +60,7 @@ export default function RecentMatchesList({ games, teamIds }: { games: any[], te
         {hasMore && (
           <button 
             onClick={() => setVisibleCount(prev => prev + 5)}
-            className="text-[10px] font-mono px-4 py-2 bg-navy-800 border border-white/10 rounded-lg text-flag-gold hover:text-white hover:border-flag-gold/50 uppercase tracking-widest transition-all"
+            className="text-[10px] font-mono px-4 py-2 bg-[#111827] border border-white/10 rounded-lg text-flag-gold hover:text-white hover:border-flag-gold/50 uppercase tracking-widest transition-all"
           >
             Show More
           </button>
@@ -67,7 +68,7 @@ export default function RecentMatchesList({ games, teamIds }: { games: any[], te
         {visibleCount > 5 && (
           <button 
             onClick={() => setVisibleCount(5)}
-            className="text-[10px] font-mono px-4 py-2 bg-navy-800/50 border border-white/5 rounded-lg text-white/40 hover:text-white hover:border-white/20 uppercase tracking-widest transition-all"
+            className="text-[10px] font-mono px-4 py-2 bg-[#111827] border border-white/5 rounded-lg text-white/40 hover:text-white hover:border-white/20 uppercase tracking-widest transition-all"
           >
             Show Less
           </button>

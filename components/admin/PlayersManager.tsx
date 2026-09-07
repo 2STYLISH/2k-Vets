@@ -116,7 +116,7 @@ export default function PlayersManager({ players }: { players: Player[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="card p-5">
+      <div className="surface-elevated rounded-xl border border-white/10 p-6">
         <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest mb-4">Register New Player</h2>
         <div className="flex gap-3">
           <input
@@ -143,16 +143,16 @@ export default function PlayersManager({ players }: { players: Player[] }) {
         />
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="surface-elevated rounded-xl border border-white/10 overflow-hidden">
         <table className="w-full text-sm text-left">
-          <thead className="bg-surface-900 border-b border-surface-700 text-white font-bold font-mono text-[10px] uppercase tracking-widest">
+          <thead className="bg-[#111827] border-b border-white/10 text-white/50 font-mono text-[10px] uppercase tracking-widest">
             <tr>
               <th className="px-5 py-3 w-16">Photo</th>
               <th className="px-5 py-3">Gamertag</th>
               <th className="px-5 py-3 w-24 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-800">
+          <tbody className="divide-y divide-white/5">
             {displayedPlayers.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-5 py-8 text-center text-silver-600">
@@ -161,13 +161,13 @@ export default function PlayersManager({ players }: { players: Player[] }) {
               </tr>
             )}
             {displayedPlayers.map(p => (
-              <tr key={p.id} className="hover:bg-surface-900/50 transition-colors">
+              <tr key={p.id} className="hover:bg-white/[0.03] transition-colors">
                 <td className="px-5 py-3">
                   <label className="cursor-pointer block relative group/photo">
                     {p.photo_path ? (
-                      <img src={p.photo_path} alt={p.gamertag} className="w-8 h-8 rounded object-cover border border-surface-600 bg-surface-900" />
+                      <img src={p.photo_path} alt={p.gamertag} className="w-8 h-8 rounded object-cover border border-white/10 bg-[#111827]" />
                     ) : (
-                      <img src="/logo.png" alt={p.gamertag} className="w-8 h-8 rounded object-cover border border-surface-600 bg-surface-900 opacity-80" />
+                      <img src="/bg-logo.png" alt={p.gamertag} className="w-8 h-8 rounded object-cover border border-white/10 bg-[#111827] opacity-80" />
                     )}
                     <input
                       type="file"
@@ -192,20 +192,20 @@ export default function PlayersManager({ players }: { players: Player[] }) {
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSaveName(p.id)}
-                        className="bg-surface-800 border border-surface-600 rounded px-2 py-1 text-xs outline-none w-32"
+                        className="bg-[#1f2937] border border-white/20 rounded px-2 py-1 text-xs outline-none w-32 focus:border-flag-red"
                         autoFocus
                       />
-                      <button onClick={() => handleSaveName(p.id)} className="text-[10px] text-gold hover:text-gold/80">SAVE</button>
-                      <button onClick={() => setEditingId(null)} className="text-[10px] text-silver-500 hover:text-white">CANCEL</button>
+                      <button onClick={() => handleSaveName(p.id)} className="text-[10px] text-flag-gold hover:text-white">SAVE</button>
+                      <button onClick={() => setEditingId(null)} className="text-[10px] text-white/50 hover:text-white">CANCEL</button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between group/name">
-                      <Link href={`/${p.slug || p.gamertag.toLowerCase()}`} className="hover:text-gold transition-colors underline decoration-transparent hover:decoration-gold underline-offset-4">
+                      <Link href={`/${p.slug || p.gamertag.toLowerCase()}`} className="hover:text-flag-gold transition-colors underline decoration-transparent hover:decoration-flag-gold underline-offset-4">
                         {p.gamertag}
                       </Link>
                       <button
                         onClick={() => { setEditingId(p.id); setEditName(p.gamertag); }}
-                        className="text-[10px] text-silver-500 hover:text-white transition-opacity font-mono"
+                        className="text-[10px] text-white/40 hover:text-white transition-opacity font-mono"
                       >
                         EDIT
                       </button>
@@ -216,7 +216,7 @@ export default function PlayersManager({ players }: { players: Player[] }) {
                   <button
                     onClick={() => handleDelete(p.id, p.gamertag)}
                     disabled={busy}
-                    className="text-[10px] font-mono text-silver-600 hover:text-crimson-400 transition-colors uppercase tracking-widest"
+                    className="text-[10px] font-mono text-white/40 hover:text-flag-red transition-colors uppercase tracking-widest"
                   >
                     Delete
                   </button>
@@ -225,23 +225,23 @@ export default function PlayersManager({ players }: { players: Player[] }) {
             ))}
             {totalPages > 1 && (
               <tr>
-                <td colSpan={3} className="px-5 py-4 bg-surface-900/50">
+                <td colSpan={3} className="px-5 py-4 bg-[#111827] border-t border-white/10">
                   <div className="flex items-center justify-between">
-                    <span className="text-silver-500 font-mono text-[10px] uppercase tracking-widest">
+                    <span className="text-white/40 font-mono text-[10px] uppercase tracking-widest">
                       Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredPlayers.length)} of {filteredPlayers.length} players
                     </span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="px-3 py-1 bg-surface-800 border border-surface-600 rounded text-[10px] font-mono text-white hover:bg-surface-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 border border-white/10 rounded text-[10px] font-mono text-white/50 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         PREV
                       </button>
                       <button
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1 bg-surface-800 border border-surface-600 rounded text-[10px] font-mono text-white hover:bg-surface-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 border border-white/10 rounded text-[10px] font-mono text-white/50 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                       >
                         NEXT
                       </button>

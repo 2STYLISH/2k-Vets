@@ -158,18 +158,17 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
       <BackButton />
 
       {/* --- TEAM HEADER --- */}
-      <div className="card p-6 md:p-10 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-navy via-flag-red to-flag-gold" />
-        <div className="absolute inset-0 bg-grid-subtle opacity-20 pointer-events-none" />
+      <div className="surface-elevated rounded-xl p-6 md:p-10 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-flag-red" />
 
         <div className="relative z-10">
           <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-4 font-bold">TEAM</p>
 
           <div className="flex flex-col md:flex-row gap-8 items-start md:items-end">
             {/* Team Logo */}
-            <div className="w-24 h-24 md:w-36 md:h-36 border-2 border-white/[0.06] bg-navy-900 rounded-2xl shrink-0 relative overflow-hidden shadow-lg flex items-center justify-center">
+            <div className="w-24 h-24 md:w-36 md:h-36 border border-white/10 bg-[#111827] rounded-xl shrink-0 relative overflow-hidden shadow-lg flex items-center justify-center">
               {teamLogo ? (
-                <img src={teamLogo} alt={teamName} className="w-full h-full object-cover" />
+                <img src={teamLogo} alt={teamName} className="w-full h-full object-contain p-3" />
               ) : (
                 <span className="text-4xl md:text-5xl font-display text-white/20">{shortName || teamName.charAt(0)}</span>
               )}
@@ -177,7 +176,7 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
 
             {/* Team Name & Info */}
             <div className="flex-1">
-              <h1 className="text-3xl md:text-5xl text-white font-display tracking-widest title-glow">{teamName}</h1>
+              <h1 className="text-3xl md:text-5xl text-white font-display tracking-widest">{teamName}</h1>
               {shortName && <p className="text-white/30 font-mono text-sm uppercase tracking-widest mt-1">{shortName}</p>}
 
               <div className="flex flex-wrap gap-6 mt-4">
@@ -207,14 +206,14 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
 
       {/* --- ACTIVE TOURNAMENTS --- */}
       {activeTournaments.length > 0 && (
-        <section className="card p-6 md:p-8">
+        <section className="surface-elevated rounded-xl p-6 md:p-8">
           <h2 className="text-xl font-display text-flag-gold tracking-widest mb-4">CURRENT SEASON</h2>
           <div className="space-y-3">
             {activeTournaments.map(t => {
               const pct = t.wins + t.losses > 0 ? (t.wins / (t.wins + t.losses)).toFixed(3) : '.000';
               return (
                 <Link key={t.teamId} href={`/tournaments/${t.tournamentId}`} className="block">
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors">
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-[#1f2937] border border-white/10 hover:border-flag-red hover:-translate-y-0.5 transition-all">
                     <div>
                       <p className="text-white font-medium">{t.tournamentName}</p>
                       <p className="text-xs font-mono text-white/40 uppercase mt-0.5">{t.format.replace(/_/g, ' ')} · {t.status}</p>
@@ -255,12 +254,12 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
 
       {/* --- ROSTER --- */}
       {rosterPlayers.length > 0 && (
-        <section className="card p-6 md:p-8">
+        <section className="surface-elevated rounded-xl p-6 md:p-8">
           <h2 className="text-xl font-display text-white tracking-widest mb-4">ROSTER</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-xs font-mono">
               <thead>
-                <tr className="bg-navy-800 border-b border-white/[0.06] text-white uppercase tracking-widest text-[10px]">
+                <tr className="bg-[#1f2937] border-b border-white/10 text-white uppercase tracking-widest text-[10px]">
                   <th className="text-left px-5 py-4">Player</th>
                   <th className="px-3 py-3 text-center">POS</th>
                   <th className="px-3 py-3 text-right">GP</th>
@@ -273,9 +272,18 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
               </thead>
               <tbody>
                 {rosterPlayers.map(p => (
-                  <tr key={p.id} className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.03] transition-colors">
+                  <tr key={p.id} className="border-b border-white/10 last:border-0 hover:bg-white/5 transition-colors">
                     <td className="px-5 py-3">
-                      <Link href={`/${p.slug || slugify(p.gamertag)}`} className="text-white hover:text-flag-gold transition-colors hover:underline font-medium">
+                      <Link href={`/${p.slug || slugify(p.gamertag)}`} className="flex items-center gap-3 text-white hover:text-flag-gold transition-colors hover:underline font-medium">
+                        <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-[#111827] shrink-0">
+                          {p.photo_path ? (
+                            <img src={p.photo_path} alt={p.gamertag} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center opacity-50">
+                              <img src="/bg-logo.png" className="w-4 h-4 object-contain" />
+                            </div>
+                          )}
+                        </div>
                         {p.gamertag}
                       </Link>
                       {p.isPastPlayer && <span className="ml-2 text-[9px] text-white/30 font-mono uppercase bg-white/5 px-1.5 py-0.5 rounded">Traded</span>}
@@ -309,12 +317,12 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
 
       {/* --- TOURNAMENT HISTORY --- */}
       {pastTournaments.length > 0 && (
-        <section className="card p-6 md:p-8">
+        <section className="surface-elevated rounded-xl p-6 md:p-8">
           <h2 className="text-xl font-display text-white tracking-widest mb-4">TOURNAMENT HISTORY</h2>
           <div className="space-y-2">
             {pastTournaments.map(t => (
               <Link key={t.teamId} href={`/tournaments/${t.tournamentId}`} className="block">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-[#1f2937] border border-white/10 hover:border-white/30 hover:-translate-y-0.5 transition-all">
                   <div className="flex items-center gap-3">
                     {t.resultIcon && <span className="text-xl">{t.resultIcon}</span>}
                     <div>

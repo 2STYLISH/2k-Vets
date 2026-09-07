@@ -102,11 +102,11 @@ export default function CreateGameForm({
     }
   }
 
-  const selectCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-silver-400 focus:border-silver-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
-  const inputCls = 'w-full bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-silver-400 focus:border-silver-400 transition-colors';
+  const selectCls = 'w-full bg-[#1f2937] border border-white/20 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-flag-red focus:border-flag-red transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+  const inputCls = 'w-full bg-[#1f2937] border border-white/20 rounded-lg px-3 py-2 text-white font-bold focus:outline-none focus:ring-1 focus:ring-flag-red focus:border-flag-red transition-colors';
 
   return (
-    <div className="card p-6 max-w-xl space-y-4">
+    <div className="surface-elevated rounded-xl border border-white/10 p-6 max-w-xl space-y-4">
       <h2 className="text-lg text-white font-display tracking-widest">CREATE GAME</h2>
 
       <div className="grid grid-cols-2 gap-3">
@@ -157,7 +157,7 @@ export default function CreateGameForm({
           : applicableMatchups;
 
         return (
-          <div className="bg-surface-800/50 p-3 rounded-lg border border-surface-700 space-y-3">
+          <div className="bg-[#111827] p-3 rounded-lg border border-white/10 space-y-3">
             {uniqueRounds.length > 0 && (
               <div className="flex items-center gap-3">
                 <label className="text-[10px] text-white font-bold uppercase font-mono tracking-widest whitespace-nowrap">Filter Round:</label>
@@ -266,7 +266,7 @@ export default function CreateGameForm({
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="text-[10px] text-white font-bold uppercase font-mono tracking-widest">Round Label</label>
-          <button type="button" onClick={() => setIsRoundLabelEditable(true)} className="text-[10px] text-gold uppercase font-mono tracking-widest hover:text-white transition-colors">
+          <button type="button" onClick={() => setIsRoundLabelEditable(true)} className="text-[10px] text-flag-gold uppercase font-mono tracking-widest hover:text-white transition-colors">
             Edit
           </button>
         </div>

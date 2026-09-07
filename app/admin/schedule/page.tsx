@@ -56,9 +56,10 @@ export default async function AdminSchedulePage({ searchParams }: { searchParams
       <BackButton />
       
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl text-white/90">ADMIN SCHEDULE</h1>
-          <p className="text-white/40 text-sm mt-1">Create, reschedule, and manage games across the season.</p>
+        <div className="section-header !mb-0 !pb-0 !border-b-0">
+          <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Schedule</p>
+          <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">ADMIN SCHEDULE</h1>
+          <p className="text-white/40 text-sm mt-4 max-w-2xl">Create, reschedule, and manage games across the season.</p>
         </div>
       </div>
 
@@ -66,9 +67,9 @@ export default async function AdminSchedulePage({ searchParams }: { searchParams
 
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <h2 className="text-lg text-white/90">ALL GAMES</h2>
-          <div className="flex items-center gap-3 bg-surface-900/50 p-2 rounded-xl border border-white/[0.06]">
-            <span className="text-[10px] font-mono text-silver-400 uppercase tracking-widest pl-2">Tournament</span>
+          <h2 className="text-lg text-white font-display tracking-widest uppercase">ALL GAMES</h2>
+          <div className="flex items-center gap-3 bg-[#1f2937] p-2 rounded-xl border border-white/10">
+            <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest pl-2 font-bold">Tournament</span>
             <TournamentFilter tournaments={tournaments} activeId={activeTournamentSlug} basePath="/admin/schedule" />
           </div>
         </div>

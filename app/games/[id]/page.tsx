@@ -111,21 +111,25 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
   });
 
 
-  function renderStatTable(teamName: string, teamStats: any[], isWinner: boolean) {
+  function renderStatTable(teamName: string, teamLogo: string | null, teamStats: any[], isWinner: boolean) {
     return (
-      <div className="relative card overflow-hidden transition-colors">
+      <div className="relative surface-elevated rounded-xl overflow-hidden transition-colors border border-white/10">
         {isWinner && (
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-navy via-flag-red to-flag-gold" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
         )}
-        <div className="px-6 py-5 border-b border-white/[0.06] flex justify-between items-center bg-white/[0.03]">
+        <div className="px-6 py-5 border-b border-white/[0.06] flex justify-between items-center bg-[#1f2937]">
           <div className="flex items-center gap-4">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm ${isWinner ? 'bg-flag-red/10 text-white border-flag-red/20' : 'bg-white/[0.06] text-white/40 border-white/[0.06]'}`}>
-              <span className="text-[10px] font-mono font-bold tracking-wider">{teamName.slice(0, 3).toUpperCase()}</span>
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden shrink-0 bg-[#111827] border p-1.5 ${isWinner ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]' : 'border-white/10'}`}>
+              {teamLogo ? (
+                <img src={teamLogo} alt={teamName} className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-[10px] font-mono font-bold text-white/40 tracking-wider">{teamName.slice(0, 3).toUpperCase()}</span>
+              )}
             </div>
             <h2 className="text-xl text-white font-display tracking-[0.1em] uppercase">{teamName}</h2>
           </div>
           {isWinner && (
-            <span className="text-[10px] uppercase font-mono tracking-[0.15em] text-white border border-flag-red/20 bg-flag-red/10 px-3 py-1 rounded-lg font-bold">Winner</span>
+            <span className="text-[10px] uppercase font-mono tracking-[0.15em] text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 rounded-lg font-bold">Winner</span>
           )}
         </div>
         <div className="overflow-x-auto">
@@ -199,7 +203,7 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
       </div>
       
       {/* Top Scoreboard (Hero) */}
-      <div className="relative rounded-3xl overflow-hidden card border-white/[0.08]">
+      <div className="relative rounded-xl overflow-hidden surface-elevated border border-white/10">
         {/* Subtle radial gradient */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.04),transparent_70%)]" />
         <div className="relative z-10 px-4 sm:px-6 py-8 sm:py-12 md:py-16">
@@ -207,7 +211,7 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
 
             {/* Home Team */}
             <div className="flex-1 text-center md:text-right flex flex-col items-center md:items-end w-full">
-              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-4 md:mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-[#1f2937] border border-white/10 mb-4 md:mb-6 flex items-center justify-center overflow-hidden p-4">
                 {((game.home_team as any)?.logo_url || (game.home_team as any)?.logo_path) ? (
                   <img src={(game.home_team as any).logo_url || (game.home_team as any).logo_path} alt={(game.home_team as any).name} className="w-full h-full object-contain" />
                 ) : (
@@ -223,14 +227,14 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
 
             {/* Divider */}
             <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="h-16 w-px bg-gradient-to-b from-transparent via-navy-200 to-transparent hidden md:block" />
-              <span className="text-sm font-mono text-white/40 uppercase tracking-[0.3em] px-4 py-2 rounded-xl border border-white/[0.06] bg-navy-900/60 backdrop-blur-sm">Final</span>
-              <div className="h-16 w-px bg-gradient-to-t from-transparent via-navy-200 to-transparent hidden md:block" />
+              <div className="h-16 w-px bg-white/10 hidden md:block" />
+              <span className="text-sm font-mono text-white/40 uppercase tracking-[0.3em] px-4 py-2 rounded-xl border border-white/10 bg-[#111827]">Final</span>
+              <div className="h-16 w-px bg-white/10 hidden md:block" />
             </div>
 
             {/* Away Team */}
             <div className="flex-1 text-center md:text-left flex flex-col items-center md:items-start w-full">
-              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-navy-900 border-2 border-white/[0.06] mb-4 md:mb-6 flex items-center justify-center overflow-hidden shadow-lg p-4">
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-[#1f2937] border border-white/10 mb-4 md:mb-6 flex items-center justify-center overflow-hidden p-4">
                 {((game.away_team as any)?.logo_url || (game.away_team as any)?.logo_path) ? (
                   <img src={(game.away_team as any).logo_url || (game.away_team as any).logo_path} alt={(game.away_team as any).name} className="w-full h-full object-contain" />
                 ) : (
@@ -250,7 +254,7 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
 
       {/* POTG Banner */}
       {potg && (
-        <div className="relative overflow-hidden card border-flag-gold/20 group transition-all hover:border-flag-gold/40 hover:shadow-[0_8px_32px_rgba(212,160,23,0.10)]">
+        <div className="relative overflow-hidden surface-elevated rounded-xl border border-flag-gold/20 group transition-all hover:border-flag-gold/40">
           {/* Gold accent top */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-flag-gold/60 via-flag-gold to-flag-gold/60" />
           <div className="absolute -right-20 -top-20 text-[15rem] text-flag-gold/[0.04] rotate-12 pointer-events-none select-none font-display transition-transform group-hover:scale-110 duration-700">🏆</div>
@@ -321,8 +325,8 @@ export default async function GameBoxScorePage({ params }: { params: { id: strin
 
       {/* Box Scores Grid */}
       <div className="space-y-10 pt-4">
-        {game.home_team && renderStatTable((game.home_team as any).name, homeStats, isHomeWinner)}
-        {game.away_team && renderStatTable((game.away_team as any).name, awayStats, !isHomeWinner && (game.away_score || 0) > (game.home_score || 0))}
+        {game.home_team && renderStatTable((game.home_team as any).name, (game.home_team as any).logo_url || (game.home_team as any).logo_path, homeStats, isHomeWinner)}
+        {game.away_team && renderStatTable((game.away_team as any).name, (game.away_team as any).logo_url || (game.away_team as any).logo_path, awayStats, !isHomeWinner && (game.away_score || 0) > (game.home_score || 0))}
       </div>
 
     </div>

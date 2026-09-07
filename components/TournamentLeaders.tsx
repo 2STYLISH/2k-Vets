@@ -5,7 +5,7 @@ import { slugify } from '@/lib/format';
 export default function LeaderboardCard({ title, leaders, dataKey }: { title: string; leaders: any[]; dataKey: string }) {
   if (!leaders || leaders.length === 0) {
     return (
-      <div className="card p-4 overflow-hidden">
+      <div className="surface-elevated rounded-xl p-4 overflow-hidden">
         <h3 className="text-sm font-display text-white tracking-widest uppercase mb-4">{title}</h3>
         <p className="text-[10px] text-white/30 font-mono uppercase text-center py-4">No data yet</p>
       </div>
@@ -16,46 +16,46 @@ export default function LeaderboardCard({ title, leaders, dataKey }: { title: st
   const rest = leaders.slice(1, 5);
 
   return (
-    <div className="card overflow-hidden border border-white/[0.06] bg-navy-900/50">
-      <div className="bg-white/[0.03] px-4 py-3 border-b border-white/[0.06]">
+    <div className="surface-elevated rounded-xl overflow-hidden">
+      <div className="bg-[#111827] px-5 py-3 border-b border-white/10">
         <h3 className="text-sm font-display text-white tracking-widest uppercase">{title}</h3>
       </div>
       
       {/* Top Leader (Large) */}
-      <Link href={`/${topLeader.player.slug || slugify(topLeader.player.gamertag)}`} className="block group relative p-4 border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors overflow-hidden">
-        <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 bg-flag-gold/[0.05] rounded-full blur-xl group-hover:bg-flag-gold/[0.1] transition-colors" />
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-flag-gold/30 bg-navy-800 shadow-md">
+      <Link href={`/${topLeader.player.slug || slugify(topLeader.player.gamertag)}`} className="block group relative p-5 border-b border-white/10 hover:bg-white/5 transition-colors overflow-hidden">
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="relative w-16 h-16 bg-[#1f2937] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
             {topLeader.player.photo_path ? (
               <img src={topLeader.player.photo_path} alt={topLeader.player.gamertag} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center p-3 opacity-50"><img src="/logo.png" alt="Logo" className="w-full h-full object-contain" /></div>
+              <span className="text-[10px] font-mono text-white/20">TBD</span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-base font-display text-white truncate tracking-wider uppercase group-hover:text-flag-gold transition-colors">{topLeader.player.gamertag}</h4>
-            <p className="text-[10px] font-mono text-white/50 tracking-widest uppercase truncate">{topLeader.teamName}</p>
+            <p className="text-[10px] font-mono text-white/50 tracking-[0.2em] uppercase mb-1">#1</p>
+            <h4 className="text-xl font-display text-white truncate tracking-wider uppercase group-hover:text-flag-gold transition-colors leading-none">{topLeader.player.gamertag}</h4>
+            <p className="text-[10px] font-mono text-white/40 tracking-widest uppercase truncate mt-1">{topLeader.teamName}</p>
           </div>
-          <div className="text-2xl font-mono font-bold text-flag-gold">
+          <div className="text-3xl font-display text-flag-gold tracking-wider">
             {Number.isInteger(topLeader.avg[dataKey]) ? topLeader.avg[dataKey] : Number(topLeader.avg[dataKey]).toFixed(1)}
-            {dataKey.includes('Pct') ? '%' : ''}
+            {dataKey.includes('Pct') ? <span className="text-lg">%</span> : ''}
           </div>
         </div>
       </Link>
 
       {/* Ranks 2-5 */}
-      <div className="divide-y divide-white/[0.03]">
+      <div className="divide-y divide-white/5 bg-[#1f2937]">
         {rest.map((item, idx) => (
-          <Link key={item.player.id} href={`/${item.player.slug || slugify(item.player.gamertag)}`} className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors group">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="text-[10px] font-mono text-white/30 w-3 text-center">{idx + 2}</span>
+          <Link key={item.player.id} href={`/${item.player.slug || slugify(item.player.gamertag)}`} className="flex items-center justify-between px-5 py-3 hover:bg-white/5 transition-colors group">
+            <div className="flex items-center gap-4 min-w-0">
+              <span className="text-[10px] font-mono text-white/30 w-4 text-center">#{idx + 2}</span>
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <span className="text-xs font-display text-white/90 truncate tracking-wider uppercase group-hover:text-flag-gold transition-colors">{item.player.gamertag}</span>
+                <span className="text-sm font-display text-white/90 truncate tracking-wider uppercase group-hover:text-white transition-colors">{item.player.gamertag}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">{item.teamName.substring(0, 3)}</span>
-              <span className="text-sm font-mono font-bold text-white w-10 text-right group-hover:text-flag-gold transition-colors">
+            <div className="flex items-center gap-4 shrink-0">
+              <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">{item.teamName.substring(0, 3)}</span>
+              <span className="text-base font-mono font-bold text-white w-12 text-right group-hover:text-flag-gold transition-colors">
                 {Number.isInteger(item.avg[dataKey]) ? item.avg[dataKey] : Number(item.avg[dataKey]).toFixed(1)}
                 {dataKey.includes('Pct') ? '%' : ''}
               </span>

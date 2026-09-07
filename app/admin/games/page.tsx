@@ -44,17 +44,18 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
     <div className="space-y-4">
       <BackButton />
       
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-6 border-b border-white/[0.06]">
-        <div>
-          <h1 className="text-4xl text-white mb-1">GAMES & SCREENSHOTS</h1>
-          <p className="text-white/40 text-sm">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-6 border-b border-white/10">
+        <div className="section-header !mb-0 !pb-0 !border-b-0">
+          <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Games</p>
+          <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">GAMES & SCREENSHOTS</h1>
+          <p className="text-white/40 text-sm mt-4 max-w-2xl">
             Upload the final box-score screenshot, run AI extraction, then review and mark players
             as DNP before verifying. Stats and award rankings update automatically on verify.
           </p>
         </div>
         
-        <div className="flex items-center gap-3 bg-surface-900/50 p-2 rounded-xl border border-white/[0.06]">
-          <span className="text-[10px] font-mono text-silver-400 uppercase tracking-widest pl-2">Tournament</span>
+        <div className="flex items-center gap-3 bg-[#1f2937] p-2 rounded-xl border border-white/10">
+          <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest pl-2 font-bold">Tournament</span>
           <TournamentFilter tournaments={tournaments} activeId={activeTournamentSlug} basePath="/admin/games" />
         </div>
       </div>
@@ -62,13 +63,13 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
       <div className="flex gap-2 mb-4">
         <Link 
           href="?tab=active" 
-          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'active' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
+          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'active' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
         >
           Active
         </Link>
         <Link 
           href="?tab=archived" 
-          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'archived' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
+          className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'archived' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
         >
           Archived
         </Link>
@@ -88,8 +89,8 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
 
           if (currentList.length === 0) {
             return (
-              <div className="card p-8 text-center">
-                <p className="text-white text-sm">No games found in this view.</p>
+              <div className="surface-elevated rounded-xl p-8 text-center border border-white/10">
+                <p className="text-white font-mono uppercase tracking-widest text-[10px] font-bold">No games found in this view.</p>
               </div>
             );
           }
@@ -119,15 +120,15 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
               <Link
                 key={s.id}
                 href={`/admin/games/${s.id}`}
-                className="relative group p-5 rounded-2xl border border-white/[0.06] bg-gradient-to-br from-surface-900/80 to-surface-950/80 backdrop-blur-xl shadow-lg hover:shadow-[0_0_25px_rgba(220,38,38,0.15)] hover:border-red-500/40 transition-all duration-300 overflow-hidden flex items-center justify-between"
+                className="relative group p-5 surface-elevated rounded-xl border border-white/10 hover:border-flag-red hover:-translate-y-0.5 transition-all duration-300 overflow-hidden flex items-center justify-between"
               >
-                <div className="absolute top-0 left-0 w-full h-full bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-flag-red/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 <div className="relative z-10">
-                  <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest group-hover:text-white/30 transition-colors">
+                  <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest group-hover:text-white/50 transition-colors">
                     {s.game_type}
                     {s.round_label ? ` · ${s.round_label}` : ''} · {formatDate(s.scheduled_date)} {formatTime(s.scheduled_time)}
                   </p>
-                  <p className="text-white font-display text-lg mt-1 group-hover:text-red-400 transition-colors">
+                  <p className="text-white font-display text-lg mt-1 group-hover:text-flag-red transition-colors">
                     {s.home?.name ?? 'TBD'} <span className="text-white/40">vs</span> {s.away?.name ?? 'TBD'}
                   </p>
                 </div>

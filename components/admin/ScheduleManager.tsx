@@ -7,11 +7,11 @@ import { useNotification } from '@/components/providers/NotificationProvider';
 import { parseError } from '@/lib/format';
 
 const STATUS_STYLES: Record<string, string> = {
-  SCHEDULED:   'bg-emerald-900/40 text-emerald-400 border border-emerald-700/50',
-  LIVE:        'bg-yellow-900/40 text-yellow-300 border border-yellow-600/50 animate-pulse',
-  COMPLETED:   'bg-surface-700 text-silver-500 border border-surface-600',
-  POSTPONED:   'bg-orange-900/40 text-orange-400 border border-orange-700/50',
-  CANCELLED:   'bg-red-900/40 text-red-400 border border-red-700/50',
+  SCHEDULED:   'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20',
+  LIVE:        'bg-flag-red/10 text-flag-red border border-flag-red/20 animate-pulse',
+  COMPLETED:   'bg-white/[0.03] text-white/30 border border-white/10',
+  POSTPONED:   'bg-flag-gold/10 text-flag-gold border border-flag-gold/20',
+  CANCELLED:   'bg-red-900/20 text-red-400 border border-red-700/30',
 };
 
 export default function ScheduleManager({ games }: { games: any[] }) {
@@ -30,13 +30,13 @@ export default function ScheduleManager({ games }: { games: any[] }) {
         <div className="flex gap-2">
           <button 
             onClick={() => setTab('ACTIVE')}
-            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ACTIVE' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
+            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ACTIVE' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
           >
             Active
           </button>
           <button 
             onClick={() => setTab('ARCHIVED')}
-            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ARCHIVED' ? 'bg-flag-red text-white shadow-lg border border-red-500' : 'bg-surface-800 text-white/50 hover:text-white border border-surface-600'}`}
+            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'ARCHIVED' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
           >
             Archived
           </button>
@@ -121,7 +121,7 @@ function GameRow({ game }: { game: any }) {
 
   if (editing) {
     return (
-      <div className="card p-4 space-y-3 border-gold/40 shadow-[0_0_15px_rgba(255,215,0,0.05)]">
+      <div className="surface-elevated rounded-xl border border-flag-gold/40 p-5 space-y-3 shadow-[0_0_15px_rgba(212,160,23,0.1)]">
         <div className="mb-2">
           <p className="text-white font-bold">{game.home?.name} vs {game.away?.name}</p>
           {tournament && <p className="text-xs text-white/70 font-mono mt-0.5">{tournament}</p>}
@@ -163,7 +163,7 @@ function GameRow({ game }: { game: any }) {
 
         <div className="flex justify-between items-center pt-2">
           <div className="flex gap-4">
-            <button onClick={handleDelete} disabled={busy} className="text-xs text-crimson-400 hover:text-crimson-300 font-mono">
+            <button onClick={handleDelete} disabled={busy} className="text-[10px] text-white/40 hover:text-flag-red transition-colors font-mono uppercase tracking-widest">
               DELETE
             </button>
           </div>
@@ -177,7 +177,7 @@ function GameRow({ game }: { game: any }) {
   }
 
   return (
-    <div className="card p-4 flex items-center justify-between group">
+    <div className="surface-elevated rounded-xl border border-white/10 p-5 flex items-center justify-between group hover:border-white/20 transition-colors">
       <div className="min-w-0">
         <p className="text-white font-bold truncate">{game.home?.name} vs {game.away?.name}</p>
         <p className="text-xs text-white/70 font-mono uppercase mt-0.5">
@@ -193,7 +193,7 @@ function GameRow({ game }: { game: any }) {
         {game.status !== 'COMPLETED' && (
           <button
             onClick={() => setEditing(true)}
-            className="text-[10px] font-mono text-silver-500 hover:text-white uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 border border-surface-600 rounded"
+            className="text-[10px] font-mono text-white/40 hover:text-white uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 border border-white/10 rounded hover:border-white/30 bg-[#111827]"
           >
             Edit
           </button>

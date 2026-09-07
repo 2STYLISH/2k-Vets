@@ -43,11 +43,7 @@ export default function Footer() {
   return (
     <footer className="footer-container">
       <div className="footer-sponsors-section">
-        <div className="footer-sponsors-header">
-          <div className="footer-sponsors-line" />
-          <span className="footer-sponsors-title title-glow">SUPPORTED BY</span>
-          <div className="footer-sponsors-line" />
-        </div>
+
 
         <div className="footer-marquee-container">
           <div className="footer-marquee-content">
@@ -60,7 +56,7 @@ export default function Footer() {
 
       <div className="footer-bottom">
         <div className="footer-bottom-content">
-          <p className="footer-copyright">© {new Date().getFullYear()} 2K Veterans League. All rights reserved.</p>
+          <p className="footer-copyright">© 2K Veterans League. All rights reserved.</p>
         </div>
       </div>
     </footer>

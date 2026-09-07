@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import TournamentSelect from '@/components/TournamentSelect';
 import Link from '@/components/HiddenLink';
 import { slugify } from '@/lib/format';
 
@@ -83,18 +82,31 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
       <div className="mb-8">
         <div className="section-header">
           <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">2K Veterans League Awards</p>
-          <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase title-glow">
+          <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">
             {activeTournamentName}
           </h1>
         </div>
 
         <div className="mt-6">
           {tournaments && tournaments.length > 0 && (
-            <TournamentSelect
-              tournaments={tournaments}
-              activeId={activeTournamentSlug}
-              basePath="/awards"
-            />
+            <div className="inline-flex flex-wrap gap-1 bg-[#1f2937] rounded-xl p-1 border border-white/10">
+              {tournaments.map((t) => {
+                const slug = slugify(t.name);
+                const isActive = activeTournamentId === t.id;
+                return (
+                  <a
+                    key={t.id}
+                    href={`/awards?tournament_id=${slug}`}
+                    className={`px-5 py-2.5 rounded-lg text-[10px] font-mono font-medium uppercase tracking-widest transition-all duration-200 ${isActive
+                        ? 'bg-flag-red text-white'
+                        : 'text-white/50 hover:text-white hover:bg-white/5'
+                      }`}
+                  >
+                    {t.name}
+                  </a>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
@@ -102,42 +114,38 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
       {!activeTournamentId ? (
         <p className="text-white/40 font-mono uppercase tracking-widest text-sm">No tournaments found.</p>
       ) : (awards ?? []).length === 0 ? (
-        <div className="card p-16 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,160,23,0.04),transparent_50%)]" />
-          <p className="text-white/40 text-sm font-mono uppercase tracking-widest relative z-10">
-            No awards published yet for this tournament. Admins are reviewing candidates.
+        <div className="surface-elevated rounded-xl p-16 text-center relative overflow-hidden">
+          <p className="text-white/40 text-sm font-mono uppercase tracking-widest relative z-10 font-bold">
+            No awards published yet for this tournament.
           </p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {(awards ?? []).map((a: any) => {
             const isMythical = a.award_type === 'MYTHICAL_TEAM';
-            
+
             // For regular awards
             const teamName = playerTeams.get(a.winner_player_id);
             const playerSlug = a.winner?.slug || slugify(a.winner?.gamertag || '');
-            
+
             // For Mythical Team
             const mythicalWinners = isMythical && teamWinnersData ? teamWinnersData.filter((p: any) => a.winner_player_ids?.includes(p.id)) : [];
 
             return (
-              <div key={a.id} className={`relative card p-8 transition-all duration-500 group overflow-hidden hover:border-flag-gold/40 hover:shadow-[0_8px_32px_rgba(212,160,23,0.12)] hover:-translate-y-1 ${isMythical ? 'md:col-span-2 lg:col-span-3' : ''}`}>
+              <div key={a.id} className={`relative surface-elevated rounded-xl p-8 transition-all duration-300 group overflow-hidden border border-white/10 hover:border-flag-gold/40 hover:-translate-y-1 ${isMythical ? 'md:col-span-2 lg:col-span-3' : ''}`}>
                 {/* Gold accent top stripe */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-flag-gold/60 via-flag-gold to-flag-gold/60 opacity-60 group-hover:opacity-100 transition-opacity" />
 
-                {/* Subtle glow */}
-                <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-flag-gold/[0.03] rounded-full blur-3xl group-hover:bg-flag-gold/[0.06] transition-colors" />
-
-                <div className="flex flex-col items-center text-center gap-2 mb-6 relative z-10">
+                <div className="flex flex-col items-center text-center gap-3 mb-8 relative z-10">
                   <span className="text-5xl mb-2 transform group-hover:scale-110 transition-transform duration-500">{TROPHY[a.award_type] ?? '🏆'}</span>
                   <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-flag-gold/40 to-transparent mb-2" />
                   <h2 className="text-lg text-white font-display tracking-[0.15em] uppercase group-hover:text-flag-gold transition-colors">
                     {isMythical ? a.custom_name || 'Mythical Team' : a.award_type?.replace(/_/g, ' ') || 'Unknown Award'}
                   </h2>
-                  <p className="text-[9px] font-mono text-white/40 uppercase tracking-[0.3em]">2K Veterans League</p>
+                  <p className="text-[9px] font-mono text-white/40 uppercase tracking-[0.3em] font-bold">2K Veterans League</p>
                 </div>
 
-                <div className={`relative z-10 bg-white/[0.03] backdrop-blur-sm rounded-2xl p-6 border border-white/[0.06] group-hover:border-flag-gold/20 transition-colors ${isMythical ? 'grid grid-cols-2 md:grid-cols-5 gap-4' : ''}`}>
+                <div className={`relative z-10 bg-[#1f2937] rounded-xl p-6 border border-white/10 group-hover:border-flag-gold/20 transition-colors ${isMythical ? 'grid grid-cols-2 md:grid-cols-5 gap-4' : ''}`}>
                   {isMythical ? (
                     mythicalWinners.length > 0 ? (
                       mythicalWinners.map((w: any) => {
@@ -147,10 +155,10 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
                           <div key={w.id} className="flex flex-col items-center gap-3 text-center">
                             <div className="relative">
                               {w.photo_path ? (
-                                <img src={w.photo_path} alt={w.gamertag} className="w-16 h-16 object-cover rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md" />
+                                <img src={w.photo_path} alt={w.gamertag} className="w-16 h-16 object-cover rounded-full border border-flag-gold/30 bg-[#111827]" />
                               ) : (
-                                <div className="w-16 h-16 rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md flex items-center justify-center overflow-hidden p-3">
-                                  <img src="/logo.png" alt={w.gamertag} className="w-full h-full object-contain opacity-50" />
+                                <div className="w-16 h-16 rounded-full border border-flag-gold/30 bg-[#111827] flex items-center justify-center overflow-hidden p-3">
+                                  <span className="text-[10px] font-mono text-white/20">TBD</span>
                                 </div>
                               )}
                               <div className="absolute -bottom-1 -right-1 bg-flag-gold w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[8px] shadow-md text-white font-bold">✓</div>
@@ -174,10 +182,10 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
                     <div className="flex flex-col items-center gap-4 text-center">
                       <div className="relative">
                         {a.winner.photo_path ? (
-                          <img src={a.winner.photo_path} alt={a.winner.gamertag} className="w-20 h-20 object-cover rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md" />
+                          <img src={a.winner.photo_path} alt={a.winner.gamertag} className="w-20 h-20 object-cover rounded-full border border-flag-gold/30 bg-[#111827]" />
                         ) : (
-                          <div className="w-20 h-20 rounded-full border-2 border-flag-gold/30 bg-navy-900 shadow-md flex items-center justify-center overflow-hidden p-3">
-                            <img src="/logo.png" alt={a.winner.gamertag} className="w-full h-full object-contain opacity-50" />
+                          <div className="w-20 h-20 rounded-full border border-flag-gold/30 bg-[#111827] flex items-center justify-center overflow-hidden p-3">
+                            <span className="text-[10px] font-mono text-white/20">TBD</span>
                           </div>
                         )}
                         <div className="absolute -bottom-1 -right-1 bg-flag-gold w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] shadow-md text-white font-bold">✓</div>
@@ -202,7 +210,7 @@ export default async function PublicAwardsPage({ searchParams }: { searchParams:
                 </div>
 
                 {a.publish_notes && a.admin_notes && (
-                  <div className="mt-6 text-xs text-white/40 italic border-t border-white/[0.06] pt-4 text-center px-4 relative z-10 leading-relaxed font-serif">
+                  <div className="mt-6 text-xs text-white/40 italic border-t border-white/10 pt-4 text-center px-4 relative z-10 leading-relaxed font-serif">
                     "{a.admin_notes}"
                   </div>
                 )}

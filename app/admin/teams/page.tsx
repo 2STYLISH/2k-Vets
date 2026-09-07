@@ -13,9 +13,10 @@ export default async function AdminTeamsPage() {
   return (
     <div className="space-y-4">
       <BackButton />
-      <div>
-        <h1 className="text-4xl text-white/90 mb-1">TEAMS & ROSTERS</h1>
-        <p className="text-white/40 text-sm mb-8">
+      <div className="section-header">
+        <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Teams</p>
+        <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">TEAMS & ROSTERS</h1>
+        <p className="text-white/40 text-sm mt-4 max-w-2xl">
           Manage teams and player rosters for each tournament.
         </p>
       </div>
