@@ -153,6 +153,16 @@ export default function Navbar() {
         {/* Desktop Right */}
         <div className="hidden md:flex items-center gap-4 flex-1 justify-end">
 
+          {/* SBP Sponsor Image */}
+          <div className="flex items-center justify-center mr-2">
+            <Image 
+              src="/sponsors/sbp.png" 
+              alt="SBP Sponsor" 
+              width={56} 
+              height={56} 
+              className="object-contain h-10 w-auto opacity-90 hover:opacity-100 transition-opacity"
+            />
+          </div>
 
           {/* Desktop Profile Button + Dropdown */}
           <div ref={desktopProfileRef} className="relative">
