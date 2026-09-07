@@ -41,7 +41,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
   ] = await Promise.all([
     supabase
       .from('bracket_matchups')
-      .select('id, short_id, round, slot, status, match_format, winner_id, is_bye, bracket_side, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,group_name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,group_name), series(team_a_id, team_b_id, team_a_wins, team_b_wins), schedule:schedules(games(home_score, away_score))')
+      .select('id, short_id, round, slot, status, match_format, winner_id, is_bye, bracket_side, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,group_name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,group_name), series(team_a_id, team_b_id, team_a_wins, team_b_wins), schedule:schedules(home_team_id, away_team_id, games(home_score, away_score))')
       .eq('tournament_id', tournament.id)
       .order('round', { ascending: true })
       .order('slot', { ascending: true }),
@@ -53,7 +53,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
   ]);
 
   // ── Player Stats ─────────────────────────────────────────────────────────────
-  const { data: players } = await supabase.from('players').select('id, gamertag, position, slug');
+  const { data: players } = await supabase.from('players').select('id, gamertag, position, slug, photo_path');
 
   const { data: statsRaw } = await supabase
     .from('player_game_stats')
