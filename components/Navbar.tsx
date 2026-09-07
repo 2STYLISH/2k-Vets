@@ -154,7 +154,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-4 flex-1 justify-end">
 
           {/* SBP Sponsor Image */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center justify-center mr-auto ml-4">
             <Image
               src="/sponsors/sbp.png"
               alt="SBP Sponsor"
