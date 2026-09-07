@@ -111,9 +111,8 @@ export default function ScreenshotUploadPanel({
         <div className="border-t border-surface-700 pt-4 space-y-3">
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-mono text-white font-bold uppercase tracking-widest">AI Extraction</span>
-            <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
-              aiWorked ? 'text-silver-200 bg-surface-700' : 'text-silver-600 bg-surface-800'
-            }`}>
+            <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${aiWorked ? 'text-silver-200 bg-surface-700' : 'text-silver-600 bg-surface-800'
+              }`}>
               {confidence}% confidence
             </span>
           </div>
@@ -190,7 +189,7 @@ function fileToBase64(file: File): Promise<string> {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        
+
         // Max dimensions for OCR is generally fine at 1920x1080
         const MAX_WIDTH = 1920;
         const MAX_HEIGHT = 1080;
@@ -211,9 +210,9 @@ function fileToBase64(file: File): Promise<string> {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject(new Error('Canvas context not available.'));
-        
+
         ctx.drawImage(img, 0, 0, width, height);
-        
+
         // Compress as JPEG
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         resolve(dataUrl.split(',')[1]);

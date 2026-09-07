@@ -8,10 +8,10 @@ export const maxDuration = 60;
 
 const STATUS_STYLES: Record<string, string> = {
   SCHEDULED: 'text-white/40 bg-white/[0.03]',
-  LIVE: 'text-white bg-navy-50',
+  LIVE: 'text-flag-red bg-flag-red/10 border-flag-red/20',
   AWAITING_STATS: 'text-white/30 bg-white/[0.03]',
-  STATS_UNDER_REVIEW: 'text-white/50 bg-navy-50',
-  VERIFIED: 'text-white bg-navy-50',
+  STATS_UNDER_REVIEW: 'text-flag-gold bg-flag-gold/10 border-flag-gold/20',
+  VERIFIED: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
   COMPLETED: 'text-white/30 bg-white/[0.03]',
 };
 
