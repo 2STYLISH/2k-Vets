@@ -137,8 +137,9 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-1 bg-[#1f2937] p-1 rounded-xl border border-white/10 h-10 my-auto">
+        {/* Desktop Nav Area */}
+        <div className="hidden lg:flex items-center gap-4">
+          <nav className="flex items-center gap-1 bg-[#1f2937] p-1 rounded-xl border border-white/10 h-10 my-auto">
           {LINKS.map((l) => {
             const active = pathname === l.href || pathname.startsWith(l.href + '/');
             return (
@@ -150,7 +151,14 @@ export default function Navbar() {
               </Link>
             );
           })}
-        </nav>
+          </nav>
+          
+          <div className="flex items-center" title="Samahang Basketbol ng Pilipinas">
+            <div className="relative w-10 h-10 hover:scale-105 transition-transform duration-200">
+              <Image src="/sponsors/sbp.png" alt="SBP Logo" fill className="object-contain" />
+            </div>
+          </div>
+        </div>
 
         {/* Desktop Right */}
         <div className="hidden md:flex items-center gap-6 flex-1 justify-end">
@@ -233,6 +241,11 @@ export default function Navbar() {
                     }`}>{l.label}</Link>
               );
             })}
+            <div className="pt-6 border-t border-white/10 mt-6">
+              <div className="relative w-16 h-16">
+                <Image src="/sponsors/sbp.png" alt="SBP Logo" fill className="object-contain" />
+              </div>
+            </div>
           </nav>
         </div>
       )}
