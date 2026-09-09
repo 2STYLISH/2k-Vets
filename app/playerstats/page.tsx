@@ -5,6 +5,7 @@ import type { PlayerGameStats } from '@/lib/types';
 import { slugify } from '@/lib/format';
 import LeaderboardCard from '@/components/TournamentLeaders';
 import PaginatedPlayerTable from '@/components/PaginatedPlayerTable';
+import PlayerComparison from '@/components/PlayerComparison';
 
 export const metadata = {
   title: 'Player Stats — 2K Veterans League',
@@ -32,6 +33,13 @@ function TabHeader({ activeTab, activeTournamentSlug }: { activeTab: string; act
             }`}
         >
           Overall Stats
+        </Link>
+        <Link
+          href={`/playerstats?tab=compare`}
+          className={`px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${activeTab === 'compare' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'
+            }`}
+        >
+          Player Comparison
         </Link>
       </div>
     </div>
@@ -66,7 +74,7 @@ function LeaderboardGrid({ rows }: { rows: { player: any; avg: any; teamName: st
 
 export default async function StatsPage({ searchParams }: { searchParams: { tab?: string; t?: string } }) {
   const supabase = createClient();
-  const activeTab = searchParams.tab === 'all' ? 'all' : 'tournaments';
+  const activeTab = searchParams.tab === 'all' ? 'all' : searchParams.tab === 'compare' ? 'compare' : 'tournaments';
 
   const { data: tournaments } = await supabase
     .from('tournaments')
@@ -82,8 +90,8 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     .from('players')
     .select('id, gamertag, position, slug, photo_path');
 
-  // ── ALL PLAYERS TAB ──────────────────────────────────────────────────────────
-  if (activeTab === 'all') {
+  // ── ALL PLAYERS & COMPARE TABS ───────────────────────────────────────────────
+  if (activeTab === 'all' || activeTab === 'compare') {
     const { data: allStats } = await supabase
       .from('player_game_stats')
       .select('player_id, team_id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score)')
@@ -119,6 +127,15 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
       })
       .filter(Boolean)
       .sort((a, b) => b!.avg.ppg - a!.avg.ppg) as { player: any; avg: any; teamName: string }[];
+
+    if (activeTab === 'compare') {
+      return (
+        <div className="max-w-5xl mx-auto space-y-8">
+          <TabHeader activeTab="compare" activeTournamentSlug={activeTournamentSlug} />
+          <PlayerComparison players={rows} />
+        </div>
+      );
+    }
 
     return (
       <div className="max-w-5xl mx-auto space-y-8">
