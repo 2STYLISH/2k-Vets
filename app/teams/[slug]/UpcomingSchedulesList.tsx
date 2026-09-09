@@ -25,8 +25,16 @@ export default function UpcomingSchedulesList({ schedules, teamIds }: { schedule
             <div key={s.id} className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-[#111827]">
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="text-white text-base font-display tracking-[0.1em] uppercase">
-                    {myTeam?.name || 'Unknown'} <span className="text-white/30 mx-2 text-xs font-mono font-bold">VS</span> {opponent?.name || 'Unknown'}
+                  <p className="text-white text-base font-display tracking-[0.1em] uppercase flex items-center">
+                    <span>{myTeam?.name || 'Unknown'}</span>
+                    <span className="text-white/30 mx-2 text-xs font-mono font-bold">VS</span>
+                    {opponent?.slug ? (
+                      <Link href={`/teams/${opponent.slug}`} className="hover:text-flag-gold transition-colors hover:underline">
+                        {opponent.name}
+                      </Link>
+                    ) : (
+                      <span>{opponent?.name || 'Unknown'}</span>
+                    )}
                   </p>
                   {tourney && <p className="text-[10px] text-white/30 font-mono uppercase mt-1">{tourney.name} {s.round_label ? `· ${s.round_label}` : ''}</p>}
                 </div>
