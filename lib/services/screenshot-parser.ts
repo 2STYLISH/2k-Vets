@@ -34,7 +34,7 @@ export async function parseGameScreenshot(imageBase64: string): Promise<ParseRes
   // was saved (CRLF line endings, copy-paste artifacts) silently breaks the
   // query string and is invisible when you eyeball the .env file.
   const apiKey = process.env.AI_PROVIDER_API_KEY?.trim();
-  const model = (process.env.AI_PROVIDER_MODEL || 'gemini-3.6-flash').trim();
+  const model = (process.env.AI_PROVIDER_MODEL || 'gemini-1.5-flash').trim();
   const baseUrl = (process.env.AI_PROVIDER_BASE_URL || 'https://generativelanguage.googleapis.com').trim().replace(/\/+$/, '');
 
   if (!apiKey) {
@@ -58,39 +58,64 @@ export async function parseGameScreenshot(imageBase64: string): Promise<ParseRes
   // under the 25s limit, and the Edge runtime allows up to 300s of ongoing
   // streaming after that. This works identically against the real Google
   // endpoint too (not just through the proxy), so it's safe either way.
-  let response: Response;
-  try {
-    response = await fetch(
-      `${baseUrl}/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } },
-                { text: PROMPT },
-              ],
+  let response: Response | null = null;
+  let retryCount = 0;
+  const MAX_RETRIES = 1;
+
+  while (retryCount <= MAX_RETRIES) {
+    try {
+      response = await fetch(
+        `${baseUrl}/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } },
+                  { text: PROMPT },
+                ],
+              },
+            ],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0,
             },
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0,
-          },
-        }),
-        signal: controller.signal,
+          }),
+          signal: controller.signal,
+        }
+      );
+      
+      // If we got rate limited (429) and haven't exhausted retries, wait and retry.
+      if (response.status === 429 && retryCount < MAX_RETRIES) {
+        console.warn(`[screenshot-parser] HTTP 429 rate limit hit. Retrying in 2 seconds...`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
       }
-    );
-  } catch (networkErr: any) {
-    const timedOut = networkErr?.name === 'AbortError';
-    const msg = timedOut
-      ? `Gemini API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s. The host this app is running on may be blocking or unable to reach ${baseUrl}.`
-      : `Network error calling Gemini API: ${networkErr?.message ?? networkErr}`;
-    console.error('[screenshot-parser]', msg);
-    return { extraction: emptyResult(), error: msg };
-  } finally {
-    clearTimeout(timeout);
+      
+      break; // Success or non-429 error, break the loop
+    } catch (networkErr: any) {
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+      const timedOut = networkErr?.name === 'AbortError';
+      const msg = timedOut
+        ? `Gemini API request timed out after ${REQUEST_TIMEOUT_MS / 1000}s. The host this app is running on may be blocking or unable to reach ${baseUrl}.`
+        : `Network error calling Gemini API: ${networkErr?.message ?? networkErr}`;
+      console.error('[screenshot-parser]', msg);
+      clearTimeout(timeout);
+      return { extraction: emptyResult(), error: msg };
+    }
+  }
+
+  clearTimeout(timeout);
+
+  if (!response) {
+    return { extraction: emptyResult(), error: 'Failed to fetch from Gemini API.' };
   }
 
   if (!response.ok) {

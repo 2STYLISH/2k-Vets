@@ -152,8 +152,7 @@ export default function ScreenshotUploadPanel({
                 <li className="flex gap-2">
                   <span className="text-silver-600">③</span>
                   <span>Gemini API quota exceeded or the model name in{' '}
-                    <code className="text-silver-300 bg-surface-700 px-1 rounded">.env</code> is incorrect
-                    (currently set to <code className="text-silver-300 bg-surface-700 px-1 rounded">gemini-3.6-flash</code>)
+                    <code className="text-silver-300 bg-surface-700 px-1 rounded">.env</code> is incorrect.
                   </span>
                 </li>
                 <li className="flex gap-2">
