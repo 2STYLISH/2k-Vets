@@ -38,7 +38,7 @@ export default function PlayerComparison({ players }: PlayerComparisonProps) {
             className="w-full bg-[#1f2937] text-white border border-white/10 rounded-lg p-2 font-display uppercase"
           >
             {players.map((p) => (
-              <option key={p.player.id} value={p.player.id}>
+              <option key={p.player.id} value={p.player.id} disabled={p.player.id === player2Id}>
                 {p.player.gamertag}
               </option>
             ))}
@@ -57,7 +57,7 @@ export default function PlayerComparison({ players }: PlayerComparisonProps) {
             className="w-full bg-[#1f2937] text-white border border-white/10 rounded-lg p-2 font-display uppercase"
           >
             {players.map((p) => (
-              <option key={p.player.id} value={p.player.id}>
+              <option key={p.player.id} value={p.player.id} disabled={p.player.id === player1Id}>
                 {p.player.gamertag}
               </option>
             ))}
@@ -105,6 +105,7 @@ export default function PlayerComparison({ players }: PlayerComparisonProps) {
               <StatRow label="AST" val1={p1.avg.apg} val2={p2.avg.apg} />
               <StatRow label="STL" val1={p1.avg.spg} val2={p2.avg.spg} />
               <StatRow label="BLK" val1={p1.avg.bpg} val2={p2.avg.bpg} />
+              <StatRow label="T.O" val1={p1.avg.topg} val2={p2.avg.topg} inverse={true} />
               <StatRow label="FG%" val1={p1.avg.fgPct} val2={p2.avg.fgPct} format="pct" />
               <StatRow label="3P%" val1={p1.avg.tpPct} val2={p2.avg.tpPct} format="pct" />
             </div>
@@ -132,12 +133,12 @@ export default function PlayerComparison({ players }: PlayerComparisonProps) {
   );
 }
 
-function StatRow({ label, val1, val2, format = 'num' }: { label: string; val1: number; val2: number; format?: 'num' | 'pct' }) {
+function StatRow({ label, val1, val2, format = 'num', inverse = false }: { label: string; val1: number; val2: number; format?: 'num' | 'pct', inverse?: boolean }) {
   const v1 = Number(val1);
   const v2 = Number(val2);
   
-  const v1IsBetter = v1 > v2;
-  const v2IsBetter = v2 > v1;
+  const v1IsBetter = inverse ? v1 < v2 : v1 > v2;
+  const v2IsBetter = inverse ? v2 < v1 : v2 > v1;
 
   const displayV1 = format === 'pct' ? `${(v1).toFixed(1)}%` : v1.toFixed(1);
   const displayV2 = format === 'pct' ? `${(v2).toFixed(1)}%` : v2.toFixed(1);
