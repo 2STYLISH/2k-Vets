@@ -78,6 +78,11 @@ export default function PaginatedPlayerTable({ rows, showTeamSearch = false }: {
                         <span className="text-white/90 font-body group-hover:text-white transition-colors font-medium">
                           {player.gamertag}
                         </span>
+                        {player.position && (
+                          <span className="text-white/30 font-mono text-[9px] uppercase tracking-widest mt-0.5">
+                            {player.position}
+                          </span>
+                        )}
                       </Link>
                     </div>
                   </td>

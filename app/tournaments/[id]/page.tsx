@@ -57,7 +57,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
 
   const { data: statsRaw } = await supabase
     .from('player_game_stats')
-    .select('player_id, team_id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id))')
+    .select('player_id, team_id, position, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id))')
     .eq('is_verified', true)
     .eq('did_not_play', false);
 
@@ -89,8 +89,25 @@ export default async function TournamentDashboard({ params }: { params: { id: st
     const player = (players ?? []).find(p => p.id === roster.player_id);
     if (!player) continue;
     const entry = statsByPlayer.get(player.id);
+    
+    // Calculate most frequent positions from tournament stats (up to 2)
+    const posCounts: Record<string, number> = {};
+    if (entry) {
+      for (const r of entry.rows as any[]) {
+        if (r.position) posCounts[r.position] = (posCounts[r.position] || 0) + 1;
+      }
+    }
+    const sortedPositions = Object.entries(posCounts).sort((a, b) => b[1] - a[1]);
+    const mainRole = sortedPositions[0]?.[0];
+    const secRole = sortedPositions[1]?.[0];
+    let roleDisplay = '';
+    if (mainRole && secRole) roleDisplay = `${mainRole}/${secRole}`;
+    else if (mainRole) roleDisplay = mainRole;
+    
+    const playerObj = { ...player, position: roleDisplay || player.position };
+    
     const avg = entry && entry.rows.length > 0 ? averageStats(entry.rows, entry.wins, entry.gamesPlayed) : null;
-    teamStatsMap.get(teamId)!.players.push({ player, avg });
+    teamStatsMap.get(teamId)!.players.push({ player: playerObj, avg });
   }
   for (const team of teamStatsMap.values()) {
     team.players.sort((a, b) => (b.avg?.ppg ?? -1) - (a.avg?.ppg ?? -1));

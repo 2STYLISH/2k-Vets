@@ -33,7 +33,12 @@ export default function LeaderboardCard({ title, leaders, dataKey }: { title: st
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-mono text-white/50 tracking-[0.2em] uppercase mb-1">#1</p>
-            <h4 className="text-xl font-display text-white truncate tracking-wider uppercase group-hover:text-flag-gold transition-colors leading-none">{topLeader.player.gamertag}</h4>
+            <div className="flex items-baseline gap-2">
+              <h4 className="text-xl font-display text-white truncate tracking-wider uppercase group-hover:text-flag-gold transition-colors leading-none">{topLeader.player.gamertag}</h4>
+              {topLeader.player.position && (
+                <span className="text-[10px] font-mono text-white/30 uppercase">{topLeader.player.position}</span>
+              )}
+            </div>
             <p className="text-[10px] font-mono text-white/40 tracking-widest uppercase truncate mt-1">{topLeader.teamName}</p>
           </div>
           <div className="text-3xl font-display text-flag-gold tracking-wider">
@@ -51,6 +56,9 @@ export default function LeaderboardCard({ title, leaders, dataKey }: { title: st
               <span className="text-[10px] font-mono text-white/30 w-4 text-center">#{idx + 2}</span>
               <div className="flex-1 min-w-0 flex items-center gap-2">
                 <span className="text-sm font-display text-white/90 truncate tracking-wider uppercase group-hover:text-white transition-colors">{item.player.gamertag}</span>
+                {item.player.position && (
+                  <span className="text-[9px] font-mono text-white/30 uppercase">{item.player.position}</span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4 shrink-0">

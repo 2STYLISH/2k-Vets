@@ -75,7 +75,12 @@ export default function TournamentPlayerStats({ teams }: { teams: TeamStats[] })
                           </div>
                         )}
                       </div>
-                      <span className="text-sm font-bold text-white group-hover:text-flag-gold transition-colors">{player.gamertag}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white group-hover:text-flag-gold transition-colors">{player.gamertag}</span>
+                        {player.position && (
+                          <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest mt-0.5">{player.position}</span>
+                        )}
+                      </div>
                     </Link>
                   </td>
                   {avg ? (
