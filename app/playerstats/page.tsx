@@ -126,7 +126,8 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
         return { player, avg, teamName };
       })
       .filter(Boolean)
-      .sort((a, b) => b!.avg.ppg - a!.avg.ppg) as { player: any; avg: any; teamName: string }[];
+      .filter((row: any) => row.avg.gamesPlayed >= 4)
+      .sort((a: any, b: any) => b.avg.ppg - a.avg.ppg) as { player: any; avg: any; teamName: string }[];
 
     if (activeTab === 'compare') {
       return (
@@ -224,7 +225,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
   const tourneyRows: { player: any; avg: any; teamName: string }[] = [];
   for (const team of teamMap.values()) {
     for (const { player, avg } of team.players) {
-      if (avg) tourneyRows.push({ player, avg, teamName: team.teamName });
+      if (avg && avg.gamesPlayed >= 4) tourneyRows.push({ player, avg, teamName: team.teamName });
     }
   }
 

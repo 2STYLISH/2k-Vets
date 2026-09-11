@@ -117,7 +117,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
   const allPlayerStats: { player: any; teamName: string; avg: any }[] = [];
   for (const team of teamStatsMap.values()) {
     for (const p of team.players) {
-      if (p.avg) allPlayerStats.push({ player: p.player, teamName: team.teamName, avg: p.avg });
+      if (p.avg && p.avg.gamesPlayed >= 4) allPlayerStats.push({ player: p.player, teamName: team.teamName, avg: p.avg });
     }
   }
 
