@@ -46,10 +46,15 @@ function TabHeader({ activeTab, activeTournamentSlug }: { activeTab: string; act
   );
 }
 
-function LeaderboardGrid({ rows }: { rows: { player: any; avg: any; teamName: string }[] }) {
+function LeaderboardGrid({ rows, minGamesRequired }: { rows: { player: any; avg: any; teamName: string }[], minGamesRequired: number }) {
   if (rows.length === 0) return null;
 
-  const getTop = (key: string) => [...rows].sort((a, b) => b.avg[key] - a.avg[key]).slice(0, 5);
+  const getTop = (key: string) => [...rows].sort((a, b) => {
+    const aQual = a.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+    const bQual = b.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+    if (aQual !== bQual) return bQual - aQual;
+    return b.avg[key] - a.avg[key];
+  }).slice(0, 5);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
@@ -117,6 +122,9 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
       }
     }
 
+    const maxGames = Math.max(...Array.from(statsByPlayer.values()).map(e => e.gamesPlayed), 0);
+    const minGamesRequired = Math.max(1, Math.ceil(maxGames * 0.6));
+
     const rows = (players ?? [])
       .map(player => {
         const entry = statsByPlayer.get(player.id);
@@ -126,8 +134,12 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
         return { player, avg, teamName };
       })
       .filter(Boolean)
-      .filter((row: any) => row.avg.gamesPlayed >= 4)
-      .sort((a: any, b: any) => b.avg.ppg - a.avg.ppg) as { player: any; avg: any; teamName: string }[];
+      .sort((a: any, b: any) => {
+        const aQual = a.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+        const bQual = b.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+        if (aQual !== bQual) return bQual - aQual;
+        return b.avg.ppg - a.avg.ppg;
+      }) as { player: any; avg: any; teamName: string }[];
 
     if (activeTab === 'compare') {
       return (
@@ -141,7 +153,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     return (
       <div className="max-w-5xl mx-auto space-y-8">
         <TabHeader activeTab="all" activeTournamentSlug={activeTournamentSlug} />
-        <LeaderboardGrid rows={rows} />
+        <LeaderboardGrid rows={rows} minGamesRequired={minGamesRequired} />
         <PaginatedPlayerTable rows={rows} showTeamSearch={false} />
       </div>
     );
@@ -222,12 +234,22 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     team.players.sort((a, b) => (b.avg?.ppg ?? -1) - (a.avg?.ppg ?? -1));
   }
 
+  const maxGames = Math.max(...Array.from(statsByPlayer.values()).map(e => e.gamesPlayed), 0);
+  const minGamesRequired = Math.max(1, Math.ceil(maxGames * 0.6));
+
   const tourneyRows: { player: any; avg: any; teamName: string }[] = [];
   for (const team of teamMap.values()) {
     for (const { player, avg } of team.players) {
-      if (avg && avg.gamesPlayed >= 4) tourneyRows.push({ player, avg, teamName: team.teamName });
+      if (avg) tourneyRows.push({ player, avg, teamName: team.teamName });
     }
   }
+
+  tourneyRows.sort((a: any, b: any) => {
+    const aQual = a.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+    const bQual = b.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+    if (aQual !== bQual) return bQual - aQual;
+    return b.avg.ppg - a.avg.ppg;
+  });
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -268,7 +290,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
         </div>
       )}
 
-      {tourneyRows.length > 0 && <LeaderboardGrid rows={tourneyRows} />}
+      {tourneyRows.length > 0 && <LeaderboardGrid rows={tourneyRows} minGamesRequired={minGamesRequired} />}
 
       {teamMap.size === 0 && (
         <div className="surface-elevated rounded-xl p-8 text-center border border-white/10">

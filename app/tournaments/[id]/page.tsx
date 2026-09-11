@@ -114,17 +114,27 @@ export default async function TournamentDashboard({ params }: { params: { id: st
     upcomingByRound.get(r)!.push(g);
   });
 
+  const maxGames = Math.max(...Array.from(statsByPlayer.values()).map(e => e.gamesPlayed), 0);
+  const minGamesRequired = Math.max(1, Math.ceil(maxGames * 0.6));
+
   const allPlayerStats: { player: any; teamName: string; avg: any }[] = [];
   for (const team of teamStatsMap.values()) {
     for (const p of team.players) {
-      if (p.avg && p.avg.gamesPlayed >= 4) allPlayerStats.push({ player: p.player, teamName: team.teamName, avg: p.avg });
+      if (p.avg) allPlayerStats.push({ player: p.player, teamName: team.teamName, avg: p.avg });
     }
   }
 
-  const topPts = [...allPlayerStats].sort((a, b) => b.avg.ppg - a.avg.ppg).slice(0, 5);
-  const topAst = [...allPlayerStats].sort((a, b) => b.avg.apg - a.avg.apg).slice(0, 5);
-  const topReb = [...allPlayerStats].sort((a, b) => b.avg.rpg - a.avg.rpg).slice(0, 5);
-  const topStl = [...allPlayerStats].sort((a, b) => b.avg.spg - a.avg.spg).slice(0, 5);
+  const getTop = (statKey: string) => [...allPlayerStats].sort((a, b) => {
+    const aQual = a.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+    const bQual = b.avg.gamesPlayed >= minGamesRequired ? 1 : 0;
+    if (aQual !== bQual) return bQual - aQual;
+    return b.avg[statKey] - a.avg[statKey];
+  }).slice(0, 5);
+
+  const topPts = getTop('ppg');
+  const topAst = getTop('apg');
+  const topReb = getTop('rpg');
+  const topStl = getTop('spg');
 
   return (
     <div className="space-y-10">
