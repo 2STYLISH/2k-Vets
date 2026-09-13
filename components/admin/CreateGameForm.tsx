@@ -61,7 +61,7 @@ export default function CreateGameForm({
       else if (matchup.bracket_side === 'ROUND_ROBIN') newRoundLabel = `Group Stage - Round ${matchup.round}`;
       else newRoundLabel = `Round ${matchup.round}`;
 
-      const seriesId = matchup.series?.[0]?.id;
+      const seriesId = Array.isArray(matchup.series) ? matchup.series[0]?.id : matchup.series?.id;
       let gameNumber = 1;
       if (seriesId && schedules) {
         gameNumber = schedules.filter(s => s.series_id === seriesId).length + 1;
@@ -142,7 +142,6 @@ export default function CreateGameForm({
 
       {tournamentId && (matchupsMap?.[tournamentId]?.length ?? 0) > 0 && (() => {
         const applicableMatchups = matchupsMap![tournamentId].filter(m => {
-          if (m.schedule_id) return false; // Hide already scheduled matchups
           if (uiGameType === 'REGULAR') return m.bracket_side === 'ROUND_ROBIN' || m.bracket_side === 'SWISS';
           if (uiGameType === 'PLAYIN') return m.bracket_side === 'PLAY_IN';
           if (uiGameType === 'PLAYOFF') return m.bracket_side === 'WINNERS' || m.bracket_side === 'LOSERS' || m.bracket_side === 'GRAND_FINAL';
