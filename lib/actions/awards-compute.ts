@@ -43,14 +43,19 @@ export async function recomputeAwardCandidates(): Promise<void> {
   // We need to group candidates per tournament, so we do this for each active tournament
   for (const tournament of tournaments) {
     // Filter stats for this specific tournament
-    const tStats = (allStats as any[]).filter(s => s.game?.schedule?.tournament_id === tournament.id);
+    const tStats = (allStats as any[]).filter(s => {
+      const g = Array.isArray(s.game) ? s.game[0] : s.game;
+      const sched = Array.isArray(g?.schedule) ? g.schedule[0] : g?.schedule;
+      return sched?.tournament_id === tournament.id;
+    });
     if (tStats.length === 0) continue;
 
     // Ensure award rows exist for THIS tournament (upsert)
     for (const awardType of ALL_AWARD_TYPES) {
       // 1. Filter stats for this specific award
       const awardStats = tStats.filter(s => {
-        const sched = s.game?.schedule;
+        const g = Array.isArray(s.game) ? s.game[0] : s.game;
+        const sched = Array.isArray(g?.schedule) ? g.schedule[0] : g?.schedule;
         if (!sched) return false;
         
         if (awardType === 'OVERALL_MVP' || awardType === 'OVERALL_DPOY') {
