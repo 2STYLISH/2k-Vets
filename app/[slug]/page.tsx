@@ -19,8 +19,12 @@ function pct(made: number, attempted: number) {
   return ((made / attempted) * 100).toFixed(1);
 }
 
-export default async function PlayerPage({ params }: { params: { slug: string } }) {
+export default async function PlayerPage({ params, searchParams }: { params: { slug: string }, searchParams?: { gt?: string } }) {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle() : { data: null };
+  const isAdmin = profile?.role === 'ADMIN';
+  const gameType = isAdmin && searchParams?.gt === 'PLAYOFF' ? 'PLAYOFF' : 'REGULAR';
 
   const { data: player } = await supabase
     .from('players')
@@ -61,13 +65,18 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
   const { data: statsRaw } = await supabase
     .from('player_game_stats')
     .select(
-      'id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, position, game:games!player_game_stats_game_id_fkey(id, short_id, home_team_id, away_team_id, home_score, away_score, played_at, home:teams!games_home_team_id_fkey(name, logo_url, logo_path), away:teams!games_away_team_id_fkey(name, logo_url, logo_path), schedule:schedules(scheduled_date, scheduled_time, tournament_id, tournament:tournaments(id, name)))'
+      'id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, position, game:games!player_game_stats_game_id_fkey(id, short_id, home_team_id, away_team_id, home_score, away_score, played_at, home:teams!games_home_team_id_fkey(name, logo_url, logo_path), away:teams!games_away_team_id_fkey(name, logo_url, logo_path), schedule:schedules(scheduled_date, scheduled_time, tournament_id, game_type, tournament:tournaments(id, name)))'
     )
     .eq('player_id', player.id)
     .eq('is_verified', true);
 
   const stats = (statsRaw ?? [])
     .filter(r => !r.did_not_play)
+    .filter((r: any) => {
+      const g = Array.isArray(r.game) ? r.game[0] : r.game;
+      const s = Array.isArray(g?.schedule) ? g.schedule[0] : g?.schedule;
+      return s?.game_type === gameType;
+    })
     .sort((a: any, b: any) => {
       const gameA = Array.isArray(a.game) ? a.game[0] : a.game;
       const gameB = Array.isArray(b.game) ? b.game[0] : b.game;
@@ -282,8 +291,28 @@ export default async function PlayerPage({ params }: { params: { slug: string } 
 
           {/* Career Totals */}
           <div className="surface-elevated rounded-xl p-8">
-            <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] mb-4 font-bold">CAREER STATS</p>
-            <h2 className="text-2xl font-display text-white uppercase tracking-[0.1em] mb-6">FULL CAREER TOTALS</h2>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.2em] mb-4 font-bold">CAREER STATS</p>
+                <h2 className="text-2xl font-display text-white uppercase tracking-[0.1em]">FULL CAREER TOTALS</h2>
+              </div>
+              {isAdmin && (
+                <div className="inline-flex bg-[#111827] rounded-xl p-1 border border-white/10">
+                  <Link
+                    href={`/${params.slug}?gt=REGULAR`}
+                    className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'REGULAR' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                  >
+                    Regular
+                  </Link>
+                  <Link
+                    href={`/${params.slug}?gt=PLAYOFF`}
+                    className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'PLAYOFF' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                  >
+                    Playoffs
+                  </Link>
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/10 border border-white/10 rounded-xl overflow-hidden mb-6">
               <div className="bg-[#111827] p-4">

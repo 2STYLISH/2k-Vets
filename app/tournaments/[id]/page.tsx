@@ -12,8 +12,13 @@ import { formatDate, slugify } from '@/lib/format';
 import { averageStats } from '@/lib/stats';
 import type { PlayerGameStats } from '@/lib/types';
 
-export default async function TournamentDashboard({ params }: { params: { id: string } }) {
+export default async function TournamentDashboard({ params, searchParams }: { params: { id: string }, searchParams?: { gt?: string } }) {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle() : { data: null };
+  const isAdmin = profile?.role === 'ADMIN';
+  const gameType = isAdmin && searchParams?.gt === 'PLAYOFF' ? 'PLAYOFF' : 'REGULAR';
+
   let tournamentId = params.id;
   let tournament = null;
 
@@ -57,11 +62,11 @@ export default async function TournamentDashboard({ params }: { params: { id: st
 
   const { data: statsRaw } = await supabase
     .from('player_game_stats')
-    .select('player_id, team_id, position, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id))')
+    .select('id, game_id, player_id, team_id, position, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id, game_type))')
     .eq('is_verified', true)
     .eq('did_not_play', false);
 
-  const tourneyStats = (statsRaw ?? []).filter((s: any) => s.game?.schedule?.tournament_id === tournament.id);
+  const tourneyStats = (statsRaw ?? []).filter((s: any) => s.game?.schedule?.tournament_id === tournament.id && s.game?.schedule?.game_type === gameType);
 
   const statsByPlayer = new Map<string, { rows: PlayerGameStats[]; wins: number; gamesPlayed: number }>();
   for (const row of tourneyStats as any[]) {
@@ -71,7 +76,7 @@ export default async function TournamentDashboard({ params }: { params: { id: st
     const entry = statsByPlayer.get(row.player_id)!;
     entry.rows.push(row as PlayerGameStats);
     entry.gamesPlayed++;
-    const game = row.game;
+    const game = Array.isArray(row.game) ? row.game[0] : row.game;
     if (game && row.team_id) {
       const isHome = game.home_team_id === row.team_id;
       const myScore = isHome ? game.home_score : game.away_score;
@@ -161,11 +166,31 @@ export default async function TournamentDashboard({ params }: { params: { id: st
         {/* Subtle accent glow */}
         <div className="absolute top-0 left-0 w-full h-1 bg-flag-red" />
         
-        <p className="text-xs font-mono text-flag-red font-bold uppercase tracking-widest mb-2">{tournament.status.replace(/_/g, ' ')}</p>
-        <h1 className="text-3xl md:text-5xl text-white font-display tracking-widest">{tournament.name}</h1>
-        <p className="text-white/50 font-mono text-xs md:text-sm mt-3 uppercase tracking-widest font-bold">
-          {tournament.format.replace(/_/g, ' ')} · {tournament.match_format} · {tournament.start_date ? new Date(tournament.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'} – {tournament.end_date ? new Date(tournament.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'}
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-xs font-mono text-flag-red font-bold uppercase tracking-widest mb-2">{tournament.status.replace(/_/g, ' ')}</p>
+            <h1 className="text-3xl md:text-5xl text-white font-display tracking-widest">{tournament.name}</h1>
+            <p className="text-white/50 font-mono text-xs md:text-sm mt-3 uppercase tracking-widest font-bold">
+              {tournament.format.replace(/_/g, ' ')} · {tournament.match_format} · {tournament.start_date ? new Date(tournament.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'} – {tournament.end_date ? new Date(tournament.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'}
+            </p>
+          </div>
+          {isAdmin && (
+            <div className="inline-flex bg-[#111827] rounded-xl p-1 border border-white/10 mt-2">
+              <Link
+                href={`/tournaments/${params.id}?gt=REGULAR`}
+                className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'REGULAR' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+              >
+                Regular
+              </Link>
+              <Link
+                href={`/tournaments/${params.id}?gt=PLAYOFF`}
+                className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'PLAYOFF' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+              >
+                Playoffs
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Champion banner */}

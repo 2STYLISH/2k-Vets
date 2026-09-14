@@ -33,7 +33,7 @@ export async function recomputeAwardCandidates(): Promise<void> {
   const { data: allStats } = await supabase
     .from('player_game_stats')
     .select(
-      'player_id, team_id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, game:games!player_game_stats_game_id_fkey(id, home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id))'
+      'id, game_id, player_id, team_id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(id, home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id, game_type, round_label))'
     )
     .eq('is_verified', true)
     .eq('did_not_play', false);
@@ -46,36 +46,52 @@ export async function recomputeAwardCandidates(): Promise<void> {
     const tStats = (allStats as any[]).filter(s => s.game?.schedule?.tournament_id === tournament.id);
     if (tStats.length === 0) continue;
 
-    // Group stats by player_id for this tournament
-    const byPlayer = new Map<string, { stats: PlayerGameStats[]; wins: number; gamesPlayed: number }>();
-
-    for (const row of tStats) {
-      if (!byPlayer.has(row.player_id)) {
-        byPlayer.set(row.player_id, { stats: [], wins: 0, gamesPlayed: 0 });
-      }
-      const entry = byPlayer.get(row.player_id)!;
-      entry.stats.push(row as PlayerGameStats);
-      entry.gamesPlayed++;
-
-      // Count wins
-      const game = row.game;
-      if (game && row.team_id) {
-        const isHome = game.home_team_id === row.team_id;
-        const teamScore = isHome ? game.home_score : game.away_score;
-        const oppScore = isHome ? game.away_score : game.home_score;
-        if (teamScore != null && oppScore != null && teamScore > oppScore) {
-          entry.wins++;
-        }
-      }
-    }
-
-    // Rank players for THIS tournament
-    let candidates = Array.from(byPlayer.entries()).map(([playerId, entry]) => {
-      return { playerId, entry };
-    });
-
     // Ensure award rows exist for THIS tournament (upsert)
     for (const awardType of ALL_AWARD_TYPES) {
+      // 1. Filter stats for this specific award
+      const awardStats = tStats.filter(s => {
+        const sched = s.game?.schedule;
+        if (!sched) return false;
+        
+        if (awardType === 'OVERALL_MVP' || awardType === 'OVERALL_DPOY') {
+          return sched.game_type === 'REGULAR';
+        }
+        if (awardType === 'FINALS_MVP') {
+          return sched.round_label && sched.round_label.toLowerCase().includes('finals');
+        }
+        // Mythical Team (BEST_*) includes all tournament games (REGULAR + PLAYOFF)
+        return true;
+      });
+
+      if (awardStats.length === 0) continue;
+
+      // 2. Group by player for this award
+      const byPlayer = new Map<string, { stats: PlayerGameStats[]; wins: number; gamesPlayed: number }>();
+      for (const row of awardStats) {
+        if (!byPlayer.has(row.player_id)) {
+          byPlayer.set(row.player_id, { stats: [], wins: 0, gamesPlayed: 0 });
+        }
+        const entry = byPlayer.get(row.player_id)!;
+        entry.stats.push(row as PlayerGameStats);
+        entry.gamesPlayed++;
+
+        // Count wins
+        const game = Array.isArray(row.game) ? row.game[0] : row.game;
+        if (game && row.team_id) {
+          const isHome = game.home_team_id === row.team_id;
+          const teamScore = isHome ? game.home_score : game.away_score;
+          const oppScore = isHome ? game.away_score : game.home_score;
+          if (teamScore != null && oppScore != null && teamScore > oppScore) {
+            entry.wins++;
+          }
+        }
+      }
+
+      // Rank players for THIS tournament and award
+      let candidates = Array.from(byPlayer.entries()).map(([playerId, entry]) => {
+        return { playerId, entry };
+      });
+
       const { data: existingAward } = await supabase
         .from('awards')
         .select('id')

@@ -12,30 +12,48 @@ export const metadata = {
   description: 'Player statistics for every tournament and overall in the 2K Veterans League Pro-Am league.',
 };
 
-function TabHeader({ activeTab, activeTournamentSlug }: { activeTab: string; activeTournamentSlug: string }) {
+function TabHeader({ activeTab, activeTournamentSlug, isAdmin, gameType }: { activeTab: string; activeTournamentSlug: string; isAdmin: boolean; gameType: string }) {
   return (
     <div className="mb-6">
-      <div className="section-header">
-        <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">2K Veterans League Leaderboards</p>
-        <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">Player Stats</h1>
+      <div className="section-header flex justify-between items-start">
+        <div>
+          <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">2K Veterans League Leaderboards</p>
+          <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">Player Stats</h1>
+        </div>
+        {isAdmin && (
+          <div className="inline-flex bg-[#111827] rounded-xl p-1 border border-white/10">
+            <Link
+              href={`/playerstats?tab=${activeTab}${activeTournamentSlug ? `&t=${activeTournamentSlug}` : ''}&gt=REGULAR`}
+              className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'REGULAR' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+            >
+              Regular Season
+            </Link>
+            <Link
+              href={`/playerstats?tab=${activeTab}${activeTournamentSlug ? `&t=${activeTournamentSlug}` : ''}&gt=PLAYOFF`}
+              className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'PLAYOFF' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+            >
+              Playoffs
+            </Link>
+          </div>
+        )}
       </div>
       <div className="inline-flex flex-wrap gap-1 bg-[#111827] rounded-xl p-1.5 border border-white/10 mt-6">
         <Link
-          href={`/playerstats?tab=tournaments${activeTournamentSlug ? `&t=${activeTournamentSlug}` : ''}`}
+          href={`/playerstats?tab=tournaments${activeTournamentSlug ? `&t=${activeTournamentSlug}` : ''}&gt=${gameType}`}
           className={`px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${activeTab === 'tournaments' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'
             }`}
         >
           Tournaments
         </Link>
         <Link
-          href={`/playerstats?tab=all`}
+          href={`/playerstats?tab=all&gt=${gameType}`}
           className={`px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${activeTab === 'all' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'
             }`}
         >
           Overall Stats
         </Link>
         <Link
-          href={`/playerstats?tab=compare`}
+          href={`/playerstats?tab=compare&gt=${gameType}`}
           className={`px-5 py-2.5 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${activeTab === 'compare' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'
             }`}
         >
@@ -77,8 +95,14 @@ function LeaderboardGrid({ rows, minGamesRequired }: { rows: { player: any; avg:
   );
 }
 
-export default async function StatsPage({ searchParams }: { searchParams: { tab?: string; t?: string } }) {
+export default async function StatsPage({ searchParams }: { searchParams: { tab?: string; t?: string; gt?: string } }) {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle() : { data: null };
+  const isAdmin = profile?.role === 'ADMIN';
+  
+  const gameType = isAdmin && searchParams.gt === 'PLAYOFF' ? 'PLAYOFF' : 'REGULAR';
+
   const activeTab = searchParams.tab === 'all' ? 'all' : searchParams.tab === 'compare' ? 'compare' : 'tournaments';
 
   const { data: tournaments } = await supabase
@@ -95,25 +119,26 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     .from('players')
     .select('id, gamertag, position, slug, photo_path');
 
-  // ── ALL PLAYERS & COMPARE TABS ───────────────────────────────────────────────
   if (activeTab === 'all' || activeTab === 'compare') {
-    const { data: allStats } = await supabase
+    const { data: allStatsRaw } = await supabase
       .from('player_game_stats')
-      .select('player_id, team_id, position, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score)')
+      .select('id, game_id, player_id, team_id, position, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(game_type))')
       .eq('is_verified', true)
       .eq('did_not_play', false);
+
+    const allStats = (allStatsRaw ?? []).filter((s: any) => s.game?.schedule?.game_type === gameType);
 
     const { data: allTeams } = await supabase.from('teams').select('id, name');
 
     const statsByPlayer = new Map<string, { rows: PlayerGameStats[]; wins: number; gamesPlayed: number; teamId?: string }>();
-    for (const row of (allStats ?? []) as any[]) {
+    for (const row of allStats) {
       if (!statsByPlayer.has(row.player_id)) {
         statsByPlayer.set(row.player_id, { rows: [], wins: 0, gamesPlayed: 0, teamId: row.team_id });
       }
       const entry = statsByPlayer.get(row.player_id)!;
       entry.rows.push(row as PlayerGameStats);
       entry.gamesPlayed++;
-      const game = row.game;
+      const game = Array.isArray(row.game) ? row.game[0] : row.game;
       if (game && row.team_id) {
         const isHome = game.home_team_id === row.team_id;
         const myScore = isHome ? game.home_score : game.away_score;
@@ -158,7 +183,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     if (activeTab === 'compare') {
       return (
         <div className="max-w-5xl mx-auto space-y-8">
-          <TabHeader activeTab="compare" activeTournamentSlug={activeTournamentSlug} />
+          <TabHeader activeTab="compare" activeTournamentSlug={activeTournamentSlug} isAdmin={isAdmin} gameType={gameType} />
           <PlayerComparison players={rows} />
         </div>
       );
@@ -166,7 +191,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
 
     return (
       <div className="max-w-5xl mx-auto space-y-8">
-        <TabHeader activeTab="all" activeTournamentSlug={activeTournamentSlug} />
+        <TabHeader activeTab="all" activeTournamentSlug={activeTournamentSlug} isAdmin={isAdmin} gameType={gameType} />
         <LeaderboardGrid rows={rows} minGamesRequired={minGamesRequired} />
         <PaginatedPlayerTable rows={rows} showTeamSearch={false} />
       </div>
@@ -178,11 +203,11 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
   if (!activeTournamentId) {
     return (
       <div className="max-w-5xl mx-auto space-y-8">
-        <TabHeader activeTab="tournaments" activeTournamentSlug="" />
+        <TabHeader activeTab="tournaments" activeTournamentSlug="" isAdmin={isAdmin} gameType={gameType} />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-8">
           {(tournaments ?? []).length === 0 && <p className="text-white/40 font-mono text-sm uppercase">No tournaments yet.</p>}
           {(tournaments ?? []).map(t => (
-            <Link key={t.id} href={`/playerstats?tab=tournaments&t=${slugify(t.name)}`}
+            <Link key={t.id} href={`/playerstats?tab=tournaments&t=${slugify(t.name)}&gt=${gameType}`}
               className="block surface-elevated rounded-xl p-6 group hover:border-flag-red hover:-translate-y-1 transition-all border border-white/10">
               <div className="flex justify-between items-start mb-4">
                 <p className="text-lg font-display text-white tracking-[0.1em] uppercase group-hover:text-flag-red transition-colors truncate">{t.name}</p>
@@ -209,11 +234,12 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
 
   const { data: tourneyStatsRaw } = await supabase
     .from('player_game_stats')
-    .select('player_id, team_id, position, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id))')
+    .select('id, game_id, player_id, team_id, position, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id, game_type))')
     .eq('is_verified', true)
     .eq('did_not_play', false);
 
-  const filteredStats = (tourneyStatsRaw ?? []).filter((s: any) => s.game?.schedule?.tournament_id === activeTournamentId);
+  const filteredStats = (tourneyStatsRaw ?? []).filter((s: any) => s.game?.schedule?.tournament_id === activeTournamentId && s.game?.schedule?.game_type === gameType);
+
 
   const statsByPlayer = new Map<string, { rows: PlayerGameStats[]; wins: number; gamesPlayed: number }>();
   for (const row of filteredStats as any[]) {
@@ -223,7 +249,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
     const entry = statsByPlayer.get(row.player_id)!;
     entry.rows.push(row as PlayerGameStats);
     entry.gamesPlayed++;
-    const game = row.game;
+    const game = Array.isArray(row.game) ? row.game[0] : row.game;
     if (game && row.team_id) {
       const isHome = game.home_team_id === row.team_id;
       const myScore = isHome ? game.home_score : game.away_score;
@@ -284,7 +310,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      <TabHeader activeTab="tournaments" activeTournamentSlug={activeTournamentSlug} />
+      <TabHeader activeTab="tournaments" activeTournamentSlug={activeTournamentSlug} isAdmin={isAdmin} gameType={gameType} />
 
       {/* Tournament Selection Pills */}
       <div className="mt-6 mb-4">
@@ -296,7 +322,7 @@ export default async function StatsPage({ searchParams }: { searchParams: { tab?
               return (
                 <a
                   key={t.id}
-                  href={`/playerstats?tab=tournaments&t=${slug}`}
+                  href={`/playerstats?tab=tournaments&t=${slug}&gt=${gameType}`}
                   className={`px-5 py-2.5 rounded-lg text-[10px] font-mono font-medium uppercase tracking-widest transition-all duration-200 ${
                     isActive
                       ? 'bg-flag-red text-white'

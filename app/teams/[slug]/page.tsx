@@ -8,9 +8,14 @@ import type { PlayerGameStats } from '@/lib/types';
 import RecentMatchesList from './RecentMatchesList';
 import UpcomingSchedulesList from './UpcomingSchedulesList';
 
-export default async function TeamProfilePage({ params }: { params: { slug: string } }) {
+export default async function TeamProfilePage({ params, searchParams }: { params: { slug: string }, searchParams?: { gt?: string } }) {
   const supabase = createClient();
   const slug = params.slug.toLowerCase();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle() : { data: null };
+  const isAdmin = profile?.role === 'ADMIN';
+  const gameType = isAdmin && searchParams?.gt === 'PLAYOFF' ? 'PLAYOFF' : 'REGULAR';
 
   // 1. Find all teams with this slug (same name across tournaments)
   const { data: teams } = await supabase
@@ -69,7 +74,7 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
   // 6. Get player stats for this team (gets all stats, even for traded players)
   const { data: playerStats } = await supabase
     .from('player_game_stats')
-    .select('player_id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, player:players(id, gamertag, slug, position, photo_path), game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id))')
+    .select('id, game_id, player_id, pts, reb, ast, stl, blk, fgm, fga, tpm, tpa, ftm, fta, turnovers, did_not_play, is_verified, team_id, player:players(id, gamertag, slug, position, photo_path), game:games!player_game_stats_game_id_fkey(home_team_id, away_team_id, home_score, away_score, schedule:schedules(tournament_id, game_type))')
     .in('team_id', teamIds)
     .eq('is_verified', true);
 
@@ -135,7 +140,12 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
 
   // Calculate stats for all unique players
   for (const [id, p] of uniquePlayers.entries()) {
-    const pStats = (playerStats ?? []).filter((s: any) => s.player_id === p.id && !s.did_not_play);
+    const pStats = (playerStats ?? []).filter((s: any) => {
+      if (s.player_id !== p.id || s.did_not_play) return false;
+      const g = Array.isArray(s.game) ? s.game[0] : s.game;
+      const sched = Array.isArray(g?.schedule) ? g.schedule[0] : g?.schedule;
+      return sched?.game_type === gameType;
+    });
     const avg = pStats.length > 0 ? averageStats(pStats as any, 0, pStats.length) : null;
     uniquePlayers.set(id, { ...p, stats: avg, gamesPlayed: pStats.length });
   }
@@ -255,7 +265,25 @@ export default async function TeamProfilePage({ params }: { params: { slug: stri
       {/* --- ROSTER --- */}
       {rosterPlayers.length > 0 && (
         <section className="surface-elevated rounded-xl p-6 md:p-8">
-          <h2 className="text-xl font-display text-white tracking-widest mb-4">ROSTER</h2>
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-xl font-display text-white tracking-widest">ROSTER</h2>
+            {isAdmin && (
+              <div className="inline-flex bg-[#111827] rounded-xl p-1 border border-white/10">
+                <Link
+                  href={`/teams/${params.slug}?gt=REGULAR`}
+                  className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'REGULAR' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                >
+                  Regular
+                </Link>
+                <Link
+                  href={`/teams/${params.slug}?gt=PLAYOFF`}
+                  className={`px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${gameType === 'PLAYOFF' ? 'bg-flag-red text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                >
+                  Playoffs
+                </Link>
+              </div>
+            )}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs font-mono">
               <thead>
