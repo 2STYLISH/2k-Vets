@@ -169,6 +169,12 @@ export default function LeaguePlayoffGenerator({
     }
   };
 
+  // A playoff is considered started if any playoff matchup has completed or has scores
+  const playoffStarted = matchups.some(m => 
+    (m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN' || m.bracket_side === 'LOSERS') &&
+    (m.status === 'COMPLETED' || (m.schedule && Array.isArray(m.schedule) ? m.schedule.some((s: any) => s.games && s.games.some((g: any) => g.home_score != null || g.away_score != null)) : (m.schedule?.games && m.schedule.games.some((g: any) => g.home_score != null || g.away_score != null))))
+  );
+
   return (
     <div className="card p-5 border-flag-gold/30 shadow-[0_0_15px_rgba(255,215,0,0.05)] mt-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -210,8 +216,9 @@ export default function LeaguePlayoffGenerator({
           )}
           <button
             onClick={handleGenerate}
-            disabled={busy || totalTeams < 4}
-            className="btn-primary py-2.5 px-6 whitespace-nowrap"
+            disabled={busy || totalTeams < 4 || (hasPlayoffs && playoffStarted)}
+            className={`py-2.5 px-6 whitespace-nowrap ${busy || totalTeams < 4 || (hasPlayoffs && playoffStarted) ? 'opacity-50 cursor-not-allowed bg-gray-700 text-white' : 'btn-primary'}`}
+            title={hasPlayoffs && playoffStarted ? "Cannot regenerate because playoffs have already started" : ""}
           >
             {busy ? 'GENERATING...' : hasPlayoffs ? 'REGENERATE PLAYOFFS' : 'GENERATE PLAYOFFS'}
           </button>

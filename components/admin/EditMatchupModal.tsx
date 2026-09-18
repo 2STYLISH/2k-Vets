@@ -18,7 +18,7 @@ export default function EditMatchupModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const [action, setAction] = useState<'ADVANCE_TEAM' | 'CHANGE_WINNER' | 'RESET_MATCHUP' | 'ASSIGN_TEAMS'>('ASSIGN_TEAMS');
+  const [action, setAction] = useState<'UPDATE_FORMAT' | 'ADVANCE_TEAM' | 'CHANGE_WINNER' | 'RESET_MATCHUP' | 'ASSIGN_TEAMS'>('UPDATE_FORMAT');
   const [winnerTeamId, setWinnerTeamId] = useState('');
   const [assignTeamA, setAssignTeamA] = useState('');
   const [assignTeamB, setAssignTeamB] = useState('');
@@ -41,7 +41,7 @@ export default function EditMatchupModal({
       } else if (matchup.status === 'COMPLETED') {
         setAction('CHANGE_WINNER');
       } else {
-        setAction('ADVANCE_TEAM');
+        setAction('UPDATE_FORMAT');
       }
     }
   }, [matchup]);
@@ -93,6 +93,7 @@ export default function EditMatchupModal({
           <div>
             <label className={labelCls}>Action</label>
             <select value={action} onChange={(e) => setAction(e.target.value as any)} className={selectCls}>
+              <option value="UPDATE_FORMAT">Update match format only</option>
               <option value="ASSIGN_TEAMS">Manually assign teams (Seeding)</option>
               <option value="ADVANCE_TEAM">Advance a team / Set Winner</option>
               <option value="CHANGE_WINNER">Change series winner</option>

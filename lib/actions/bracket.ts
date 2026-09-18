@@ -11,7 +11,7 @@ import { ensureScheduleForMatchup } from './bracket-scheduling';
  */
 export async function overrideBracketMatchup(input: {
   matchupId: string;
-  action: 'ADVANCE_TEAM' | 'CHANGE_WINNER' | 'RESET_MATCHUP' | 'CHANGE_SEED' | 'ASSIGN_TEAMS';
+  action: 'UPDATE_FORMAT' | 'ADVANCE_TEAM' | 'CHANGE_WINNER' | 'RESET_MATCHUP' | 'CHANGE_SEED' | 'ASSIGN_TEAMS';
   winnerTeamId?: string;
   teamAId?: string;
   teamBId?: string;
