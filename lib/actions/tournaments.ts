@@ -1059,24 +1059,480 @@ export async function resetBracketSeeding(tournamentId: string) {
 }
 
 /**
- * Compute standings from completed round-robin matchups, then generate
- * a play-in + playoff bracket for a VETERANS_LEAGUE tournament.
+ * Cross-Group Playoff Generator for VETERANS_LEAGUE tournaments.
  *
- * Standings are ranked by: wins (desc) → point differential (desc) → losses (asc).
+ * Computes per-group standings from completed ROUND_ROBIN matchups (respecting
+ * manual seed overrides) then generates:
+ *   1. Per-group play-in rounds   (optional, configurable seeds)
+ *   2. A cross-group playoff bracket with the following 1st-round seeding:
  *
- * Playoff structure (if 10+ teams):
- *   Seeds 1–6  → direct to 8-team single-elim bracket
- *   Seeds 7–10 → Play-In (7v8, 9v10, elimination game)
- *   Seeds 11+  → eliminated
+ *   LEFT SIDE  (slots 1-4, feeds into left half of bracket):
+ *     M1: Group A 1st  vs Group B 8th
+ *     M2: Group B 4th  vs Group A 5th
+ *     M3: Group B 2nd  vs Group A 7th
+ *     M4: Group A 3rd  vs Group B 6th
  *
- * If fewer than 10 teams, the bracket adapts:
- *   8–9 teams  → 4 direct + 4 play-in
- *   6–7 teams  → 2 direct + 4 play-in (or direct bracket if not enough)
- *   4–5 teams  → direct single-elim bracket
+ *   RIGHT SIDE (slots 5-8, feeds into right half of bracket):
+ *     M5: Group B 1st  vs Group A 8th
+ *     M6: Group A 4th  vs Group B 5th
+ *     M7: Group A 2nd  vs Group B 7th
+ *     M8: Group B 3rd  vs Group A 6th
  *
- * Play-ins are always BO1, playoffs are always BO3.
+ *   Missing seeds are replaced with BYE slots (winner auto-advances).
+ *   Bracket: 1st Round → 2nd Round → 3rd Round → Grand Finals (WINNERS side).
+ *
+ * @param playInSeeds - how many bottom-of-group seeds go through play-in (0, 2, or 4).
+ *                      When 4: last 4 seeds per group play two BO1 games; two winners
+ *                      fill the 5th and 8th bracket slots.
+ *                      When 2: last 2 seeds per group play one BO1; winner fills 8th slot.
+ *                      When 0: no play-in, top 8 per group seed directly into bracket.
  */
+export async function generateCrossGroupPlayoffs(
+  tournamentId: string,
+  options?: { playInSeeds?: 0 | 2 | 4 }
+) {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) throw new Error('Admin authentication required.');
+
+  const supabase = createClient();
+
+  // 1. Verify tournament format
+  const { data: tourney } = await supabase
+    .from('tournaments')
+    .select('format, match_format')
+    .eq('id', tournamentId)
+    .single();
+  if (!tourney || tourney.format !== 'VETERANS_LEAGUE') {
+    throw new Error('Cross-group playoffs are only available for Veterans League tournaments.');
+  }
+
+  // 2. Get all teams with their group assignments
+  const { data: allTeams } = await supabase
+    .from('teams')
+    .select('id, name, group_name')
+    .eq('tournament_id', tournamentId);
+
+  if (!allTeams || allTeams.length === 0) throw new Error('No teams found.');
+
+  const groupA = allTeams.filter(t => t.group_name === 'Group A');
+  const groupB = allTeams.filter(t => t.group_name === 'Group B');
+
+  if (groupA.length === 0 || groupB.length === 0) {
+    throw new Error(
+      'Teams must be assigned to Group A and Group B before generating cross-group playoffs. ' +
+      'Use the Randomize Bracket tool with 2+ groups.'
+    );
+  }
+
+  // 3. Get manual seed overrides
+  const { data: existingSeeds } = await supabase
+    .from('tournament_seeds')
+    .select('team_id, seed, manual_wins, manual_losses, point_differential')
+    .eq('tournament_id', tournamentId);
+
+  // 4. Get all completed ROUND_ROBIN games for this tournament
+  const { data: matchups } = await supabase
+    .from('bracket_matchups')
+    .select('id, team_a_id, team_b_id, winner_id, status, bracket_side, schedule:schedules(home_team_id, games(home_score, away_score))')
+    .eq('tournament_id', tournamentId)
+    .eq('bracket_side', 'ROUND_ROBIN')
+    .eq('status', 'COMPLETED');
+
+  // 5. Compute standings per group
+  type Standing = { teamId: string; wins: number; losses: number; pd: number; seed: number };
+
+  function computeGroupStandings(groupTeams: typeof groupA): Standing[] {
+    const map = new Map<string, Standing>();
+
+    for (const t of groupTeams) {
+      const s = existingSeeds?.find(x => x.team_id === t.id);
+      map.set(t.id, {
+        teamId: t.id,
+        wins: s?.manual_wins ?? 0,
+        losses: s?.manual_losses ?? 0,
+        pd: s?.point_differential ?? 0,
+        seed: s?.seed ?? 999,
+      });
+    }
+
+    // Accumulate from actual game results if no manual overrides
+    for (const m of (matchups ?? []) as any[]) {
+      const homeTeamId = m.team_a_id;
+      const awayTeamId = m.team_b_id;
+      if (!homeTeamId || !awayTeamId) continue;
+
+      const homeEntry = map.get(homeTeamId);
+      const awayEntry = map.get(awayTeamId);
+      const homeSeed = existingSeeds?.find(s => s.team_id === homeTeamId);
+      const awaySeed = existingSeeds?.find(s => s.team_id === awayTeamId);
+
+      const scheds = Array.isArray(m.schedule) ? m.schedule : m.schedule ? [m.schedule] : [];
+      let homePd = 0, awayPd = 0;
+      for (const sched of scheds) {
+        for (const g of sched.games || []) {
+          if (g.home_score != null && g.away_score != null) {
+            const homeIsHome = sched.home_team_id === homeTeamId;
+            homePd += homeIsHome ? (g.home_score - g.away_score) : (g.away_score - g.home_score);
+            awayPd += homeIsHome ? (g.away_score - g.home_score) : (g.home_score - g.away_score);
+          }
+        }
+      }
+
+      if (homeEntry && homeSeed?.manual_wins == null && homeSeed?.manual_losses == null) {
+        if (m.winner_id === homeTeamId) homeEntry.wins++;
+        else homeEntry.losses++;
+        if (homeSeed?.point_differential == null) homeEntry.pd += homePd;
+      }
+      if (awayEntry && awaySeed?.manual_wins == null && awaySeed?.manual_losses == null) {
+        if (m.winner_id === awayTeamId) awayEntry.wins++;
+        else awayEntry.losses++;
+        if (awaySeed?.point_differential == null) awayEntry.pd += awayPd;
+      }
+    }
+
+    const standings = Array.from(map.values()).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      if (b.pd !== a.pd) return b.pd - a.pd;
+      if (a.losses !== b.losses) return a.losses - b.losses;
+      if (a.seed !== b.seed) return a.seed - b.seed;
+      return a.teamId.localeCompare(b.teamId);
+    });
+
+    return standings;
+  }
+
+  const standingsA = computeGroupStandings(groupA);
+  const standingsB = computeGroupStandings(groupB);
+
+  // 6. Delete existing playoff matchups (keep round-robin)
+  await supabase
+    .from('bracket_matchups')
+    .delete()
+    .eq('tournament_id', tournamentId)
+    .in('bracket_side', ['PLAY_IN', 'WINNERS', 'GRAND_FINAL']);
+
+  // 7. Update seeds in DB (unified across both groups)
+  await supabase.from('tournament_seeds').delete().eq('tournament_id', tournamentId);
+
+  const allStandings = [...standingsA, ...standingsB];
+  for (let i = 0; i < allStandings.length; i++) {
+    const s = allStandings[i];
+    const oldSeed = existingSeeds?.find(x => x.team_id === s.teamId);
+    await supabase.from('tournament_seeds').insert({
+      tournament_id: tournamentId,
+      team_id: s.teamId,
+      seed: i + 1,
+      manual_wins: oldSeed?.manual_wins ?? null,
+      manual_losses: oldSeed?.manual_losses ?? null,
+      point_differential: oldSeed?.point_differential ?? null,
+    });
+  }
+
+  // Helper: get teamId at position (1-indexed) from standings, or null if not enough teams
+  const seedA = (n: number): string | null => standingsA[n - 1]?.teamId || null;
+  const seedB = (n: number): string | null => standingsB[n - 1]?.teamId || null;
+
+  const playInSeeds = options?.playInSeeds ?? 0;
+
+  // 8. Generate per-group play-in rounds (if requested)
+  // Play-in format: last N seeds play BO1 games within each group to earn bracket spots
+  // For playInSeeds=4: seeds 5v8 (winner in), 6v7 (winner in) — top 4 auto into bracket
+  // For playInSeeds=2: seeds 7v8 (winner fills 8th slot) — top 6 auto into bracket
+  
+  // Track which bracket slots will be filled by play-in winners
+  // The bracket has slots 1-8 (plus potential BYEs for groups with <8 teams)
+  // Slots that are "direct" come from seeds 1-directSeeds per group
+  // Slots from play-in winners are the lowest seeds that qualify
+
+  type PlayInResult = { groupAWinnerMatchId: string | null; groupBWinnerMatchId: string | null };
+
+  async function generateGroupPlayIn(
+    group: 'A' | 'B',
+    seeds: number
+  ): Promise<{ winnerMatchId: string | null; directSeeds: number }> {
+    const seedFn = group === 'A' ? seedA : seedB;
+    
+    if (seeds === 0) return { winnerMatchId: null, directSeeds: 8 };
+    
+    if (seeds === 2) {
+      // 7 vs 8 — winner is the 8th bracket slot for this group
+      const t7 = seedFn(7);
+      const t8 = seedFn(8);
+      if (!t7 && !t8) return { winnerMatchId: null, directSeeds: 8 };
+      
+      const matchId = await insertMatchup(supabase, tournamentId, 1, group === 'A' ? 1 : 2, 'PLAY_IN');
+      await supabase.from('bracket_matchups').update({ match_format: 'BO1' }).eq('id', matchId);
+      
+      if (t7 && t8) {
+        await supabase.from('bracket_matchups').update({ team_a_id: t7, team_b_id: t8 }).eq('id', matchId);
+      } else if (t7) {
+        // Only t7 — auto-advance (bye)
+        await supabase.from('bracket_matchups').update({ team_a_id: t7, winner_id: t7, is_bye: true, status: 'COMPLETED' }).eq('id', matchId);
+      } else {
+        // Only t8 — auto-advance (bye)
+        await supabase.from('bracket_matchups').update({ team_b_id: t8, winner_id: t8, is_bye: true, status: 'COMPLETED' }).eq('id', matchId);
+      }
+      return { winnerMatchId: matchId, directSeeds: 6 };
+    }
+
+    if (seeds === 4) {
+      // NBA-style play-in: 7v8 (winner gets 7th seed), 9v10 (loser out), L(7v8) vs W(9v10) (winner gets 8th seed)
+      const t7 = seedFn(7); const t8 = seedFn(8); const t9 = seedFn(9); const t10 = seedFn(10);
+      const r1slot1 = group === 'A' ? 1 : 3;
+      const r1slot2 = group === 'A' ? 2 : 4;
+      const r2slot  = group === 'A' ? 1 : 2;
+      
+      const m1 = await insertMatchup(supabase, tournamentId, 1, r1slot1, 'PLAY_IN'); // 7v8
+      const m2 = await insertMatchup(supabase, tournamentId, 1, r1slot2, 'PLAY_IN'); // 9v10
+      const m3 = await insertMatchup(supabase, tournamentId, 2, r2slot, 'PLAY_IN');  // L(7v8) vs W(9v10)
+      
+      await supabase.from('bracket_matchups').update({ match_format: 'BO1' }).in('id', [m1, m2, m3]);
+
+      // Wire feeds
+      await supabase.from('bracket_matchups').update({ loser_feeds_into_matchup_id: m3 }).eq('id', m1);
+      await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: m3 }).eq('id', m2);
+
+      const seedOrBye = async (matchId: string, tA: string | null, tB: string | null) => {
+        if (tA && tB) {
+          await supabase.from('bracket_matchups').update({ team_a_id: tA, team_b_id: tB }).eq('id', matchId);
+        } else if (tA) {
+          await supabase.from('bracket_matchups').update({ team_a_id: tA, winner_id: tA, is_bye: true, status: 'COMPLETED' }).eq('id', matchId);
+        } else if (tB) {
+          await supabase.from('bracket_matchups').update({ team_b_id: tB, winner_id: tB, is_bye: true, status: 'COMPLETED' }).eq('id', matchId);
+        } else {
+          await supabase.from('bracket_matchups').update({ is_bye: true, status: 'COMPLETED' }).eq('id', matchId);
+        }
+      };
+
+      await seedOrBye(m1, t7, t8);
+      await seedOrBye(m2, t9, t10);
+      
+      // Auto-advance m3 if one of its feeds is a BYE
+      // This requires slightly more complex logic, but we will rely on propagateByeWinners later or a simple check here.
+      if (!t7 && !t8 && !t9 && !t10) {
+        await supabase.from('bracket_matchups').update({ is_bye: true, status: 'COMPLETED' }).eq('id', m3);
+      }
+
+      // We return m1 (which produces the 7th seed) and directSeeds=6
+      // But we also need m3 (which produces the 8th seed). The caller will re-query for these.
+      return { winnerMatchId: m1, directSeeds: 6 };
+    }
+
+    return { winnerMatchId: null, directSeeds: 8 };
+  }
+
+  const piA = await generateGroupPlayIn('A', playInSeeds);
+  const piB = await generateGroupPlayIn('B', playInSeeds);
+
+  // 9. Generate cross-group playoff bracket
+  // 8 first-round matchups → 4 second-round → 2 third-round → 1 grand final
+  //
+  // Slots 1-4 feed left semi (r2s1); slots 5-8 feed right semi (r2s2)
+  // LEFT:   M1(A1vB8) → r2s1,  M2(B4vA5) → r2s1
+  //         M3(B2vA7) → r2s2_left,  M4(A3vB6) → r2s2_left
+  //   Wait — per image: 1st round → 2nd round → 3rd round → Grand Finals
+  //   Left  4 matches → 2 second-round matches → 1 third-round match (left semi) → Grand Finals
+  //   Right 4 matches → 2 second-round matches → 1 third-round match (right semi) → Grand Finals
+
+  // Round 1 (8 matchups)
+  const r1m1 = await insertMatchup(supabase, tournamentId, 1, 1, 'WINNERS'); // A1 vs B8
+  const r1m2 = await insertMatchup(supabase, tournamentId, 1, 2, 'WINNERS'); // B4 vs A5
+  const r1m3 = await insertMatchup(supabase, tournamentId, 1, 3, 'WINNERS'); // B2 vs A7
+  const r1m4 = await insertMatchup(supabase, tournamentId, 1, 4, 'WINNERS'); // A3 vs B6
+  const r1m5 = await insertMatchup(supabase, tournamentId, 1, 5, 'WINNERS'); // B1 vs A8
+  const r1m6 = await insertMatchup(supabase, tournamentId, 1, 6, 'WINNERS'); // A4 vs B5
+  const r1m7 = await insertMatchup(supabase, tournamentId, 1, 7, 'WINNERS'); // A2 vs B7
+  const r1m8 = await insertMatchup(supabase, tournamentId, 1, 8, 'WINNERS'); // B3 vs A6
+
+  // Round 2 (4 matchups)
+  const r2m1 = await insertMatchup(supabase, tournamentId, 2, 1, 'WINNERS'); // W(M1) vs W(M2) - left top
+  const r2m2 = await insertMatchup(supabase, tournamentId, 2, 2, 'WINNERS'); // W(M3) vs W(M4) - left bottom
+  const r2m3 = await insertMatchup(supabase, tournamentId, 2, 3, 'WINNERS'); // W(M5) vs W(M6) - right top
+  const r2m4 = await insertMatchup(supabase, tournamentId, 2, 4, 'WINNERS'); // W(M7) vs W(M8) - right bottom
+
+  // Round 3 / Semifinals (2 matchups)
+  const r3m1 = await insertMatchup(supabase, tournamentId, 3, 1, 'WINNERS'); // W(r2m1) vs W(r2m2) - left semi
+  const r3m2 = await insertMatchup(supabase, tournamentId, 3, 2, 'WINNERS'); // W(r2m3) vs W(r2m4) - right semi
+
+  // Grand Final
+  const gf = await insertMatchup(supabase, tournamentId, 4, 1, 'WINNERS'); // Grand Finals
+
+  // Set match formats
+  await supabase.from('bracket_matchups').update({ match_format: 'BO3' }).in('id', [
+    r1m1, r1m2, r1m3, r1m4, r1m5, r1m6, r1m7, r1m8,
+    r2m1, r2m2, r2m3, r2m4, r3m1, r3m2
+  ]);
+  await supabase.from('bracket_matchups').update({ match_format: 'BO5' }).in('id', [gf]);
+
+  // Wire Round 1 → Round 2
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r2m1 }).in('id', [r1m1, r1m2]);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r2m2 }).in('id', [r1m3, r1m4]);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r2m3 }).in('id', [r1m5, r1m6]);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r2m4 }).in('id', [r1m7, r1m8]);
+
+  // Wire Round 2 → Semifinals
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r3m1 }).in('id', [r2m1, r2m2]);
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: r3m2 }).in('id', [r2m3, r2m4]);
+
+  // Wire Semifinals → Grand Final
+  await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: gf }).in('id', [r3m1, r3m2]);
+
+  // 10. Seed teams into Round 1 matchups
+  // Helper: place teams into a matchup, auto-handling BYEs
+  const placeMatchup = async (
+    matchId: string,
+    teamA: string | null,
+    teamB: string | null,
+    playInFeedA?: string | null,  // play-in matchup that feeds team_a slot
+    playInFeedB?: string | null   // play-in matchup that feeds team_b slot
+  ) => {
+    const update: any = {};
+    if (teamA) update.team_a_id = teamA;
+    if (teamB) update.team_b_id = teamB;
+
+    if (teamA && !teamB && !playInFeedB) {
+      // BYE — team A advances automatically
+      update.winner_id = teamA;
+      update.is_bye = true;
+      update.status = 'COMPLETED';
+    } else if (!teamA && !playInFeedA && teamB) {
+      // BYE — team B advances automatically
+      update.winner_id = teamB;
+      update.is_bye = true;
+      update.status = 'COMPLETED';
+    } else if (!teamA && !playInFeedA && !teamB && !playInFeedB) {
+      // Both missing — double BYE (shouldn't happen with sensible data)
+      update.is_bye = true;
+      update.status = 'COMPLETED';
+    }
+
+    if (Object.keys(update).length > 0) {
+      await supabase.from('bracket_matchups').update(update).eq('id', matchId);
+    }
+
+    // Wire play-in feeds
+    if (playInFeedA) {
+      await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: matchId }).eq('id', playInFeedA);
+    }
+    if (playInFeedB) {
+      await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: matchId }).eq('id', playInFeedB);
+    }
+  };
+
+  // Determine which seeds are "direct" vs filled by play-in
+  // With playInSeeds=0: all 8 seeds direct
+  // With playInSeeds=2: seeds 1-6 direct, seeds 7-8 come from play-in
+  // With playInSeeds=4: seeds 1-4 direct, seeds 5-8 come from play-in (two play-in winners per group)
+
+  // For each group, we need to know:
+  // - directA(n) / directB(n): the actual teamId for that seed if they go direct, or null
+  // - playInFeedA / playInFeedB: the play-in matchup IDs that produce those seeds
+
+  const directSeeds = piA.directSeeds; // same for both groups since same playInSeeds
+
+  const getDirectA = (n: number): string | null => n <= directSeeds ? seedA(n) : null;
+  const getDirectB = (n: number): string | null => n <= directSeeds ? seedB(n) : null;
+
+  // Play-in winners fill positions directSeeds+1 and above
+  // For playInSeeds=2: piA.winnerMatchId fills the "8th" slot for group A
+  //                    piB.winnerMatchId fills the "8th" slot for group B
+  // For playInSeeds=4: two play-in matches per group
+  //   When seeds=4: we created piA = m1 (5v8), m2 (6v7) with slots 1,2 for A and 3,4 for B
+  //   Both winners go to 5th and 8th bracket slots respectively
+
+  // We need separate refs for 4-seed play-in case
+  // Re-query the play-in matchups to get their IDs
+  let piAm1: string | null = null, piAm2: string | null = null;
+  let piBm1: string | null = null, piBm2: string | null = null;
+
+  if (playInSeeds === 4) {
+    // NBA-style play-ins produce two seeds per group:
+    // Group A: 7th seed is R1 slot 1, 8th seed is R2 slot 1
+    // Group B: 7th seed is R1 slot 3, 8th seed is R2 slot 2
+    const { data: piMatchups } = await supabase
+      .from('bracket_matchups')
+      .select('id, round, slot')
+      .eq('tournament_id', tournamentId)
+      .eq('bracket_side', 'PLAY_IN');
+
+    for (const pm of piMatchups ?? []) {
+      if (pm.round === 1 && pm.slot === 1) piAm1 = pm.id; // Group A 7th
+      if (pm.round === 2 && pm.slot === 1) piAm2 = pm.id; // Group A 8th
+      if (pm.round === 1 && pm.slot === 3) piBm1 = pm.id; // Group B 7th
+      if (pm.round === 2 && pm.slot === 2) piBm2 = pm.id; // Group B 8th
+    }
+  } else if (playInSeeds === 2) {
+    piAm1 = piA.winnerMatchId;
+    piBm1 = piB.winnerMatchId;
+  }
+
+  // Seed the 8 first-round matchups
+  // LEFT SIDE:
+  // M1: A1 vs B8
+  await placeMatchup(r1m1, getDirectA(1), getDirectB(8),
+    null, playInSeeds === 2 ? piBm1 : (playInSeeds === 4 ? piBm1 : null));
+  // M2: B4 vs A5
+  await placeMatchup(r1m2, getDirectB(4), getDirectA(5),
+    null, playInSeeds === 4 ? piAm1 : null);
+  // M3: B2 vs A7
+  await placeMatchup(r1m3, getDirectB(2), getDirectA(7),
+    null, playInSeeds === 2 ? piAm1 : (playInSeeds === 4 ? piAm2 : null));
+  // M4: A3 vs B6
+  await placeMatchup(r1m4, getDirectA(3), getDirectB(6),
+    null, playInSeeds === 4 ? piBm2 : null);
+
+  // RIGHT SIDE:
+  // M5: B1 vs A8
+  await placeMatchup(r1m5, getDirectB(1), getDirectA(8),
+    null, playInSeeds === 2 ? piAm1 : (playInSeeds === 4 ? piAm1 : null));
+  // M6: A4 vs B5
+  await placeMatchup(r1m6, getDirectA(4), getDirectB(5),
+    null, playInSeeds === 4 ? piBm1 : null);
+  // M7: A2 vs B7
+  await placeMatchup(r1m7, getDirectA(2), getDirectB(7),
+    null, playInSeeds === 2 ? piBm1 : (playInSeeds === 4 ? piBm2 : null));
+  // M8: B3 vs A6
+  await placeMatchup(r1m8, getDirectB(3), getDirectA(6),
+    null, playInSeeds === 4 ? piAm2 : null);
+
+  // 11. Auto-advance any BYE slots through the bracket
+  async function propagateByeWinners() {
+    const { data: r1Matchups } = await supabase
+      .from('bracket_matchups')
+      .select('id, winner_id, is_bye, feeds_into_matchup_id')
+      .eq('tournament_id', tournamentId)
+      .eq('round', 1)
+      .eq('bracket_side', 'WINNERS')
+      .eq('is_bye', true);
+
+    for (const byeM of r1Matchups ?? []) {
+      if (!byeM.winner_id || !byeM.feeds_into_matchup_id) continue;
+      const { data: nextM } = await supabase
+        .from('bracket_matchups')
+        .select('id, team_a_id, team_b_id')
+        .eq('id', byeM.feeds_into_matchup_id)
+        .single();
+      if (nextM) {
+        const field = nextM.team_a_id ? 'team_b_id' : 'team_a_id';
+        await supabase.from('bracket_matchups').update({ [field]: byeM.winner_id }).eq('id', nextM.id);
+      }
+    }
+  }
+
+  await propagateByeWinners();
+
+  await supabase
+    .from('tournaments')
+    .update({ playoff_size: 'CROSS_GROUP_PLAYOFF' })
+    .eq('id', tournamentId);
+
+  revalidatePath('/admin/bracket');
+  revalidatePath('/bracket');
+  revalidatePath('/tournaments');
+}
+
 export async function generateLeaguePlayoffs(tournamentId: string, options?: { playoffSize?: 'TOP_10_PLAY_IN' | 'AUTO' | 'TOP_8' | 'TOP_6' | 'TOP_4' }) {
+
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
 
@@ -1216,6 +1672,24 @@ export async function generateLeaguePlayoffs(tournamentId: string, options?: { p
       // ── ≤8 teams: pure direct bracket (byes fill gaps) ────────
       await generateDirectBracket(supabase, tournamentId, standings.slice(0, totalTeams));
     }
+  }
+
+  if (options?.playoffSize) {
+    await supabase
+      .from('tournaments')
+      .update({ playoff_size: options.playoffSize })
+      .eq('id', tournamentId);
+  } else {
+    // If AUTO, compute what was used
+    let resolvedSize = 'TOP_8';
+    if (totalTeams > 10) resolvedSize = 'TOP_10_PLAY_IN';
+    else if (totalTeams <= 6 && totalTeams > 4) resolvedSize = 'TOP_6';
+    else if (totalTeams <= 4) resolvedSize = 'TOP_4';
+    
+    await supabase
+      .from('tournaments')
+      .update({ playoff_size: resolvedSize })
+      .eq('id', tournamentId);
   }
 
   revalidatePath('/admin/bracket');

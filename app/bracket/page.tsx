@@ -7,7 +7,7 @@ export default async function PublicBracketPage() {
 
   const { data: tournament } = await supabase
     .from('tournaments')
-    .select('id, name, status, format, match_format')
+    .select('id, name, status, format, match_format, playoff_size')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -50,7 +50,7 @@ export default async function PublicBracketPage() {
           </div>
         </>
       ) : (
-        <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} />
+        <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} layout={tournament.playoff_size === 'CROSS_GROUP_PLAYOFF' ? 'cross_group' : undefined} />
       )}
     </div>
   );

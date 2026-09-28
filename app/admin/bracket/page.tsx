@@ -118,6 +118,7 @@ export default async function AdminBracketPage({
                   matchups={(matchups ?? []) as any}
                   hasPlayoffs={(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN')}
                   playoffsVisible={(active as any).playoffs_visible ?? false}
+                  currentPlayoffSize={(active as any).playoff_size}
                 />
               )}
 
@@ -129,6 +130,7 @@ export default async function AdminBracketPage({
                     matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} 
                     teams={(teams ?? []) as any} 
                     defaultMatchFormat={active.match_format} 
+                    layout={(active as any).playoff_size === 'CROSS_GROUP_PLAYOFF' ? 'cross_group' : undefined}
                   />
                 </div>
               )}

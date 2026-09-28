@@ -53,6 +53,7 @@ export default function TeamsManager({
   const [newTeamName, setNewTeamName] = useState('');
   const [busy, setBusy] = useState(false);
   const [activeTournament, setActiveTournament] = useState<string>(tournaments[0]?.id || '');
+  const [teamSearchQuery, setTeamSearchQuery] = useState('');
 
   async function handleCreateTeam(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -115,7 +116,14 @@ export default function TeamsManager({
         </div>
 
         <div className="surface-elevated rounded-xl border border-flag-gold/40 p-6 shadow-[0_0_15px_rgba(212,160,23,0.1)]">
-          <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest mb-4">Active Tournament Rosters</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-sm text-white font-bold uppercase tracking-widest">Active Tournament Rosters</h2>
+            {activeTournament && (
+              <span className="text-xs font-mono text-silver-400">
+                {teams.filter(t => t.tournament_id === activeTournament).length} Teams
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <label htmlFor="tourney-logo-upload" className="relative cursor-pointer group shrink-0" title="Click to upload tournament logo">
               <div className="w-10 h-10 rounded border border-white/10 bg-[#111827] flex items-center justify-center overflow-hidden group-hover:border-flag-gold/50 transition-colors">
@@ -156,11 +164,24 @@ export default function TeamsManager({
 
       {/* Team cards grid for the active tournament */}
       {activeTournament ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {teams.filter(t => t.tournament_id === activeTournament).length === 0 && (
-            <p className="text-silver-600 text-sm col-span-2">No teams yet. Create your first team above.</p>
-          )}
-          {teams.filter(t => t.tournament_id === activeTournament).map((team) => {
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <input 
+              type="text"
+              placeholder="Search teams..."
+              value={teamSearchQuery}
+              onChange={(e) => setTeamSearchQuery(e.target.value)}
+              className="input-field w-full md:w-1/3"
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {teams.filter(t => t.tournament_id === activeTournament).length === 0 && (
+              <p className="text-silver-600 text-sm col-span-2">No teams yet. Create your first team above.</p>
+            )}
+            {teams
+              .filter(t => t.tournament_id === activeTournament)
+              .filter(t => t.name.toLowerCase().includes(teamSearchQuery.toLowerCase()))
+              .map((team) => {
             const teamRosterIds = rosters.filter(r => r.tournament_id === activeTournament && r.team_id === team.id).map(r => r.player_id);
             const teamRoster = players.filter(p => teamRosterIds.includes(p.id));
             const tournamentRosterIds = rosters.filter(r => r.tournament_id === activeTournament).map(r => r.player_id);
@@ -176,6 +197,7 @@ export default function TeamsManager({
               />
             );
           })}
+          </div>
         </div>
       ) : (
         <p className="text-silver-600 text-sm">Please create a tournament first to manage rosters.</p>

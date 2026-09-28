@@ -8,6 +8,17 @@ export async function createTeam(input: { tournamentId: string; name: string; sh
   if (!isAdmin) throw new Error('Admin authentication required.');
 
   const supabase = createClient();
+  const { data: existing } = await supabase
+    .from('teams')
+    .select('id')
+    .eq('tournament_id', input.tournamentId)
+    .ilike('name', input.name)
+    .maybeSingle();
+
+  if (existing) {
+    throw new Error(`A team with the name "${input.name}" already exists in this tournament.`);
+  }
+
   const { error } = await supabase.from('teams').insert({ tournament_id: input.tournamentId, name: input.name, short_name: input.shortName || null });
   if (error) throw error;
 

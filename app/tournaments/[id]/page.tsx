@@ -257,7 +257,7 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
           <section className="surface-elevated rounded-xl p-6 md:p-8 overflow-hidden">
             <h2 className="text-xl font-display text-white tracking-widest mb-6">BRACKET</h2>
             <div className="overflow-x-auto pb-4">
-              <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} />
+              <BracketTree matchups={(matchups ?? []) as any} defaultMatchFormat={tournament.match_format} layout={tournament.playoff_size === 'CROSS_GROUP_PLAYOFF' ? 'cross_group' : undefined} />
             </div>
           </section>
 
@@ -277,7 +277,7 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
             <section className="surface-elevated rounded-xl p-6 md:p-8 overflow-hidden">
 
               <div className="overflow-x-auto pb-4">
-                <BracketTree matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} defaultMatchFormat={tournament.match_format} />
+                <BracketTree matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')} defaultMatchFormat={tournament.match_format} layout={tournament.playoff_size === 'CROSS_GROUP_PLAYOFF' ? 'cross_group' : undefined} />
               </div>
             </section>
           )}
