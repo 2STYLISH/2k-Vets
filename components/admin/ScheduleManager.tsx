@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { updateSchedule, deleteSchedule } from '@/lib/actions/schedule';
 import { formatDate } from '@/lib/format';
 import { useNotification } from '@/components/providers/NotificationProvider';
@@ -16,17 +16,37 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function ScheduleManager({ games }: { games: any[] }) {
   const [tab, setTab] = useState<'ACTIVE' | 'ARCHIVED'>('ACTIVE');
+  const [groupFilter, setGroupFilter] = useState<string>('ALL');
+
+  // Derive available groups from round_label (e.g. "Group Stage - Group A - Round 1")
+  const availableGroups = useMemo(() => {
+    const groups = new Set<string>();
+    for (const g of games) {
+      const label: string = g.round_label ?? '';
+      // Match patterns like "Group A", "Group B" inside the label
+      const match = label.match(/Group ([A-Z])/i);
+      if (match) groups.add(`Group ${match[1].toUpperCase()}`);
+    }
+    return [...groups].sort();
+  }, [games]);
 
   const filtered = games.filter((g) => {
     const isArchived = g.is_archived || g.status === 'COMPLETED';
     if (tab === 'ACTIVE' && isArchived) return false;
     if (tab === 'ARCHIVED' && !isArchived) return false;
+    if (groupFilter !== 'ALL' && availableGroups.length >= 2) {
+      const label: string = g.round_label ?? '';
+      const match = label.match(/Group ([A-Z])/i);
+      const gameGroup = match ? `Group ${match[1].toUpperCase()}` : null;
+      if (gameGroup !== groupFilter) return false;
+    }
     return true;
   });
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center flex-wrap">
+        {/* Active / Archived tabs */}
         <div className="flex gap-2">
           <button 
             onClick={() => setTab('ACTIVE')}
@@ -41,6 +61,30 @@ export default function ScheduleManager({ games }: { games: any[] }) {
             Archived
           </button>
         </div>
+
+        {/* Group filter — only shown when multiple groups exist */}
+        {availableGroups.length >= 2 && (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Group</span>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setGroupFilter('ALL')}
+                className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${groupFilter === 'ALL' ? 'bg-flag-gold text-black font-bold' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
+              >
+                All
+              </button>
+              {availableGroups.map(gr => (
+                <button
+                  key={gr}
+                  onClick={() => setGroupFilter(gr)}
+                  className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${groupFilter === gr ? 'bg-flag-gold text-black font-bold' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
+                >
+                  {gr}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="space-y-3">

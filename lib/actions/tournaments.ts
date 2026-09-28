@@ -612,25 +612,27 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
       const isDouble = options?.doubleRoundRobin ?? (tourney?.format === 'VETERANS_LEAGUE');
       const numCycles = isDouble ? 2 : 1;
 
-      for (let cycle = 0; cycle < numCycles; cycle++) {
-        // Reset working teams for each cycle
-        const workingTeams = isOdd ? [...groupTeams, null] : [...groupTeams];
-        const n = workingTeams.length;
-        const rounds = n - 1;
+      // One shared working-teams array — rotate once per RR round (not per cycle)
+      const workingTeams = isOdd ? [...groupTeams, null] : [...groupTeams];
+      const n = workingTeams.length;
+      const rrRounds = n - 1; // rounds per cycle
 
-        for (let round = 1; round <= rounds; round++) {
+      for (let rrRound = 1; rrRound <= rrRounds; rrRound++) {
+        // For each RR round, insert game 1 then immediately game 2 (home/away swapped)
+        for (let cycle = 0; cycle < numCycles; cycle++) {
+          const dbRound = (rrRound - 1) * numCycles + cycle + 1;
+
           for (let i = 0; i < n / 2; i++) {
             let teamA = workingTeams[i];
             let teamB = workingTeams[n - 1 - i];
 
-            if (cycle === 1) {
-              [teamA, teamB] = [teamB, teamA];
-            }
+            // Cycle 1 = rematch: swap home/away
+            if (cycle === 1) [teamA, teamB] = [teamB, teamA];
 
             if (teamA && teamB) {
               await supabase.from('bracket_matchups').insert({
                 tournament_id: tournamentId,
-                round: round + (cycle * rounds),
+                round: dbRound,
                 slot: slotCounter++,
                 status: 'PENDING',
                 bracket_side: 'ROUND_ROBIN',
@@ -639,9 +641,9 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
               });
             }
           }
-          // Rotate array for next round (keep first element fixed)
-          workingTeams.splice(1, 0, workingTeams.pop() as string | null);
         }
+        // Rotate for next RR round (keep index 0 fixed — circle method)
+        workingTeams.splice(1, 0, workingTeams.pop() as string | null);
       }
     }
     await supabase.from('tournaments').update({ status: 'IN_PROGRESS' }).eq('id', tournamentId);
