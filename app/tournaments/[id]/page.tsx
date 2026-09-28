@@ -54,7 +54,7 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
     supabase.from('schedules').select('id, scheduled_date, scheduled_time, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'SCHEDULED'),
     supabase.from('schedules').select('id, scheduled_date, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'COMPLETED'),
     supabase.from('tournament_rosters').select('team_id, player_id, team:teams(id, name, slug, group_name)').eq('tournament_id', tournament.id),
-    supabase.from('championships').select('champion_team_id, runner_up_team_id, champion:teams!championships_champion_team_id_fkey(name), runner_up:teams!championships_runner_up_team_id_fkey(name)').eq('tournament_id', tournament.id).maybeSingle(),
+    supabase.from('championships').select('champion_team_id, runner_up_team_id, champion:teams!championships_champion_team_id_fkey(name,slug), runner_up:teams!championships_runner_up_team_id_fkey(name,slug)').eq('tournament_id', tournament.id).maybeSingle(),
   ]);
 
   // ── Player Stats ─────────────────────────────────────────────────────────────
@@ -201,9 +201,13 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
           </div>
           <div>
             <p className="text-[10px] font-mono text-flag-gold uppercase tracking-[0.2em] mb-1 font-bold">Champion</p>
-            <p className="text-2xl md:text-3xl text-white font-display tracking-widest">{champ.champion?.name}</p>
+            <Link href={`/teams/${champ.champion?.slug}`} className="hover:text-flag-gold hover:underline transition-colors block">
+              <p className="text-2xl md:text-3xl text-white font-display tracking-widest">{champ.champion?.name}</p>
+            </Link>
             {champ.runner_up?.name && (
-              <p className="text-xs text-white/50 font-mono mt-1 uppercase tracking-widest">RUNNER-UP: <span className="text-white/80">{champ.runner_up.name}</span></p>
+              <p className="text-xs text-white/50 font-mono mt-1 uppercase tracking-widest">
+                RUNNER-UP: <Link href={`/teams/${champ.runner_up.slug}`} className="text-white/80 hover:text-flag-gold hover:underline transition-colors">{champ.runner_up.name}</Link>
+              </p>
             )}
           </div>
         </div>
