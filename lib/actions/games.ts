@@ -211,7 +211,7 @@ export async function saveVerifiedGameStats(input: {
       // First try exact schedule match
       let { data: matchups } = await supabase
         .from('bracket_matchups')
-        .select('id, tournament_id, bracket_side, round, team_a_id, team_b_id, feeds_into_matchup_id, loser_feeds_into_matchup_id')
+        .select('id, tournament_id, bracket_side, round, team_a_id, team_b_id, feeds_into_matchup_id, loser_feeds_into_matchup_id, match_format')
         .eq('schedule_id', game.schedule_id)
         .limit(1);
 
@@ -219,7 +219,7 @@ export async function saveVerifiedGameStats(input: {
       if (!matchups || matchups.length === 0) {
         const { data: fuzzy } = await supabase
           .from('bracket_matchups')
-          .select('id, tournament_id, bracket_side, round, team_a_id, team_b_id, feeds_into_matchup_id, loser_feeds_into_matchup_id')
+          .select('id, tournament_id, bracket_side, round, team_a_id, team_b_id, feeds_into_matchup_id, loser_feeds_into_matchup_id, match_format')
           .eq('tournament_id', tournamentId)
           .neq('status', 'COMPLETED')
           .or(`and(team_a_id.eq.${game.home_team_id},team_b_id.eq.${game.away_team_id}),and(team_a_id.eq.${game.away_team_id},team_b_id.eq.${game.home_team_id})`)
@@ -240,6 +240,12 @@ export async function saveVerifiedGameStats(input: {
         if (game.series_id) {
           const { data: series } = await supabase.from('series').select('*').eq('id', game.series_id).single();
           if (series) {
+            // Always sync match_format from bracket_matchup (admin-overridable source of truth)
+            const effectiveFormat = matchup.match_format || series.match_format;
+            if (matchup.match_format && matchup.match_format !== series.match_format) {
+              await supabase.from('series').update({ match_format: matchup.match_format }).eq('id', series.id);
+            }
+
             // Recalculate wins from all verified games in the series to prevent double-counting on edits
             const { data: seriesGames } = await supabase
               .from('games')
@@ -258,10 +264,10 @@ export async function saveVerifiedGameStats(input: {
 
             let requiredWinsA = 1;
             let requiredWinsB = 1;
-            if (series.match_format === 'BO3') { requiredWinsA = 2; requiredWinsB = 2; }
-            else if (series.match_format === 'BO5') { requiredWinsA = 3; requiredWinsB = 3; }
-            else if (series.match_format === 'BO7') { requiredWinsA = 4; requiredWinsB = 4; }
-            else if (series.match_format === 'TWICE_TO_BEAT') {
+            if (effectiveFormat === 'BO3') { requiredWinsA = 2; requiredWinsB = 2; }
+            else if (effectiveFormat === 'BO5') { requiredWinsA = 3; requiredWinsB = 3; }
+            else if (effectiveFormat === 'BO7') { requiredWinsA = 4; requiredWinsB = 4; }
+            else if (effectiveFormat === 'TWICE_TO_BEAT') {
               requiredWinsA = 1; // Team A (upper seed) needs 1 win
               requiredWinsB = 2; // Team B (lower seed) needs 2 wins
             }

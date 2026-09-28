@@ -27,6 +27,10 @@ export async function overrideBracketMatchup(input: {
   // Save match_format directly whenever it is provided (in any action context)
   if (input.matchFormat !== undefined) {
      await supabase.from('bracket_matchups').update({ match_format: input.matchFormat || null }).eq('id', input.matchupId);
+     // Also sync the format to the linked series so the matchup detail page (which reads from series) shows the correct format
+     if (input.matchFormat) {
+       await supabase.from('series').update({ match_format: input.matchFormat }).eq('bracket_matchup_id', input.matchupId);
+     }
   }
 
   if (input.action === 'RESET_MATCHUP') {
@@ -167,6 +171,8 @@ export async function overrideBracketMatchup(input: {
 
   revalidatePath('/admin/bracket');
   revalidatePath('/bracket');
+  revalidatePath('/bracket/[matchupId]', 'page');
+  revalidatePath(`/bracket/${input.matchupId}`);
   revalidatePath('/admin/schedule');
   revalidatePath('/admin/games');
   revalidatePath('/schedule');

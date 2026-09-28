@@ -13,7 +13,7 @@ export default async function MatchupDetailPage({ params }: { params: { matchupI
   let query = supabase
     .from('bracket_matchups')
     .select(
-      'id, short_id, round, slot, status, winner_id, tournament_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,logo_url), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,logo_url), tournament:tournaments(name)'
+      'id, short_id, round, slot, status, winner_id, tournament_id, match_format, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,logo_url), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,logo_url), tournament:tournaments(name)'
     );
 
   if (isUuid) {
@@ -85,10 +85,10 @@ export default async function MatchupDetailPage({ params }: { params: { matchupI
             <div className="inline-flex items-center gap-3 bg-navy-950/50 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/5 shadow-inner">
               <span className={`w-2 h-2 rounded-full ${matchup.status === 'COMPLETED' ? 'bg-flag-gold' : matchup.status === 'IN_PROGRESS' ? 'bg-flag-red animate-pulse' : 'bg-white/20'}`} />
               <p className="text-xs font-mono text-white/70 uppercase tracking-wider">{matchup.status.replace(/_/g, ' ')}</p>
-              {series?.match_format && (
+              {(matchup.match_format || series?.match_format) && (
                 <>
                   <span className="text-white/20">•</span>
-                  <p className="text-xs font-mono text-white/70 uppercase tracking-wider">{series.match_format}</p>
+                  <p className="text-xs font-mono text-white/70 uppercase tracking-wider">{matchup.match_format || series?.match_format}</p>
                 </>
               )}
             </div>
