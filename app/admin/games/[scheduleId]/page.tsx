@@ -93,21 +93,29 @@ export default async function AdminGameDetailPage({ params }: { params: { schedu
             const isCancelled = s.status === 'CANCELLED';
             const gameNumber = idx + 1;
             
+            const className = `px-4 py-2 text-xs font-mono font-bold tracking-widest uppercase rounded flex-1 text-center whitespace-nowrap transition-colors ${
+              isActive 
+                ? 'bg-white/[0.06] text-white/90' 
+                : isCancelled
+                ? 'text-surface-600 bg-transparent cursor-not-allowed opacity-50'
+                : 'text-white/40 hover:bg-white/[0.03] hover:text-white/50'
+            }`;
+
+            if (isCancelled) {
+              return (
+                <span key={s.id} className={className}>
+                  Game {gameNumber} (Cancelled)
+                </span>
+              );
+            }
+
             return (
               <a
                 key={s.id}
                 href={`/admin/games/${s.id}`}
-                className={`px-4 py-2 text-xs font-mono font-bold tracking-widest uppercase rounded flex-1 text-center whitespace-nowrap transition-colors ${
-                  isActive 
-                    ? 'bg-white/[0.06] text-white/90' 
-                    : isCancelled
-                    ? 'text-surface-600 hover:bg-white/[0.03] cursor-not-allowed opacity-50'
-                    : 'text-white/40 hover:bg-white/[0.03] hover:text-white/50'
-                }`}
-                onClick={isCancelled ? (e) => e.preventDefault() : undefined}
+                className={className}
               >
                 Game {gameNumber}
-                {isCancelled && ' (Cancelled)'}
               </a>
             );
           })}

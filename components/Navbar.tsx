@@ -38,9 +38,14 @@ export default function Navbar() {
   useEffect(() => {
     async function verifyAuth() {
       try {
-        const { username, isAdmin } = await checkAdminStatus();
-        setUsername(username);
-        setIsAdmin(isAdmin);
+        const result = await checkAdminStatus();
+        if (result) {
+          setUsername(result.username);
+          setIsAdmin(result.isAdmin);
+        } else {
+          setUsername(null);
+          setIsAdmin(false);
+        }
       } catch (err) {
         console.error('Navbar auth check failed:', err);
         setIsAdmin(false);

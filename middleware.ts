@@ -29,19 +29,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.redirect(new URL('/login?redirect=/admin', request.url));
-  }
-
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-
-  if (profile?.role !== 'ADMIN') {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
+  // Only refresh the session if needed. We do not block or query the DB here.
+  // The layout.tsx inside /admin will handle the actual redirects and DB role checks.
+  await supabase.auth.getUser();
 
   return response;
 }
