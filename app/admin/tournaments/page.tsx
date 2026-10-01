@@ -7,10 +7,10 @@ import { slugify } from '@/lib/format';
 
 export default async function AdminTournamentsPage() {
   const supabase = createClient();
-  
+
   const { data: tournaments } = await supabase
     .from('tournaments')
-    .select('id, name, status, format, start_date, end_date, championship_award_name, logo_url')
+    .select('id, name, status, format, num_teams, match_format, start_date, end_date, championship_award_name, logo_url')
     .order('created_at', { ascending: false });
 
   return (
@@ -28,31 +28,55 @@ export default async function AdminTournamentsPage() {
       </div>
 
       <div className="space-y-4 mt-6">
-        {(tournaments ?? []).length === 0 && <p className="surface-elevated p-8 text-center rounded-xl border border-white/10 text-white/40 font-mono text-[10px] uppercase tracking-widest font-bold">No tournaments yet.</p>}
+        {(tournaments ?? []).length === 0 && (
+          <p className="surface-elevated p-8 text-center rounded-xl border border-white/10 text-white/40 font-mono text-[10px] uppercase tracking-widest font-bold">
+            No tournaments yet.
+          </p>
+        )}
         {(tournaments ?? []).map((t) => (
-          <div key={t.id} className="surface-elevated rounded-xl border border-white/10 p-6 flex flex-col gap-5 hover:border-white/20 transition-all duration-300">
+          <div
+            key={t.id}
+            className="surface-elevated rounded-xl border border-white/10 p-6 flex flex-col gap-5 hover:border-white/20 transition-all duration-300"
+          >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
               <div>
                 <p className="text-2xl text-white font-display uppercase tracking-widest mb-2">{t.name}</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[9px] font-mono text-white/50 font-bold uppercase tracking-widest bg-[#111827] px-2.5 py-1 rounded-full border border-white/10">{t.format.replace('_', ' ')}</span>
-                  <Link href={`/admin/bracket?t=${slugify(t.name)}`} className="text-[9px] font-mono font-bold text-white/50 hover:text-white hover:border-white/30 uppercase tracking-widest bg-[#111827] px-2.5 py-1 rounded-full border border-white/10 transition-colors">
+                  <span className="text-[9px] font-mono text-white/50 font-bold uppercase tracking-widest bg-[#111827] px-2.5 py-1 rounded-full border border-white/10">
+                    {t.format.replace(/_/g, ' ')}
+                  </span>
+                  <span className="text-[9px] font-mono text-white/50 font-bold uppercase tracking-widest bg-[#111827] px-2.5 py-1 rounded-full border border-white/10">
+                    {t.num_teams} Teams · {t.match_format}
+                  </span>
+                  {t.start_date && (
+                    <span className="text-[9px] font-mono text-white/40 tracking-widest">
+                      {t.start_date}{t.end_date ? ` → ${t.end_date}` : ''}
+                    </span>
+                  )}
+                  <Link
+                    href={`/admin/bracket?t=${slugify(t.name)}`}
+                    className="text-[9px] font-mono font-bold text-white/50 hover:text-white hover:border-white/30 uppercase tracking-widest bg-[#111827] px-2.5 py-1 rounded-full border border-white/10 transition-colors"
+                  >
                     Manage Bracket
                   </Link>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <TournamentStatusToggle tournamentId={t.id} currentStatus={t.status} />
               </div>
             </div>
 
-            {/* Championship Award Name + Delete */}
             <TournamentAdminActions
               tournamentId={t.id}
               tournamentName={t.name}
               currentChampionshipName={t.championship_award_name ?? ''}
               currentLogoUrl={t.logo_url ?? ''}
+              currentFormat={t.format}
+              currentNumTeams={t.num_teams}
+              currentMatchFormat={t.match_format}
+              currentStartDate={t.start_date ?? ''}
+              currentEndDate={t.end_date ?? ''}
             />
           </div>
         ))}

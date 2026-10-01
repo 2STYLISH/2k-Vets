@@ -69,6 +69,42 @@ export async function updateTournamentChampionshipName(tournamentId: string, nam
   revalidatePath('/awards');
 }
 
+export async function updateTournament(input: {
+  tournamentId: string;
+  name: string;
+  format: string;
+  numTeams: number;
+  matchFormat: string;
+  startDate?: string;
+  endDate?: string;
+  championshipAwardName?: string;
+}) {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) throw new Error('Admin authentication required.');
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('tournaments')
+    .update({
+      name: input.name,
+      format: input.format,
+      num_teams: input.numTeams,
+      match_format: input.matchFormat,
+      start_date: input.startDate || null,
+      end_date: input.endDate || null,
+      championship_award_name: input.championshipAwardName || null,
+    })
+    .eq('id', input.tournamentId);
+  if (error) throw error;
+
+  revalidatePath('/admin/tournaments');
+  revalidatePath('/tournaments');
+  revalidatePath('/');
+  revalidatePath('/schedule');
+  revalidatePath('/awards');
+}
+
+
 export async function updateTournamentLogo(tournamentId: string, logoUrl: string) {
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
@@ -764,23 +800,98 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
   }
 
   // ── ELIM (single or double) ───────────────────────────────────────────────
-  // Reset all matchup slots to clean state (wipe teams/winners/byes/schedules)
-  await supabase
-    .from('bracket_matchups')
-    .update({
-      team_a_id: null,
-      team_b_id: null,
-      winner_id: null,
-      is_bye: false,
-      status: 'PENDING',
-      schedule_id: null,
-    })
-    .eq('tournament_id', tournamentId);
+  // Rebuild bracket structure entirely based on actual registered team count.
+  // This makes it safe to add/remove teams after tournament creation.
+  const isDoubleElim = tourney?.format === 'DOUBLE_ELIM';
+  const actualTeamCount = teamIds.length;
 
-  // Delete stale schedules from a previous randomize run
+  if (actualTeamCount < 2) throw new Error('Need at least 2 teams to generate a bracket.');
+
+  // Rebuild from scratch: wipe all existing bracket matchups & schedules
   await supabase.from('schedules').delete().eq('tournament_id', tournamentId);
+  await supabase.from('bracket_matchups').delete().eq('tournament_id', tournamentId);
 
-  // Get R1 UB matchups — must use bracket_side = 'WINNERS' (set correctly in generateBracket)
+  const ubRounds = Math.ceil(Math.log2(actualTeamCount));
+  const bracketSize = Math.pow(2, ubRounds);
+
+  // ── Build Winners bracket ────────────────────────────────────────────────
+  const ubIds: string[][] = [];
+
+  for (let round = 1; round <= ubRounds; round++) {
+    const count = bracketSize / Math.pow(2, round);
+    const roundIds: string[] = [];
+    for (let slot = 1; slot <= count; slot++) {
+      const id = await insertMatchup(supabase, tournamentId, round, slot, 'WINNERS');
+      roundIds.push(id);
+    }
+    ubIds.push(roundIds);
+  }
+
+  // Wire UB forward
+  for (let r = 0; r < ubIds.length - 1; r++) {
+    const current = ubIds[r];
+    const next = ubIds[r + 1];
+    for (let i = 0; i < current.length; i++) {
+      await supabase
+        .from('bracket_matchups')
+        .update({ feeds_into_matchup_id: next[Math.floor(i / 2)] })
+        .eq('id', current[i]);
+    }
+  }
+
+  if (isDoubleElim && ubRounds >= 2) {
+    // ── Build Losers bracket ───────────────────────────────────────────────
+    const lbRoundCount = 2 * (ubRounds - 1);
+    const lbIds: string[][] = [];
+
+    for (let lbRound = 1; lbRound <= lbRoundCount; lbRound++) {
+      const k = Math.ceil(lbRound / 2);
+      const count = Math.max(1, bracketSize / Math.pow(2, k + 1));
+      const roundIds: string[] = [];
+      for (let slot = 1; slot <= count; slot++) {
+        const id = await insertMatchup(supabase, tournamentId, lbRound, slot, 'LOSERS');
+        roundIds.push(id);
+      }
+      lbIds.push(roundIds);
+    }
+
+    // Wire LB forward
+    for (let r = 0; r < lbIds.length - 1; r++) {
+      const current = lbIds[r];
+      const next = lbIds[r + 1];
+      if (current.length === next.length) {
+        for (let i = 0; i < current.length; i++) {
+          await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: next[i] }).eq('id', current[i]);
+        }
+      } else {
+        for (let i = 0; i < current.length; i++) {
+          await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: next[Math.floor(i / 2)] }).eq('id', current[i]);
+        }
+      }
+    }
+
+    // Wire UB losers into LB
+    for (let ubRound = 1; ubRound <= ubRounds; ubRound++) {
+      const ubRoundIds = ubIds[ubRound - 1];
+      const lbTargetRound = ubRound === 1 ? 1 : 2 * (ubRound - 1);
+      const lbTargetIds = lbIds[lbTargetRound - 1];
+      for (let i = 0; i < ubRoundIds.length; i++) {
+        const targetIndex = ubRound === 1 ? Math.floor(i / 2) : i;
+        const lbTarget = lbTargetIds[targetIndex];
+        if (lbTarget) {
+          await supabase.from('bracket_matchups').update({ loser_feeds_into_matchup_id: lbTarget }).eq('id', ubRoundIds[i]);
+        }
+      }
+    }
+
+    // Grand Final
+    const gfId = await insertMatchup(supabase, tournamentId, 1, 1, 'GRAND_FINAL');
+    await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: gfId }).eq('id', ubIds[ubRounds - 1][0]);
+    await supabase.from('bracket_matchups').update({ feeds_into_matchup_id: gfId }).eq('id', lbIds[lbRoundCount - 1][0]);
+  }
+
+  // ── Now seed teams into R1 slots ─────────────────────────────────────────
+  // Re-fetch round1 after rebuild so we have fresh IDs + feed links
   const { data: round1 } = await supabase
     .from('bracket_matchups')
     .select('id, feeds_into_matchup_id, loser_feeds_into_matchup_id')
@@ -789,55 +900,46 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
     .eq('round', 1)
     .order('slot', { ascending: true });
 
-  if (!round1 || round1.length === 0) throw new Error('Bracket not generated yet. Please generate the bracket first.');
+  if (!round1 || round1.length === 0) throw new Error('Bracket rebuild failed.');
 
-  const bracketSize = round1.length * 2;
   const seedOrder = generateSeedOrder(bracketSize);
-
-  // Track bye matchup IDs for cascade propagation
   const byeMatchupIds = new Set<string>();
 
   for (let i = 0; i < round1.length; i++) {
     const matchup = round1[i];
     const seedA = seedOrder[i * 2];
     const seedB = seedOrder[i * 2 + 1];
-    
+
     const teamA = teamSeedMap.get(seedA) || null;
     const teamB = teamSeedMap.get(seedB) || null;
-    
+
     if (teamA && teamB) {
       // Normal match
-      await supabase.from('bracket_matchups').update({ 
-        team_a_id: teamA, 
+      await supabase.from('bracket_matchups').update({
+        team_a_id: teamA,
         team_b_id: teamB,
         status: 'PENDING',
       }).eq('id', matchup.id);
     } else if (teamA || teamB) {
-      // Bye match — one real team, auto-advance
+      // One real team — bye
       const presentTeam = (teamA || teamB)!;
-      await supabase.from('bracket_matchups').update({ 
-        team_a_id: teamA, 
+      await supabase.from('bracket_matchups').update({
+        team_a_id: teamA,
         team_b_id: teamB,
         winner_id: presentTeam,
         is_bye: true,
-        status: 'COMPLETED'
+        status: 'COMPLETED',
       }).eq('id', matchup.id);
       byeMatchupIds.add(matchup.id);
-      
-      // Advance winner to next UB slot
+
       if (matchup.feeds_into_matchup_id) {
         const { data: next } = await supabase.from('bracket_matchups')
-          .select('id, team_a_id, team_b_id')
-          .eq('id', matchup.feeds_into_matchup_id).single();
-          
+          .select('id, team_a_id, team_b_id').eq('id', matchup.feeds_into_matchup_id).single();
         if (next) {
           const field = next.team_a_id ? 'team_b_id' : 'team_a_id';
           await supabase.from('bracket_matchups').update({ [field]: presentTeam }).eq('id', next.id);
         }
       }
-      
-      // The LB slot that would receive this bye's loser is itself a bye
-      // (there's no real loser from a bye match)
       if (matchup.loser_feeds_into_matchup_id) {
         byeMatchupIds.add(matchup.loser_feeds_into_matchup_id);
         await supabase.from('bracket_matchups')
@@ -845,7 +947,7 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
           .eq('id', matchup.loser_feeds_into_matchup_id);
       }
     } else {
-      // Ghost vs ghost — mark as bye, cascade both outputs
+      // Ghost vs ghost
       await supabase.from('bracket_matchups').update({ is_bye: true, status: 'COMPLETED' }).eq('id', matchup.id);
       byeMatchupIds.add(matchup.id);
       if (matchup.feeds_into_matchup_id) {
@@ -859,8 +961,7 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
     }
   }
 
-  // Cascade bye flags through the Losers bracket:
-  // A LB matchup that receives ALL bye inputs is itself a bye.
+  // Cascade byes through Losers bracket
   if (byeMatchupIds.size > 0) {
     const { data: allMatchups } = await supabase
       .from('bracket_matchups')
@@ -879,9 +980,7 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
           const byeIncomers = incomers.filter(x => byeMatchupIds.has(x.id));
           if (incomers.length > 0 && byeIncomers.length === incomers.length && m.bracket_side === 'LOSERS') {
             byeMatchupIds.add(m.id);
-            await supabase.from('bracket_matchups')
-              .update({ is_bye: true, status: 'COMPLETED' })
-              .eq('id', m.id);
+            await supabase.from('bracket_matchups').update({ is_bye: true, status: 'COMPLETED' }).eq('id', m.id);
             const local = allMatchups.find(x => x.id === m.id);
             if (local) local.is_bye = true;
             changed = true;
@@ -892,7 +991,6 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
   }
 
   await supabase.from('tournaments').update({ status: 'IN_PROGRESS' }).eq('id', tournamentId);
-
   revalidatePath('/admin/bracket');
   revalidatePath('/bracket');
 }

@@ -25,6 +25,87 @@ export async function createTeam(input: { tournamentId: string; name: string; sh
   revalidatePath('/admin/teams');
 }
 
+/**
+ * Import an existing team into a new tournament.
+ * Copies the team's name, short_name, and logo_url.
+ * Optionally seeds the roster from the source team's prior roster entries.
+ */
+export async function importTeamToTournament(input: {
+  sourceTeamId: string;
+  targetTournamentId: string;
+  copyRoster: boolean;
+}) {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) throw new Error('Admin authentication required.');
+
+  const supabase = createClient();
+
+  // Fetch source team details
+  const { data: sourceTeam, error: srcErr } = await supabase
+    .from('teams')
+    .select('name, short_name, logo_url')
+    .eq('id', input.sourceTeamId)
+    .single();
+  if (srcErr || !sourceTeam) throw new Error('Source team not found.');
+
+  // Guard: don't import if same name already exists in target tournament
+  const { data: duplicate } = await supabase
+    .from('teams')
+    .select('id')
+    .eq('tournament_id', input.targetTournamentId)
+    .ilike('name', sourceTeam.name)
+    .maybeSingle();
+  if (duplicate) {
+    throw new Error(`"${sourceTeam.name}" already exists in this tournament.`);
+  }
+
+  // Insert new team row for the target tournament
+  const { data: newTeam, error: insertErr } = await supabase
+    .from('teams')
+    .insert({
+      tournament_id: input.targetTournamentId,
+      name: sourceTeam.name,
+      short_name: sourceTeam.short_name,
+      logo_url: sourceTeam.logo_url,
+    })
+    .select('id')
+    .single();
+  if (insertErr || !newTeam) throw insertErr ?? new Error('Failed to create team.');
+
+  // Optionally copy players from the source team's most recent roster
+  if (input.copyRoster) {
+    const { data: sourceRoster } = await supabase
+      .from('tournament_rosters')
+      .select('player_id')
+      .eq('team_id', input.sourceTeamId);
+
+    if (sourceRoster && sourceRoster.length > 0) {
+      // Filter out players already assigned to the target tournament
+      const { data: alreadyAssigned } = await supabase
+        .from('tournament_rosters')
+        .select('player_id')
+        .eq('tournament_id', input.targetTournamentId);
+
+      const assignedIds = new Set((alreadyAssigned ?? []).map((r: any) => r.player_id));
+      const toInsert = sourceRoster
+        .filter((r: any) => !assignedIds.has(r.player_id))
+        .map((r: any) => ({
+          tournament_id: input.targetTournamentId,
+          team_id: newTeam.id,
+          player_id: r.player_id,
+        }));
+
+      if (toInsert.length > 0) {
+        const { error: rosterErr } = await supabase.from('tournament_rosters').insert(toInsert);
+        if (rosterErr) throw rosterErr;
+      }
+    }
+  }
+
+  revalidatePath('/admin/teams');
+  return newTeam.id;
+}
+
 export async function deleteTeam(teamId: string) {
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
