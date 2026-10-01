@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+﻿import { createClient } from '@/lib/supabase/server';
 import AdminInteractiveBracket from '@/components/admin/AdminInteractiveBracket';
 import StandingsTable from '@/components/StandingsTable';
 import BracketSeeder from '@/components/admin/BracketSeeder';
@@ -51,7 +51,7 @@ export default async function AdminBracketPage({
     ? await supabase.from('tournament_seeds').select('*').eq('tournament_id', active.id)
     : { data: [] };
 
-  const rosterIds = (rosters ?? []).map((r) => r.team_id);
+  const rosterIds = Array.from(new Set((rosters ?? []).map((r) => r.team_id)));
   const seededIds = (seeds ?? []).map((s) => s.team_id);
 
   return (
@@ -63,7 +63,7 @@ export default async function AdminBracketPage({
           <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Bracket</p>
           <h1 className="text-4xl md:text-5xl text-white font-display tracking-[0.12em] uppercase">BRACKET MANAGEMENT</h1>
           <p className="text-white/40 text-sm mt-4 max-w-2xl">
-            Verified series results advance teams automatically. The system never invents a winner —
+            Verified series results advance teams automatically. The system never invents a winner â€”
             use Admin Override below for manual corrections.
           </p>
         </div>

@@ -538,12 +538,13 @@ function generateSeedOrder(bracketSize: number): number[] {
   return matches;
 }
 
-export async function randomizeBracket(tournamentId: string, options?: { randomizeSeeds?: boolean, doubleRoundRobin?: boolean, numGroups?: number }) {
+export async function randomizeBracket(tournamentId: string, options?: { randomizeSeeds?: boolean, doubleRoundRobin?: boolean, numGroups?: number, explicitSeeds?: { teamId: string, seed: number }[] }) {
   const { isAdmin } = await requireAdmin();
   if (!isAdmin) throw new Error('Admin authentication required.');
 
   const supabase = createClient();
   const shouldRandomize = options?.randomizeSeeds ?? true;
+  const explicitSeeds = options?.explicitSeeds;
   
   // 1. Get all teams registered to this tournament
   const { data: rosters } = await supabase
@@ -556,24 +557,44 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
   const teamIds = Array.from(new Set(rosters.map(r => r.team_id)));
   const teamSeedMap = new Map<number, string>();
 
-  if (shouldRandomize) {
+  if (explicitSeeds && explicitSeeds.length > 0) {
+    // Use the explicitly provided seeds (e.g. from local manual shuffling)
+    await supabase.from('tournament_seeds').delete().eq('tournament_id', tournamentId);
+    const newSeeds = explicitSeeds.map(s => ({
+      tournament_id: tournamentId,
+      team_id: s.teamId,
+      seed: s.seed
+    }));
+    const { error: seedErr } = await supabase.from('tournament_seeds').insert(newSeeds);
+    if (seedErr) throw seedErr;
+
+    for (const s of explicitSeeds) {
+      teamSeedMap.set(s.seed, s.teamId);
+    }
+  } else if (shouldRandomize) {
     // Shuffle teams
     for (let i = teamIds.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
     }
 
+    // Completely wipe existing seeds so we don't hit unique constraint conflicts during reshuffle
+    await supabase.from('tournament_seeds').delete().eq('tournament_id', tournamentId);
+
     // Assign random seeds (1 to N)
+    const newSeeds = teamIds.map((teamId, i) => ({
+      tournament_id: tournamentId,
+      team_id: teamId,
+      seed: i + 1,
+    }));
+    
+    // Bulk insert the fresh seeds
+    const { error: seedErr } = await supabase.from('tournament_seeds').insert(newSeeds);
+    if (seedErr) throw seedErr;
+
+    // Repopulate map for the rest of the generation logic
     for (let i = 0; i < teamIds.length; i++) {
       teamSeedMap.set(i + 1, teamIds[i]);
-    }
-    
-    // Upsert seeds
-    for (let i = 0; i < teamIds.length; i++) {
-      await supabase.from('tournament_seeds').upsert(
-        { tournament_id: tournamentId, team_id: teamIds[i], seed: i + 1 },
-        { onConflict: 'tournament_id,seed' } // Wait, this constraint might cause issues if seeds overlap. Best to delete first or update by team_id
-      );
     }
   } else {
     // Read existing seeds from database
@@ -625,23 +646,24 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
           groupsOfTeams[groupIdx].push(sortedTeamIds[i]);
         }
 
-        // Assign group_names in the DB
+        // Assign group_names in the DB in bulk (one query per group)
         const groupLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         for (let g = 0; g < groupsOfTeams.length; g++) {
           const groupName = `Group ${groupLetters[g]}`;
-          for (const tId of groupsOfTeams[g]) {
-            await supabase.from('teams').update({ group_name: groupName }).eq('id', tId);
+          if (groupsOfTeams[g].length > 0) {
+            await supabase.from('teams').update({ group_name: groupName }).in('id', groupsOfTeams[g]);
           }
         }
       } else {
-        // No groups — clear any existing group_name
-        for (const tId of sortedTeamIds) {
-          await supabase.from('teams').update({ group_name: null }).eq('id', tId);
+        // No groups — clear any existing group_name in a single bulk query
+        if (sortedTeamIds.length > 0) {
+          await supabase.from('teams').update({ group_name: null }).in('id', sortedTeamIds);
         }
       }
     }
 
     let slotCounter = 1;
+    const matchupRows: object[] = [];
 
     for (const groupTeams of groupsOfTeams) {
       const isOdd = groupTeams.length % 2 !== 0;
@@ -666,7 +688,7 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
             if (cycle === 1) [teamA, teamB] = [teamB, teamA];
 
             if (teamA && teamB) {
-              await supabase.from('bracket_matchups').insert({
+              matchupRows.push({
                 tournament_id: tournamentId,
                 round: dbRound,
                 slot: slotCounter++,
@@ -682,6 +704,13 @@ export async function randomizeBracket(tournamentId: string, options?: { randomi
         workingTeams.splice(1, 0, workingTeams.pop() as string | null);
       }
     }
+
+    // Single bulk insert — massively faster than one await per matchup
+    if (matchupRows.length > 0) {
+      const { error: insertErr } = await supabase.from('bracket_matchups').insert(matchupRows);
+      if (insertErr) throw insertErr;
+    }
+
     await supabase.from('tournaments').update({ status: 'IN_PROGRESS' }).eq('id', tournamentId);
     revalidatePath('/admin/bracket');
     revalidatePath('/bracket');
