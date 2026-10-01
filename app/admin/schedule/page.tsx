@@ -9,7 +9,7 @@ export default async function AdminSchedulePage({ searchParams }: { searchParams
   const supabase = createClient();
   const activeParam = searchParams.t;
 
-  const { data: tournamentsData } = await supabase.from('tournaments').select('id, name, format').neq('status', 'COMPLETED');
+  const { data: tournamentsData } = await supabase.from('tournaments').select('id, name, format, match_format').neq('status', 'COMPLETED');
   const tournaments = tournamentsData ?? [];
   const activeTournamentObj = tournaments.find(t => t.id === activeParam || slugify(t.name) === activeParam) ?? tournaments[0];
   const activeTournament = activeTournamentObj?.id || '';
@@ -23,12 +23,12 @@ export default async function AdminSchedulePage({ searchParams }: { searchParams
       .order('team_id'),
     supabase
       .from('schedules')
-      .select('id, scheduled_date, scheduled_time, status, game_type, round_label, is_archived, series_id, tournament:tournaments(name), home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name)')
+      .select('id, scheduled_date, scheduled_time, status, game_type, round_label, is_archived, series_id, home_team_id, away_team_id, tournament:tournaments(name), home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name)')
       .eq('tournament_id', activeTournament)
       .order('scheduled_date', { ascending: true }),
     supabase
       .from('bracket_matchups')
-      .select('id, schedule_id, tournament_id, team_a_id, team_b_id, status, bracket_side, round, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug), series(id)')
+      .select('id, schedule_id, match_format, tournament_id, team_a_id, team_b_id, status, bracket_side, round, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug), series(id)')
       .eq('tournament_id', activeTournament)
       .not('team_a_id', 'is', null)
       .not('team_b_id', 'is', null)

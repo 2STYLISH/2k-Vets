@@ -10,6 +10,7 @@ export async function createScheduledGame(input: {
   roundLabel?: string;
   tournamentId?: string;
   seriesId?: string;
+  matchupId?: string;
   scheduledDate: string;
   scheduledTime: string;
   matchFormat?: string;
@@ -19,12 +20,24 @@ export async function createScheduledGame(input: {
   const supabase = createClient();
 
   // Find if there is an active bracket matchup for these two teams
-  const { data: matchup } = await supabase
-    .from('bracket_matchups')
-    .select('id, schedule_id, match_format, team_a_id, team_b_id, tournaments(match_format)')
-    .neq('status', 'COMPLETED')
-    .or(`and(team_a_id.eq.${input.homeTeamId},team_b_id.eq.${input.awayTeamId}),and(team_a_id.eq.${input.awayTeamId},team_b_id.eq.${input.homeTeamId})`)
-    .maybeSingle();
+  let matchup: any = null;
+  if (input.matchupId) {
+    const { data } = await supabase
+      .from('bracket_matchups')
+      .select('id, schedule_id, match_format, team_a_id, team_b_id, tournaments(match_format)')
+      .eq('id', input.matchupId)
+      .maybeSingle();
+    matchup = data;
+  } else {
+    const { data } = await supabase
+      .from('bracket_matchups')
+      .select('id, schedule_id, match_format, team_a_id, team_b_id, tournaments(match_format)')
+      .neq('status', 'COMPLETED')
+      .or(`and(team_a_id.eq.${input.homeTeamId},team_b_id.eq.${input.awayTeamId}),and(team_a_id.eq.${input.awayTeamId},team_b_id.eq.${input.homeTeamId})`)
+      .limit(1)
+      .maybeSingle();
+    matchup = data;
+  }
 
   // Find if there is an active series for these two teams
   let { data: series } = await supabase

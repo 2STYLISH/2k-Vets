@@ -9,7 +9,7 @@ export default function CreateGameForm({
   matchupsMap,
   schedules,
 }: {
-  tournaments: { id: string; name: string; format?: string }[];
+  tournaments: { id: string; name: string; format?: string; match_format?: string }[];
   rosterMap: Record<string, { id: string; name: string }[]>;
   matchupsMap?: Record<string, any[]>;
   schedules?: any[];
@@ -89,6 +89,7 @@ export default function CreateGameForm({
         gameType: dbGameType,
         roundLabel: roundLabel || undefined,
         tournamentId: tournamentId || undefined,
+        matchupId: selectedMatchupId || undefined,
         scheduledDate: date,
         scheduledTime: time,
       });
@@ -141,11 +142,37 @@ export default function CreateGameForm({
       </div>
 
       {tournamentId && (matchupsMap?.[tournamentId]?.length ?? 0) > 0 && (() => {
+        const activeT = tournaments.find(t => t.id === tournamentId);
         const applicableMatchups = matchupsMap![tournamentId].filter(m => {
           if (uiGameType === 'REGULAR') return m.bracket_side === 'ROUND_ROBIN' || m.bracket_side === 'SWISS';
           if (uiGameType === 'PLAYIN') return m.bracket_side === 'PLAY_IN';
           if (uiGameType === 'PLAYOFF') return m.bracket_side === 'WINNERS' || m.bracket_side === 'LOSERS' || m.bracket_side === 'GRAND_FINAL';
           if (uiGameType === 'TOURNAMENT') return m.bracket_side !== 'ROUND_ROBIN' && m.bracket_side !== 'SWISS';
+          return true;
+        }).filter(m => {
+          const seriesId = Array.isArray(m.series) ? m.series[0]?.id : m.series?.id;
+          const format = m.match_format || activeT?.match_format || 'BO1';
+          let maxGames = 1;
+          if (format === 'BO3') maxGames = 3;
+          if (format === 'BO5') maxGames = 5;
+          if (format === 'BO7') maxGames = 7;
+          
+          if (seriesId && schedules) {
+            const gamesCount = schedules.filter(s => s.series_id === seriesId).length;
+            if (gamesCount >= maxGames) return false;
+          } else if (maxGames === 1) {
+            if (m.schedule_id) return false;
+            // Fallback for old data or if maybeSingle failed: check schedules manually
+            if (schedules) {
+              const hasGame = schedules.some(s => 
+                !s.series_id && 
+                ((s.home_team_id === m.team_a_id && s.away_team_id === m.team_b_id) || 
+                 (s.home_team_id === m.team_b_id && s.away_team_id === m.team_a_id)) &&
+                s.round_label?.includes(`Round ${m.round}`) // Rough check in case they play multiple times in group stage
+              );
+              if (hasGame) return false;
+            }
+          }
           return true;
         });
         
