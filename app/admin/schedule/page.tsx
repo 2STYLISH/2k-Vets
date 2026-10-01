@@ -54,7 +54,7 @@ export default async function AdminSchedulePage({ searchParams }: { searchParams
   return (
     <div className="space-y-8">
       <BackButton />
-      
+
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="section-header !mb-0 !pb-0 !border-b-0">
           <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Schedule</p>

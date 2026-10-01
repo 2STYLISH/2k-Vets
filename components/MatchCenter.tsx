@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatGameUrl } from '@/lib/format';
+import Link from 'next/link';
 
 function formatDateHuman(dateStr: string) {
   if (!dateStr) return '';
@@ -107,7 +108,11 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
                   <span className="text-white/20 font-mono text-xs">TBD</span>
                 )}
               </div>
-              <span className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center">{fHome}</span>
+              {featured.home?.slug ? (
+                <Link href={`/teams/${featured.home.slug}`} className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center hover:text-flag-gold transition-colors">{fHome}</Link>
+              ) : (
+                <span className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center">{fHome}</span>
+              )}
             </div>
 
             {/* Scores */}
@@ -130,7 +135,11 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
                   <span className="text-white/20 font-mono text-xs">TBD</span>
                 )}
               </div>
-              <span className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center">{fAway}</span>
+              {featured.away?.slug ? (
+                <Link href={`/teams/${featured.away.slug}`} className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center hover:text-flag-gold transition-colors">{fAway}</Link>
+              ) : (
+                <span className="text-xl sm:text-2xl font-display text-white tracking-[0.1em] text-center">{fAway}</span>
+              )}
             </div>
           </div>
 
@@ -183,7 +192,13 @@ function GridMatch({ game }: { game: any }) {
             <div className="w-8 h-8 bg-[#111827] border border-white/10 rounded flex items-center justify-center p-1 shrink-0">
               {hLogo ? <img src={hLogo} className="w-full h-full object-contain" /> : <span className="text-[8px] text-white/20 font-mono">TBD</span>}
             </div>
-            <span className={`text-base font-display tracking-[0.1em] truncate ${hWin ? 'text-white' : 'text-white/50'}`}>{hName}</span>
+            {game.home?.slug ? (
+              <Link href={`/teams/${game.home.slug}`} onClick={(e: any) => e.stopPropagation()} className={`text-base font-display tracking-[0.1em] truncate hover:text-flag-gold transition-colors ${hWin ? 'text-white' : 'text-white/50'}`}>
+                {hName}
+              </Link>
+            ) : (
+              <span className={`text-base font-display tracking-[0.1em] truncate ${hWin ? 'text-white' : 'text-white/50'}`}>{hName}</span>
+            )}
           </div>
           <span className={`text-xl font-display tracking-wide shrink-0 ${hWin ? 'text-white' : 'text-white/40'}`}>{hScore}</span>
         </div>
@@ -193,7 +208,13 @@ function GridMatch({ game }: { game: any }) {
             <div className="w-8 h-8 bg-[#111827] border border-white/10 rounded flex items-center justify-center p-1 shrink-0">
               {aLogo ? <img src={aLogo} className="w-full h-full object-contain" /> : <span className="text-[8px] text-white/20 font-mono">TBD</span>}
             </div>
-            <span className={`text-base font-display tracking-[0.1em] truncate ${aWin ? 'text-white' : 'text-white/50'}`}>{aName}</span>
+            {game.away?.slug ? (
+              <Link href={`/teams/${game.away.slug}`} onClick={(e: any) => e.stopPropagation()} className={`text-base font-display tracking-[0.1em] truncate hover:text-flag-gold transition-colors ${aWin ? 'text-white' : 'text-white/50'}`}>
+                {aName}
+              </Link>
+            ) : (
+              <span className={`text-base font-display tracking-[0.1em] truncate ${aWin ? 'text-white' : 'text-white/50'}`}>{aName}</span>
+            )}
           </div>
           <span className={`text-xl font-display tracking-wide shrink-0 ${aWin ? 'text-white' : 'text-white/40'}`}>{aScore}</span>
         </div>

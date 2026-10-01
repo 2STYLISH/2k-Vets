@@ -37,7 +37,7 @@ export default async function PlayerPage({ params, searchParams }: { params: { s
   // 1. Current Teams / Roster Status
   const { data: currentRosters } = await supabase
     .from('tournament_rosters')
-    .select('team_id, tournament_id, team:teams(name, logo_url, logo_path), tournament:tournaments(name, status, start_date)')
+    .select('team_id, tournament_id, team:teams(name, slug, logo_url, logo_path), tournament:tournaments(name, status, start_date)')
     .eq('player_id', player.id)
     .order('created_at', { ascending: false });
 
@@ -47,6 +47,7 @@ export default async function PlayerPage({ params, searchParams }: { params: { s
     return {
       tournament: t,
       teamName: team?.name ?? 'Unknown',
+      teamSlug: team?.slug || null,
       teamLogo: team?.logo_url || team?.logo_path || null,
     };
   }).filter(x => x.tournament?.status === 'SEEDING' || x.tournament?.status === 'IN_PROGRESS');
@@ -57,6 +58,7 @@ export default async function PlayerPage({ params, searchParams }: { params: { s
     return {
       tournament: t,
       teamName: team?.name ?? 'Unknown',
+      teamSlug: team?.slug || null,
       teamLogo: team?.logo_url || team?.logo_path || null,
     };
   }).filter(x => x.tournament?.status === 'COMPLETED');
@@ -439,17 +441,17 @@ export default async function PlayerPage({ params, searchParams }: { params: { s
                 </div>
               )}
               {activeLeagues.map((x, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 bg-[#1f2937] border border-white/10 rounded-xl">
+                <Link key={idx} href={x.teamSlug ? `/teams/${x.teamSlug}` : '#'} className="flex items-center gap-3 p-3 bg-[#1f2937] border border-white/10 rounded-xl hover:border-flag-gold/50 hover:-translate-y-0.5 transition-all">
                   {x.teamLogo ? (
                     <img src={x.teamLogo} className="w-10 h-10 object-contain p-1.5 rounded-lg bg-[#111827] border border-white/10" />
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-[#111827] border border-white/10 flex items-center justify-center"><span className="text-[8px] font-mono text-white/40">TEAM</span></div>
                   )}
                   <div>
-                    <p className="text-sm font-display text-white tracking-[0.1em] uppercase">{x.teamName}</p>
+                    <p className="text-sm font-display text-white tracking-[0.1em] uppercase hover:text-flag-gold transition-colors">{x.teamName}</p>
                     <p className="text-[9px] font-mono text-white/40 uppercase mt-0.5 max-w-[150px] truncate" title={x.tournament?.name}>{x.tournament?.name}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 
@@ -458,17 +460,17 @@ export default async function PlayerPage({ params, searchParams }: { params: { s
                 <h2 className="text-lg font-display text-white/40 uppercase tracking-[0.1em] mb-4">PAST TEAMS</h2>
                 <div className="space-y-3 opacity-60 hover:opacity-100 transition-opacity">
                   {pastLeagues.map((x, idx) => (
-                    <div key={'past' + idx} className="flex items-center gap-3 p-3 bg-[#111827] border border-white/5 rounded-xl">
+                    <Link key={'past' + idx} href={x.teamSlug ? `/teams/${x.teamSlug}` : '#'} className="flex items-center gap-3 p-3 bg-[#111827] border border-white/5 rounded-xl hover:border-white/20 hover:-translate-y-0.5 transition-all">
                       {x.teamLogo ? (
                         <img src={x.teamLogo} className="w-10 h-10 object-contain p-1.5 rounded-lg bg-[#111827] border border-white/10 opacity-70" />
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center"><span className="text-[8px] font-mono text-white/30">TEAM</span></div>
                       )}
                       <div>
-                        <p className="text-sm font-display text-white/70 tracking-[0.1em] uppercase">{x.teamName}</p>
+                        <p className="text-sm font-display text-white/70 tracking-[0.1em] uppercase hover:text-white transition-colors">{x.teamName}</p>
                         <p className="text-[9px] font-mono text-white/30 uppercase mt-0.5 max-w-[150px] truncate" title={x.tournament?.name}>{x.tournament?.name}</p>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

@@ -7,11 +7,15 @@ import { formatGameUrl } from '@/lib/format';
 export default function ScheduleAccordion({ 
   tournamentName, 
   games, 
-  defaultExpanded = false 
+  defaultExpanded = false,
+  currentFilter = 'all',
+  activeDateFilter = null,
 }: { 
   tournamentName: string;
   games: any[];
   defaultExpanded?: boolean;
+  currentFilter?: string;
+  activeDateFilter?: string | null;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
@@ -44,9 +48,19 @@ export default function ScheduleAccordion({
             <div key={date}>
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px bg-white/10 flex-1" />
-                <p className="text-xs font-mono text-white/40 uppercase tracking-[0.2em] font-bold">
+                <a
+                  href={`/schedule?filter=${currentFilter}&date=${date}`}
+                  className={`group/date text-xs font-mono uppercase tracking-[0.2em] font-bold transition-colors ${
+                    activeDateFilter === date
+                      ? 'text-flag-gold'
+                      : 'text-white/40 hover:text-flag-gold'
+                  }`}
+                >
                   {new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-                </p>
+                  <span className={`ml-1.5 transition-opacity ${
+                    activeDateFilter === date ? 'opacity-100 text-flag-gold' : 'opacity-0 group-hover/date:opacity-60'
+                  }`}>↗</span>
+                </a>
                 <div className="h-px bg-white/10 flex-1" />
               </div>
               
@@ -73,39 +87,63 @@ export default function ScheduleAccordion({
                       </div>
                       
                       {isComplete ? (
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4 relative z-10">
                           <div className="flex justify-between items-center text-base">
-                            <p className={`font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 ${isComplete && g.home_score > g.away_score ? 'text-white font-bold' : 'text-white/70'} transition-colors`}>{g.home?.name ?? 'TBD'}</p>
+                            {g.home?.slug ? (
+                              <Link href={`/teams/${g.home.slug}`} className={`font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 ${isComplete && g.home_score > g.away_score ? 'text-white font-bold' : 'text-white/70'} hover:text-flag-gold transition-colors`}>
+                                {g.home?.name ?? 'TBD'}
+                              </Link>
+                            ) : (
+                              <p className={`font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 ${isComplete && g.home_score > g.away_score ? 'text-white font-bold' : 'text-white/70'} transition-colors`}>{g.home?.name ?? 'TBD'}</p>
+                            )}
                             <span className={`font-display tracking-wider text-xl ${isComplete && g.home_score > g.away_score ? 'text-white font-bold' : 'text-white/50'}`}>{isComplete ? g.home_score : '-'}</span>
                           </div>
                           <div className="flex justify-between items-center text-base">
-                            <p className={`font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 ${isComplete && g.away_score > g.home_score ? 'text-white font-bold' : 'text-white/70'} transition-colors`}>{g.away?.name ?? 'TBD'}</p>
+                            {g.away?.slug ? (
+                              <Link href={`/teams/${g.away.slug}`} className={`font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 ${isComplete && g.away_score > g.home_score ? 'text-white font-bold' : 'text-white/70'} hover:text-flag-gold transition-colors`}>
+                                {g.away?.name ?? 'TBD'}
+                              </Link>
+                            ) : (
+                              <p className={`font-display tracking-[0.1em] uppercase truncate flex-1 min-w-0 ${isComplete && g.away_score > g.home_score ? 'text-white font-bold' : 'text-white/70'} transition-colors`}>{g.away?.name ?? 'TBD'}</p>
+                            )}
                             <span className={`font-display tracking-wider text-xl ${isComplete && g.away_score > g.home_score ? 'text-white font-bold' : 'text-white/50'}`}>{isComplete ? g.away_score : '-'}</span>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center gap-3 py-2">
-                          <p className="font-display tracking-[0.12em] uppercase text-white text-center w-full truncate text-base">{g.home?.name ?? 'TBD'}</p>
+                        <div className="flex flex-col items-center justify-center gap-3 py-2 relative z-10">
+                          {g.home?.slug ? (
+                            <Link href={`/teams/${g.home.slug}`} className="font-display tracking-[0.12em] uppercase text-white text-center w-full truncate text-base hover:text-flag-gold transition-colors">
+                              {g.home?.name ?? 'TBD'}
+                            </Link>
+                          ) : (
+                            <p className="font-display tracking-[0.12em] uppercase text-white text-center w-full truncate text-base">{g.home?.name ?? 'TBD'}</p>
+                          )}
                           <span className="text-[10px] font-mono text-white/30 font-bold uppercase tracking-widest">VS</span>
-                          <p className="font-display tracking-[0.12em] uppercase text-white text-center w-full truncate text-base">{g.away?.name ?? 'TBD'}</p>
+                          {g.away?.slug ? (
+                            <Link href={`/teams/${g.away.slug}`} className="font-display tracking-[0.12em] uppercase text-white text-center w-full truncate text-base hover:text-flag-gold transition-colors">
+                              {g.away?.name ?? 'TBD'}
+                            </Link>
+                          ) : (
+                            <p className="font-display tracking-[0.12em] uppercase text-white text-center w-full truncate text-base">{g.away?.name ?? 'TBD'}</p>
+                          )}
                         </div>
                       )}
 
                       {g.round_label && (
-                        <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center">
+                        <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center relative z-10">
                            <p className="text-[9px] text-flag-gold uppercase font-mono tracking-[0.15em] font-bold">{g.round_label}</p>
-                           {isComplete && <span className="text-[9px] text-white/30 font-mono tracking-widest uppercase hover:text-white transition-colors">Box Score →</span>}
+                           {isComplete && (
+                             <Link href={formatGameUrl(gameId, shortId, g.home?.name, g.away?.name)} className="text-[9px] text-white/30 font-mono tracking-widest uppercase hover:text-white transition-colors">
+                               Box Score →
+                             </Link>
+                           )}
                         </div>
                       )}
                     </>
                   );
 
-                  return isComplete ? (
-                    <Link key={g.id} href={formatGameUrl(gameId, shortId, g.home?.name, g.away?.name)} className="group/card relative block p-5 rounded-lg border border-white/10 bg-[#1f2937] hover:border-flag-red/50 hover:bg-[#0f1742] transition-all overflow-hidden shadow-md">
-                      {CardContent}
-                    </Link>
-                  ) : (
-                    <div key={g.id} className="group/card relative block p-5 rounded-lg border border-white/10 bg-[#1f2937] overflow-hidden shadow-sm">
+                  return (
+                    <div key={g.id} className={`group/card relative block p-5 rounded-lg border ${isComplete ? 'border-white/10 bg-[#1f2937] hover:border-flag-red/50 hover:bg-[#0f1742] shadow-md' : 'border-white/10 bg-[#1f2937] shadow-sm'} transition-all overflow-hidden`}>
                       {CardContent}
                     </div>
                   );

@@ -12,13 +12,13 @@ export default function HiddenLink({
   href: string;
   children: ReactNode;
   className?: string;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   const router = useRouter();
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     e.preventDefault();
-    if (onClick) onClick();
+    if (onClick) onClick(e);
     router.push(href);
   }
 

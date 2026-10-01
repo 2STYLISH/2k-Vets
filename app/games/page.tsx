@@ -17,8 +17,8 @@ export default async function GameBoxScorePage({ searchParams }: { searchParams:
       schedule_id,
       home_score,
       away_score,
-      home_team:teams!games_home_team_id_fkey(id, name, short_name, logo_url, logo_path),
-      away_team:teams!games_away_team_id_fkey(id, name, short_name, logo_url, logo_path),
+      home_team:teams!games_home_team_id_fkey(id, name, short_name, slug, logo_url, logo_path),
+      away_team:teams!games_away_team_id_fkey(id, name, short_name, slug, logo_url, logo_path),
       schedules!inner(tournament_id, round_label, status, scheduled_date)
     `)
     .eq('short_id', gameId)
@@ -73,7 +73,7 @@ export default async function GameBoxScorePage({ searchParams }: { searchParams:
   });
 
 
-  function renderStatTable(teamName: string, teamLogo: string | null, teamStats: any[], isWinner: boolean) {
+  function renderStatTable(teamName: string, teamSlug: string | null, teamLogo: string | null, teamStats: any[], isWinner: boolean) {
     return (
       <div className="relative surface-elevated rounded-xl overflow-hidden transition-colors border border-white/10">
         {isWinner && (
@@ -88,7 +88,13 @@ export default async function GameBoxScorePage({ searchParams }: { searchParams:
                 <span className="text-[10px] font-mono font-bold text-white/40 tracking-wider">{teamName.slice(0, 3).toUpperCase()}</span>
               )}
             </div>
-            <h2 className="text-xl text-white font-display tracking-[0.1em] uppercase">{teamName}</h2>
+            {teamSlug ? (
+              <Link href={`/teams/${teamSlug}`}>
+                <h2 className="text-xl text-white font-display tracking-[0.1em] uppercase hover:text-flag-gold transition-colors">{teamName}</h2>
+              </Link>
+            ) : (
+              <h2 className="text-xl text-white font-display tracking-[0.1em] uppercase">{teamName}</h2>
+            )}
           </div>
           {isWinner && (
             <span className="text-[10px] uppercase font-mono tracking-[0.15em] text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 rounded-lg font-bold">Winner</span>
@@ -180,7 +186,13 @@ export default async function GameBoxScorePage({ searchParams }: { searchParams:
                   <span className="text-2xl text-white/30 font-display tracking-widest">{(game.home_team as any)?.name?.slice(0, 3).toUpperCase()}</span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.home_team as any)?.name}</h1>
+              {(game.home_team as any)?.slug ? (
+                <Link href={`/teams/${(game.home_team as any).slug}`}>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase hover:text-flag-gold transition-colors">{(game.home_team as any)?.name}</h1>
+                </Link>
+              ) : (
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.home_team as any)?.name}</h1>
+              )}
               <div className="relative mt-2 sm:mt-4">
                 <p className="text-5xl sm:text-6xl md:text-8xl font-display text-white tracking-tighter">{game.home_score ?? '-'}</p>
                 {isHomeWinner && <div className="absolute -left-4 sm:-left-8 top-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-flag-red shadow-[0_0_12px_rgba(206,17,38,0.6)]" title="Winner" />}
@@ -203,7 +215,13 @@ export default async function GameBoxScorePage({ searchParams }: { searchParams:
                   <span className="text-2xl text-white/30 font-display tracking-widest">{(game.away_team as any)?.name?.slice(0, 3).toUpperCase()}</span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.away_team as any)?.name}</h1>
+              {(game.away_team as any)?.slug ? (
+                <Link href={`/teams/${(game.away_team as any).slug}`}>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase hover:text-flag-gold transition-colors">{(game.away_team as any)?.name}</h1>
+                </Link>
+              ) : (
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-display tracking-[0.1em] text-white uppercase">{(game.away_team as any)?.name}</h1>
+              )}
               <div className="relative mt-2 sm:mt-4">
                 <p className="text-5xl sm:text-6xl md:text-8xl font-display text-white tracking-tighter">{game.away_score ?? '-'}</p>
                 {!isHomeWinner && (game.away_score || 0) > (game.home_score || 0) && <div className="absolute -right-4 sm:-right-8 top-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-flag-red shadow-[0_0_12px_rgba(206,17,38,0.6)]" title="Winner" />}
@@ -287,8 +305,8 @@ export default async function GameBoxScorePage({ searchParams }: { searchParams:
 
       {/* Box Scores Grid */}
       <div className="space-y-10 pt-4">
-        {game.home_team && renderStatTable((game.home_team as any).name, (game.home_team as any).logo_url || (game.home_team as any).logo_path, homeStats, isHomeWinner)}
-        {game.away_team && renderStatTable((game.away_team as any).name, (game.away_team as any).logo_url || (game.away_team as any).logo_path, awayStats, !isHomeWinner && (game.away_score || 0) > (game.home_score || 0))}
+        {game.home_team && renderStatTable((game.home_team as any).name, (game.home_team as any).slug || null, (game.home_team as any).logo_url || (game.home_team as any).logo_path, homeStats, isHomeWinner)}
+        {game.away_team && renderStatTable((game.away_team as any).name, (game.away_team as any).slug || null, (game.away_team as any).logo_url || (game.away_team as any).logo_path, awayStats, !isHomeWinner && (game.away_score || 0) > (game.home_score || 0))}
       </div>
 
     </div>
