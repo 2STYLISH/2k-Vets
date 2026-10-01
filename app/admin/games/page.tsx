@@ -15,10 +15,11 @@ const STATUS_STYLES: Record<string, string> = {
   COMPLETED: 'text-white/30 bg-white/[0.03]',
 };
 
-export default async function AdminGamesPage({ searchParams }: { searchParams: { tab?: string, t?: string } }) {
+export default async function AdminGamesPage({ searchParams }: { searchParams: { tab?: string, t?: string, date?: string } }) {
   const tab = searchParams.tab || 'active';
   const supabase = createClient();
   const activeParam = searchParams.t;
+  const dateParam = searchParams.date || 'all';
 
   const { data: tournamentsData } = await supabase.from('tournaments').select('id, name').neq('status', 'COMPLETED');
   const tournaments = tournamentsData ?? [];
@@ -40,6 +41,8 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
     .select('id, schedule_id, status');
   const gameBySchedule = new Map((games ?? []).map((g) => [g.schedule_id, g]));
 
+  const uniqueDates = Array.from(new Set((schedules ?? []).map((s: any) => s.scheduled_date).filter(Boolean))).sort((a: any, b: any) => new Date(b).getTime() - new Date(a).getTime());
+
   return (
     <div className="space-y-4">
       <BackButton />
@@ -54,26 +57,60 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
           </p>
         </div>
         
-        <div className="flex items-center gap-3 bg-[#1f2937] p-2 rounded-xl border border-white/10">
-          <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest pl-2 font-bold">Tournament</span>
-          <TournamentFilter tournaments={tournaments} activeId={activeTournamentSlug} basePath="/admin/games" />
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex items-center gap-3 bg-[#1f2937] p-2 rounded-xl border border-white/10">
+            <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest pl-2 font-bold">Tournament</span>
+            <TournamentFilter tournaments={tournaments} activeId={activeTournamentSlug} basePath="/admin/games" />
+          </div>
         </div>
       </div>
 
       <div className="flex gap-2 mb-4">
         <Link 
-          href="?tab=active" 
+          href={`?tab=active${activeParam ? `&t=${activeParam}` : ''}`}
           className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'active' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
         >
           Active
         </Link>
         <Link 
-          href="?tab=archived" 
+          href={`?tab=archived${activeParam ? `&t=${activeParam}` : ''}`}
           className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'archived' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
         >
           Archived
         </Link>
       </div>
+
+      {uniqueDates.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-2 custom-scrollbar" style={{ scrollbarWidth: 'none' }}>
+          {uniqueDates.map((date: any) => {
+            const d = new Date(date + 'T00:00:00');
+            const isActive = dateParam === date;
+            const dayName = d.toLocaleDateString(undefined, { weekday: 'short' });
+            const dayNum = d.toLocaleDateString(undefined, { day: 'numeric' });
+            const monthName = d.toLocaleDateString(undefined, { month: 'short' });
+            
+            // Build toggle URL
+            const nextDate = isActive ? '' : `&date=${date}`;
+            const tParam = activeParam ? `&t=${activeParam}` : '';
+            const href = `?tab=${tab}${tParam}${nextDate}`;
+
+            return (
+              <Link
+                key={date}
+                href={href}
+                className={`shrink-0 flex flex-col items-center px-4 py-2.5 rounded-xl border text-center transition-all duration-200 ${isActive
+                  ? 'bg-flag-gold border-flag-gold text-[#111827]'
+                  : 'bg-[#1f2937] border-white/10 text-white/50 hover:border-flag-gold/50 hover:text-white'
+                  }`}
+              >
+                <span className={`text-[9px] font-mono uppercase tracking-widest font-bold ${isActive ? 'text-[#111827]' : ''}`}>{dayName}</span>
+                <span className={`text-xl font-display font-bold leading-none my-0.5 ${isActive ? 'text-[#111827]' : 'text-white'}`}>{dayNum}</span>
+                <span className={`text-[9px] font-mono uppercase tracking-widest ${isActive ? 'text-[#111827]/70' : 'text-white/30'}`}>{monthName}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid gap-3">
         {(() => {
@@ -85,7 +122,17 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
           const activeList = combined.filter(s => !s.is_archived && s.gameStatus !== 'VERIFIED' && s.gameStatus !== 'COMPLETED');
           const archivedList = combined.filter(s => s.is_archived || s.gameStatus === 'VERIFIED' || s.gameStatus === 'COMPLETED');
           
-          const currentList = tab === 'archived' ? archivedList : activeList;
+          let currentList = tab === 'archived' ? archivedList : activeList;
+          
+          if (dateParam === 'all') {
+            return (
+              <div className="surface-elevated rounded-xl p-8 text-center border border-white/10">
+                <p className="text-white/40 font-mono text-sm uppercase tracking-widest">Select a date to view games.</p>
+              </div>
+            );
+          }
+
+          currentList = currentList.filter(s => s.scheduled_date === dateParam);
 
           if (currentList.length === 0) {
             return (
