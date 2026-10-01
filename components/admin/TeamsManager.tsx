@@ -10,6 +10,7 @@ import {
   assignPlayerToTournamentTeam,
   removePlayerFromTournamentTeam,
   updateTeamLogo,
+  updateTeamName,
 } from '@/lib/actions/teams';
 import { updateTournamentLogo } from '@/lib/actions/tournaments';
 import { uploadFileBypassingRLS } from '@/lib/actions/upload';
@@ -503,6 +504,28 @@ function TeamCard({
   const [uploading, setUploading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(team.logo_url ?? '');
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState(team.name);
+
+  async function handleSaveName() {
+    if (!editName.trim() || editName === team.name) {
+      setIsEditingName(false);
+      setEditName(team.name);
+      return;
+    }
+    setBusy(true);
+    try {
+      await updateTeamName(team.id, editName.trim());
+      showToast('Team name updated.', 'success');
+      setIsEditingName(false);
+      router.refresh();
+    } catch (e: any) {
+      showToast(parseError(e), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleAddExistingPlayer() {
     if (!searchQuery) return;
     const player = unassignedPlayers.find((p) => p.gamertag === searchQuery);
@@ -601,7 +624,54 @@ function TeamCard({
               className="sr-only"
             />
           </label>
-          <p className="text-base text-white font-display tracking-widest">{team.name}</p>
+          <div className="flex-1">
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="bg-[#1f2937] border border-white/20 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-flag-gold/50"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveName();
+                    if (e.key === 'Escape') {
+                      setIsEditingName(false);
+                      setEditName(team.name);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveName}
+                  disabled={busy}
+                  className="text-[10px] text-flag-gold hover:text-flag-gold/70 font-mono uppercase tracking-widest"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingName(false);
+                    setEditName(team.name);
+                  }}
+                  disabled={busy}
+                  className="text-[10px] text-silver-500 hover:text-white font-mono uppercase tracking-widest"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group/name cursor-pointer" onClick={() => setIsEditingName(true)}>
+                <p className="text-base text-white font-display tracking-widest">{team.name}</p>
+                <button type="button" className="opacity-0 group-hover/name:opacity-100 text-silver-500 hover:text-white transition-opacity">
+                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                   </svg>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <button
           type="button"

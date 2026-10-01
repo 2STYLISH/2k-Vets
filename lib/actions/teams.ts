@@ -197,3 +197,17 @@ export async function updateTeamLogo(teamId: string, logoUrl: string | null) {
   revalidatePath('/');
   revalidatePath('/schedule');
 }
+
+export async function updateTeamName(teamId: string, name: string) {
+  const { isAdmin } = await requireAdmin();
+  if (!isAdmin) throw new Error('Admin authentication required.');
+
+  const supabase = createClient();
+  const { error } = await supabase.from('teams').update({ name }).eq('id', teamId);
+  if (error) throw error;
+
+  revalidatePath('/admin/teams');
+  revalidatePath('/');
+  revalidatePath('/schedule');
+}
+
