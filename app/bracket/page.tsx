@@ -14,11 +14,11 @@ export default async function PublicBracketPage() {
 
   const { data: matchups } = tournament
     ? await supabase
-        .from('bracket_matchups')
-        .select('id, round, slot, status, winner_id, is_bye, bracket_side, match_format, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,group_name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,group_name), series(team_a_id, team_b_id, team_a_wins, team_b_wins), schedule:schedules(home_team_id, away_team_id, series_id, series:series(team_a_id, team_b_id, team_a_wins, team_b_wins), games(home_score, away_score, status))')
-        .eq('tournament_id', tournament.id)
-        .order('round', { ascending: true })
-        .order('slot', { ascending: true })
+      .from('bracket_matchups')
+      .select('id, round, slot, status, winner_id, is_bye, bracket_side, match_format, feeds_into_matchup_id, loser_feeds_into_matchup_id, team_a:teams!bracket_matchups_team_a_id_fkey(id,name,slug,group_name), team_b:teams!bracket_matchups_team_b_id_fkey(id,name,slug,group_name), series(team_a_id, team_b_id, team_a_wins, team_b_wins), schedule:schedules(home_team_id, away_team_id, series_id, series:series(team_a_id, team_b_id, team_a_wins, team_b_wins), games(home_score, away_score, status))')
+      .eq('tournament_id', tournament.id)
+      .order('round', { ascending: true })
+      .order('slot', { ascending: true })
     : { data: [] };
 
   const { data: teams } = await supabase.from('teams').select('id, name, slug, group_name').order('name');
@@ -40,6 +40,31 @@ export default async function PublicBracketPage() {
         <div className="card p-6">
           <p className="text-white/40 text-sm font-mono uppercase tracking-widest">No active tournament bracket yet.</p>
         </div>
+      ) : tournament.format === 'VETERANS_LEAGUE' ? (
+        <>
+          <StandingsTable matchups={(matchups ?? []) as any} teams={teams ?? []} seeds={seeds ?? []} />
+
+          {(matchups ?? []).some((m: any) => m.bracket_side === 'WINNERS' || m.bracket_side === 'PLAY_IN') && (
+            <div className="mt-8">
+              <h2 className="text-xl font-display text-white tracking-widest mb-4">PLAYOFFS</h2>
+              <BracketTree
+                matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side !== 'ROUND_ROBIN')}
+                defaultMatchFormat={tournament.match_format}
+                layout={tournament.playoff_size === 'CROSS_GROUP_PLAYOFF' ? 'cross_group' : undefined}
+              />
+            </div>
+          )}
+
+          {(matchups ?? []).some((m: any) => m.bracket_side === 'ROUND_ROBIN') && (
+            <div className="mt-12">
+              <h2 className="text-xl font-display text-white tracking-widest mb-4">REGULAR SEASON MATCHUPS</h2>
+              <BracketTree
+                matchups={((matchups ?? []) as any[]).filter((m: any) => m.bracket_side === 'ROUND_ROBIN')}
+                defaultMatchFormat="BO1"
+              />
+            </div>
+          )}
+        </>
       ) : tournament.format === 'ROUND_ROBIN' || tournament.format === 'LEADERBOARD' ? (
         <StandingsTable matchups={(matchups ?? []) as any} teams={teams ?? []} seeds={seeds ?? []} />
       ) : tournament.format === 'SWISS' ? (
