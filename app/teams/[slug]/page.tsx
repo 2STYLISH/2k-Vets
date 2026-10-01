@@ -142,9 +142,9 @@ export default async function TeamProfilePage({ params, searchParams }: { params
       if (eliminationMatches.length > 0) {
         const lastLoss = eliminationMatches.sort((a, b) => b.round - a.round)[0];
         if (lastLoss.bracket_side === 'PLAY_IN') {
-          result = 'Eliminated in Play-In';
+          result = 'Eliminated in Play-In Playoffs';
         } else {
-          result = `Eliminated in Round ${lastLoss.round}`;
+          result = `Eliminated in Round ${lastLoss.round} Playoffs`;
         }
         resultColor = 'text-red-400';
       } else {
