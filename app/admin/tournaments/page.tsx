@@ -70,7 +70,6 @@ export default async function AdminTournamentsPage() {
             <TournamentAdminActions
               tournamentId={t.id}
               tournamentName={t.name}
-              currentChampionshipName={t.championship_award_name ?? ''}
               currentLogoUrl={t.logo_url ?? ''}
               currentFormat={t.format}
               currentNumTeams={t.num_teams}
