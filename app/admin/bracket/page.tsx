@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import AdminInteractiveBracket from '@/components/admin/AdminInteractiveBracket';
 import StandingsTable from '@/components/StandingsTable';
 import BracketSeeder from '@/components/admin/BracketSeeder';
@@ -93,6 +93,7 @@ export default async function AdminBracketPage({
                 teams={teams ?? []}
                 rosterIds={rosterIds}
                 seededIds={seededIds}
+                tournamentStatus={active.status}
                 hasScheduledGames={(matchups ?? []).some((m: any) => m.schedule && (Array.isArray(m.schedule) ? m.schedule.length > 0 : Object.keys(m.schedule).length > 0))}
               />
 

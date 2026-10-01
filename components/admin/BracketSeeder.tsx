@@ -17,6 +17,7 @@ export default function BracketSeeder({
   teams,
   rosterIds,
   seededIds,
+  tournamentStatus,
   hasScheduledGames = false
 }: {
   tournamentId: string;
@@ -24,6 +25,7 @@ export default function BracketSeeder({
   teams: Team[];
   rosterIds: string[];
   seededIds: string[];
+  tournamentStatus?: string;
   hasScheduledGames?: boolean;
 }) {
   const { showConfirm, showToast } = useNotification();
@@ -37,6 +39,7 @@ export default function BracketSeeder({
   const isVeteransLeague = format === 'VETERANS_LEAGUE';
   const totalRostered = rosterIds.length;
   const maxGroups = Math.min(4, Math.floor(totalRostered / 3) || 1);
+  const isLive = tournamentStatus === 'IN_PROGRESS';
 
   // Local state for seeds
   const [localSeeds, setLocalSeeds] = useState<{ teamId: string, seed: number }[]>([]);
@@ -144,6 +147,11 @@ export default function BracketSeeder({
                 Note: Games have already been scheduled. You cannot re-seed or randomize the bracket anymore.
               </p>
             )}
+            {isLive && !hasScheduledGames && (
+              <p className="text-xs text-yellow-400 mt-2">
+                🔒 Tournament is <b>LIVE</b>. Hit <b>RESET BRACKET</b> first if you need to change the groupings.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
@@ -154,7 +162,7 @@ export default function BracketSeeder({
                   <select
                     value={numGroups}
                     onChange={e => setNumGroups(Number(e.target.value))}
-                    disabled={busy || hasScheduledGames}
+                    disabled={busy || hasScheduledGames || isLive}
                     style={{ colorScheme: 'dark' }}
                     className="bg-arena-800 border border-white/[0.15] text-white text-xs font-mono rounded-lg px-3 py-2 focus:outline-none focus:border-flag-gold/50 cursor-pointer"
                   >
@@ -171,7 +179,7 @@ export default function BracketSeeder({
                   className={`py-2 px-4 text-xs font-mono uppercase tracking-widest rounded-lg border transition-all whitespace-nowrap ${doubleRoundRobin
                     ? 'border-flag-gold/40 text-flag-gold bg-flag-gold/10'
                     : 'border-white/[0.1] text-white/50'
-                    } ${(busy || hasScheduledGames) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    } ${(busy || hasScheduledGames || isLive) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {doubleRoundRobin ? '✓ Double RR' : 'Single RR'}
                 </button>
@@ -203,14 +211,14 @@ export default function BracketSeeder({
             </button>
             <button
               onClick={handleShuffleLocally}
-              disabled={busy || totalRostered === 0 || hasScheduledGames}
+              disabled={busy || totalRostered === 0 || hasScheduledGames || isLive}
               className="btn-secondary py-2 px-5"
             >
               SHUFFLE
             </button>
             <button
               onClick={handleSaveToDB}
-              disabled={busy || localSeeds.length === 0 || hasScheduledGames}
+              disabled={busy || localSeeds.length === 0 || hasScheduledGames || isLive}
               className="btn-primary py-2 px-5"
             >
               {busy ? 'SAVING...' : 'SAVE'}
