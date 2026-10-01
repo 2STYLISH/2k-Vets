@@ -52,6 +52,21 @@ export default async function TeamProfilePage({ params, searchParams }: { params
     .select('team_id, tournament_id, player_id, player:players(id, gamertag, slug, position, photo_path)')
     .in('team_id', teamIds);
 
+  // 4b. Get dynamic stats for tournament history
+  const { data: allTeamSchedules } = await supabase
+    .from('schedules')
+    .select('tournament_id, game_type, home_team_id, away_team_id, games(home_score, away_score, status)')
+    .or(teamIds.map(id => `home_team_id.eq.${id},away_team_id.eq.${id}`).join(','))
+    .in('status', ['COMPLETED']);
+
+  // 4c. Get playoff matchups for elimination data
+  const { data: allTeamMatchups } = await supabase
+    .from('bracket_matchups')
+    .select('tournament_id, round, bracket_side, status, winner_id, team_a_id, team_b_id')
+    .or(teamIds.map(id => `team_a_id.eq.${id},team_b_id.eq.${id}`).join(','))
+    .in('status', ['COMPLETED'])
+    .neq('bracket_side', 'ROUND_ROBIN');
+
   // 5. Get recent games
   const { data: recentGames } = await supabase
     .from('games')
@@ -84,9 +99,36 @@ export default async function TeamProfilePage({ params, searchParams }: { params
     const seed = (seeds ?? []).find(s => s.team_id === team.id);
     const champ = (championships ?? []).find((c: any) => c.tournament_id === team.tournament_id);
 
+    // Calculate dynamic wins/losses
+    let dynWins = 0;
+    let dynLosses = 0;
+    let dynPd = 0;
+    const teamScheds = (allTeamSchedules ?? []).filter(s => s.tournament_id === team.tournament_id && s.game_type === 'REGULAR');
+    for (const s of teamScheds) {
+      const isHome = s.home_team_id === team.id;
+      for (const g of (s.games ?? [])) {
+        if (g.status === 'VERIFIED' || g.status === 'COMPLETED') {
+          if (g.home_score != null && g.away_score != null) {
+            const myScore = isHome ? g.home_score : g.away_score;
+            const oppScore = isHome ? g.away_score : g.home_score;
+            if (myScore > oppScore) dynWins++;
+            else if (oppScore > myScore) dynLosses++;
+            dynPd += (myScore - oppScore);
+          }
+        }
+      }
+    }
+
+    const wins = seed?.manual_wins ?? dynWins;
+    const losses = seed?.manual_losses ?? dynLosses;
+    const pd = seed?.point_differential ?? dynPd;
+
     let result = 'Participated';
     let resultColor = 'text-white/40';
     let resultIcon = '';
+    
+    const teamPlayoffMatchups = (allTeamMatchups ?? []).filter(m => m.tournament_id === team.tournament_id);
+
     if (champ && champ.champion_team_id === team.id) {
       result = 'Champion';
       resultColor = 'text-flag-gold';
@@ -95,6 +137,20 @@ export default async function TeamProfilePage({ params, searchParams }: { params
       result = 'Runner-Up';
       resultColor = 'text-silver-400';
       resultIcon = '🥈';
+    } else if (teamPlayoffMatchups.length > 0) {
+      const eliminationMatches = teamPlayoffMatchups.filter(m => m.winner_id && m.winner_id !== team.id && (m.team_a_id === team.id || m.team_b_id === team.id));
+      if (eliminationMatches.length > 0) {
+        const lastLoss = eliminationMatches.sort((a, b) => b.round - a.round)[0];
+        if (lastLoss.bracket_side === 'PLAY_IN') {
+          result = 'Eliminated in Play-In';
+        } else {
+          result = `Eliminated in Round ${lastLoss.round}`;
+        }
+        resultColor = 'text-red-400';
+      } else {
+        result = 'Made Playoffs';
+        resultColor = 'text-white/80';
+      }
     }
 
     return {
@@ -105,9 +161,9 @@ export default async function TeamProfilePage({ params, searchParams }: { params
       status: t?.status || '',
       startDate: t?.start_date,
       seed: seed?.seed,
-      wins: seed?.manual_wins ?? 0,
-      losses: seed?.manual_losses ?? 0,
-      pd: seed?.point_differential ?? 0,
+      wins,
+      losses,
+      pd,
       result,
       resultColor,
       resultIcon,
