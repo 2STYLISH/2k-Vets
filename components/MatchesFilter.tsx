@@ -11,27 +11,10 @@ export default function MatchesFilter({ rounds, isUpcoming = false }: { rounds: 
       </div>
   }
 
-  // Sort rounds logically
-  const getRoundWeight = (name: string) => {
-    const n = name.toUpperCase();
-    if (n.includes('ROUND 1') || n.includes('PLAY-IN')) return 1;
-    if (n.includes('ROUND 2')) return 2;
-    if (n.includes('ROUND 3')) return 3;
-    if (n.includes('ROUND 4')) return 4;
-    if (n.includes('ROUND 5')) return 5;
-    if (n.includes('QUARTER')) return 6;
-    if (n.includes('SEMI')) return 7;
-    if (n.includes('FINAL')) return 8;
-    return 99; // OTHER
-  };
-
-  const sortedRounds = [...rounds].sort((a, b) => {
-    const weightA = getRoundWeight(a.roundName);
-    const weightB = getRoundWeight(b.roundName);
-    if (weightA !== weightB) return weightA - weightB;
-    // Fallback to alphabetical if same weight (e.g. FINALS GAME 1 vs FINALS GAME 2)
-    return a.roundName.localeCompare(b.roundName);
-  });
+  // Sort rounds numerically (handles ROUND 1 … ROUND 12 correctly, then QUARTER/SEMI/FINAL)
+  const sortedRounds = [...rounds].sort((a, b) =>
+    a.roundName.localeCompare(b.roundName, undefined, { numeric: true, sensitivity: 'base' })
+  );
 
   const [activeRound, setActiveRound] = useState(sortedRounds[0]?.roundName);
 

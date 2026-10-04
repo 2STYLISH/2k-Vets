@@ -51,7 +51,7 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
       .order('round', { ascending: true })
       .order('slot', { ascending: true }),
     supabase.from('tournament_seeds').select('seed, team_id, manual_wins, manual_losses, point_differential, team:teams(name,slug)').eq('tournament_id', tournament.id).order('seed'),
-    supabase.from('schedules').select('id, scheduled_date, scheduled_time, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'SCHEDULED'),
+    supabase.from('schedules').select('id, scheduled_date, scheduled_time, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'SCHEDULED').order('scheduled_date', { ascending: true, nullsFirst: false }).order('round_label', { ascending: true }),
     supabase.from('schedules').select('id, scheduled_date, round_label, home:teams!schedules_home_team_id_fkey(name), away:teams!schedules_away_team_id_fkey(name), games(id, short_id)').eq('tournament_id', tournament.id).eq('status', 'COMPLETED'),
     supabase.from('tournament_rosters').select('team_id, player_id, team:teams(id, name, slug, group_name)').eq('tournament_id', tournament.id),
     supabase.from('championships').select('champion_team_id, runner_up_team_id, champion:teams!championships_champion_team_id_fkey(name,slug), runner_up:teams!championships_runner_up_team_id_fkey(name,slug)').eq('tournament_id', tournament.id).maybeSingle(),
@@ -135,6 +135,9 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
     if (!upcomingByRound.has(r)) upcomingByRound.set(r, []);
     upcomingByRound.get(r)!.push(g);
   });
+  const sortedUpcomingRounds = [...upcomingByRound.entries()].sort(([a], [b]) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+  );
 
   const maxGames = Math.max(...Array.from(statsByPlayer.values()).map(e => e.gamesPlayed), 0);
   const minGamesRequired = Math.max(1, Math.ceil(maxGames * 0.6));
@@ -285,7 +288,7 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
           <section>
             <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
             <MatchesFilter 
-              rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
+              rounds={sortedUpcomingRounds.map(([roundName, games]) => ({ roundName, games }))}
               isUpcoming={true}
             />
           </section>
@@ -295,7 +298,7 @@ export default async function TournamentDashboard({ params, searchParams }: { pa
           <section>
             <h2 className="text-xl font-display text-white tracking-widest mb-3">UPCOMING MATCHES</h2>
             <MatchesFilter 
-              rounds={[...upcomingByRound.entries()].map(([roundName, games]) => ({ roundName, games }))}
+              rounds={sortedUpcomingRounds.map(([roundName, games]) => ({ roundName, games }))}
               isUpcoming={true}
             />
           </section>
