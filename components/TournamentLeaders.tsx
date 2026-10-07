@@ -28,7 +28,7 @@ export default function LeaderboardCard({ title, leaders, dataKey }: { title: st
             {topLeader.player.photo_path ? (
               <img src={topLeader.player.photo_path} alt={topLeader.player.gamertag} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-[10px] font-mono text-white/20">TBD</span>
+              <span className="text-[14px] font-mono font-bold text-white/40 tracking-widest uppercase">{topLeader.player.gamertag.substring(0, 3)}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">

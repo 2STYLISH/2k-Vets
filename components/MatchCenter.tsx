@@ -105,7 +105,7 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
                 {fHomeLogo ? (
                   <img src={fHomeLogo} className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-white/20 font-mono text-xs">TBD</span>
+                  <span className="text-white/40 font-mono text-xs uppercase tracking-widest">{fHome.substring(0, 3)}</span>
                 )}
               </div>
               {featured.home?.slug ? (
@@ -132,7 +132,7 @@ export default function MatchCenter({ games = [] }: { games: any[] }) {
                 {fAwayLogo ? (
                   <img src={fAwayLogo} className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-white/20 font-mono text-xs">TBD</span>
+                  <span className="text-white/40 font-mono text-xs uppercase tracking-widest">{fAway.substring(0, 3)}</span>
                 )}
               </div>
               {featured.away?.slug ? (
@@ -190,7 +190,7 @@ function GridMatch({ game }: { game: any }) {
         <div className="flex justify-between items-center gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-8 h-8 bg-[#111827] border border-white/10 rounded flex items-center justify-center p-1 shrink-0">
-              {hLogo ? <img src={hLogo} className="w-full h-full object-contain" /> : <span className="text-[8px] text-white/20 font-mono">TBD</span>}
+              {hLogo ? <img src={hLogo} className="w-full h-full object-contain" /> : <span className="text-[10px] text-white/40 font-mono uppercase tracking-widest">{hName.substring(0, 3)}</span>}
             </div>
             {game.home?.slug ? (
               <Link href={`/teams/${game.home.slug}`} onClick={(e: any) => e.stopPropagation()} className={`text-base font-display tracking-[0.1em] truncate hover:text-flag-gold transition-colors ${hWin ? 'text-white' : 'text-white/50'}`}>
@@ -206,7 +206,7 @@ function GridMatch({ game }: { game: any }) {
         <div className="flex justify-between items-center gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-8 h-8 bg-[#111827] border border-white/10 rounded flex items-center justify-center p-1 shrink-0">
-              {aLogo ? <img src={aLogo} className="w-full h-full object-contain" /> : <span className="text-[8px] text-white/20 font-mono">TBD</span>}
+              {aLogo ? <img src={aLogo} className="w-full h-full object-contain" /> : <span className="text-[10px] text-white/40 font-mono uppercase tracking-widest">{aName.substring(0, 3)}</span>}
             </div>
             {game.away?.slug ? (
               <Link href={`/teams/${game.away.slug}`} onClick={(e: any) => e.stopPropagation()} className={`text-base font-display tracking-[0.1em] truncate hover:text-flag-gold transition-colors ${aWin ? 'text-white' : 'text-white/50'}`}>
