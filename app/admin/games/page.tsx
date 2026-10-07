@@ -34,7 +34,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
     )
     .eq('tournament_id', activeTournament)
     .order('scheduled_date', { ascending: false })
-    .limit(200);
+    .limit(10000);
 
   const { data: games } = await supabase
     .from('games')
@@ -46,7 +46,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
   return (
     <div className="space-y-4">
       <BackButton />
-      
+
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-6 border-b border-white/10">
         <div className="section-header !mb-0 !pb-0 !border-b-0">
           <p className="text-[10px] text-flag-gold font-mono uppercase tracking-[0.3em] mb-1 font-bold">Admin / Games</p>
@@ -56,7 +56,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
             as DNP before verifying. Stats and award rankings update automatically on verify.
           </p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="flex items-center gap-3 bg-[#1f2937] p-2 rounded-xl border border-white/10">
             <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest pl-2 font-bold">Tournament</span>
@@ -66,13 +66,13 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
       </div>
 
       <div className="flex gap-2 mb-4">
-        <Link 
+        <Link
           href={`?tab=active${activeParam ? `&t=${activeParam}` : ''}`}
           className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'active' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
         >
           Active
         </Link>
-        <Link 
+        <Link
           href={`?tab=archived${activeParam ? `&t=${activeParam}` : ''}`}
           className={`px-3 py-1.5 text-xs font-mono uppercase tracking-widest rounded transition-colors ${tab === 'archived' ? 'bg-flag-red text-white' : 'bg-[#1f2937] text-white/50 hover:text-white border border-white/10'}`}
         >
@@ -88,7 +88,7 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
             const dayName = d.toLocaleDateString(undefined, { weekday: 'short' });
             const dayNum = d.toLocaleDateString(undefined, { day: 'numeric' });
             const monthName = d.toLocaleDateString(undefined, { month: 'short' });
-            
+
             // Build toggle URL
             const nextDate = isActive ? '' : `&date=${date}`;
             const tParam = activeParam ? `&t=${activeParam}` : '';
@@ -121,9 +121,9 @@ export default async function AdminGamesPage({ searchParams }: { searchParams: {
 
           const activeList = combined.filter(s => !s.is_archived && s.gameStatus !== 'VERIFIED' && s.gameStatus !== 'COMPLETED');
           const archivedList = combined.filter(s => s.is_archived || s.gameStatus === 'VERIFIED' || s.gameStatus === 'COMPLETED');
-          
+
           let currentList = tab === 'archived' ? archivedList : activeList;
-          
+
           if (dateParam === 'all') {
             return (
               <div className="surface-elevated rounded-xl p-8 text-center border border-white/10">
