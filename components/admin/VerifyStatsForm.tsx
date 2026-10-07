@@ -330,35 +330,35 @@ function StatTable({
           {activePlayers} PLAYING · {rows.length - activePlayers} DNP
         </span>
       </div>
-      <div className="overflow-x-auto rounded-lg border border-surface-700 bg-surface-950 shadow-inner">
+      <div className="overflow-x-auto rounded-lg border border-surface-700 bg-surface-900 shadow-inner">
         <table className="w-full text-xs stat-mono min-w-[900px] border-collapse">
           <thead>
-            <tr className="bg-surface-900 border-b border-surface-700 text-white font-bold uppercase tracking-widest text-[9px]">
-              <th className="text-left px-3 py-3 font-mono font-bold w-40 border-r border-surface-800">Player</th>
-              <th className="px-2 py-3 text-center w-16 border-r border-surface-800">Pos</th>
-              <th className="px-2 py-3 text-center w-20 border-r border-surface-800">Status</th>
+            <tr className="bg-surface-950 text-white font-bold uppercase tracking-widest text-[9px]">
+              <th className="text-left px-3 py-3 font-mono font-bold w-40">Player</th>
+              <th className="px-2 py-3 text-center w-16">Pos</th>
+              <th className="px-2 py-3 text-center w-20">Status</th>
               {FIELDS.map((f) => (
-                <th key={f} className="px-2 py-3 text-right tracking-wider border-r border-surface-800 last:border-r-0">
+                <th key={f} className="px-2 py-3 text-center tracking-wider text-white">
                   {FIELD_LABELS[f]}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {rows.map((r, rowIndex) => (
               <tr
                 key={r.playerId}
-                className={`border-b border-surface-800 last:border-b-0 transition-colors focus-within:bg-surface-800/80 hover:bg-surface-800/50 ${r.didNotPlay ? 'opacity-50 grayscale' : ''}`}
+                className={`${rowIndex % 2 === 0 ? 'bg-white text-navy-900' : 'bg-[#e5e5e5] text-navy-900'} transition-colors hover:opacity-90 ${r.didNotPlay ? 'opacity-50 grayscale' : ''}`}
               >
-                <td className="px-3 py-2 text-white font-bold font-body whitespace-nowrap border-r border-surface-800 bg-surface-900/20">
+                <td className="px-3 py-2 font-bold font-body whitespace-nowrap">
                   {r.gamertag}
                 </td>
-                <td className="p-0 border-r border-surface-800 text-center relative group">
+                <td className="p-1 text-center relative group">
                   <select
                     value={r.position}
                     disabled={r.didNotPlay}
                     onChange={(e) => onChange(r.playerId, 'position', e.target.value)}
-                    className="w-full h-full bg-transparent px-1 py-3 text-white font-bold text-center focus:outline-none focus:bg-surface-700 cursor-pointer appearance-none disabled:cursor-not-allowed group-hover:bg-surface-800/50 transition-colors"
+                    className="w-full bg-white/50 px-1 py-1.5 text-navy-900 font-bold text-center focus:outline-none rounded cursor-pointer appearance-none disabled:cursor-not-allowed"
                   >
                     <option value="">-</option>
                     <option value="PG">PG</option>
@@ -368,25 +368,25 @@ function StatTable({
                     <option value="C">C</option>
                   </select>
                 </td>
-                <td className="p-0 border-r border-surface-800 text-center">
+                <td className="p-1 text-center">
                   <button
                     onClick={() => onToggleDNP(r.playerId)}
-                    className={`w-full h-full px-2 py-3 text-[9px] font-mono font-bold tracking-widest uppercase transition-colors focus:outline-none ${r.didNotPlay
-                      ? 'text-red-500 hover:bg-red-500/10'
-                      : 'text-emerald-500 hover:bg-emerald-500/10'
+                    className={`w-full px-2 py-1.5 rounded text-[9px] font-mono font-bold tracking-widest uppercase transition-colors focus:outline-none ${r.didNotPlay
+                      ? 'bg-red-500/20 text-red-700'
+                      : 'bg-emerald-500/20 text-emerald-700'
                       }`}
                   >
                     {r.didNotPlay ? 'DNP' : 'ACTIVE'}
                   </button>
                 </td>
                 {FIELDS.map((f) => (
-                  <td key={f} className="p-0 border-r border-surface-800 last:border-r-0">
+                  <td key={f} className="p-1">
                     <input
                       type="number"
                       value={r[f] as number | ''}
                       disabled={r.didNotPlay}
                       onChange={(e) => onChange(r.playerId, f, e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full h-full bg-transparent px-3 py-3 text-right text-white font-bold focus:outline-none focus:bg-surface-700 focus:text-white transition-colors disabled:cursor-not-allowed placeholder-surface-700"
+                      className="w-full bg-white border border-surface-300 px-2 py-1.5 text-center text-navy-900 font-bold rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all disabled:cursor-not-allowed disabled:bg-white/50 placeholder-navy-900/30"
                       placeholder="0"
                     />
                   </td>
