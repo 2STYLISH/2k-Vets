@@ -337,11 +337,18 @@ function StatTable({
               <th className="text-left px-3 py-3 font-mono font-bold w-40">Player</th>
               <th className="px-2 py-3 text-center w-16">Pos</th>
               <th className="px-2 py-3 text-center w-20">Status</th>
-              {FIELDS.map((f) => (
-                <th key={f} className="px-2 py-3 text-center tracking-wider text-white">
-                  {FIELD_LABELS[f]}
-                </th>
-              ))}
+              {FIELDS.map((f) => {
+                const hasLeftBorder = ['fgm', 'tpm', 'ftm'].includes(f);
+                return (
+                  <th
+                    key={f}
+                    className={`px-2 py-3 text-center tracking-wider text-white ${hasLeftBorder ? 'border-l-[3px] border-surface-700' : ''
+                      }`}
+                  >
+                    {FIELD_LABELS[f]}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -379,18 +386,25 @@ function StatTable({
                     {r.didNotPlay ? 'DNP' : 'ACTIVE'}
                   </button>
                 </td>
-                {FIELDS.map((f) => (
-                  <td key={f} className="p-1">
-                    <input
-                      type="number"
-                      value={r[f] as number | ''}
-                      disabled={r.didNotPlay}
-                      onChange={(e) => onChange(r.playerId, f, e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full bg-white border border-surface-300 px-2 py-1.5 text-center text-navy-900 font-bold rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all disabled:cursor-not-allowed disabled:bg-white/50 placeholder-navy-900/30"
-                      placeholder="0"
-                    />
-                  </td>
-                ))}
+                {FIELDS.map((f) => {
+                  const hasLeftBorder = ['fgm', 'tpm', 'ftm'].includes(f);
+                  return (
+                    <td
+                      key={f}
+                      className={`p-1 ${hasLeftBorder ? 'border-l-[3px] border-surface-950' : ''
+                        }`}
+                    >
+                      <input
+                        type="number"
+                        value={r[f] as number | ''}
+                        disabled={r.didNotPlay}
+                        onChange={(e) => onChange(r.playerId, f, e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-full bg-white border border-surface-300 px-2 py-1.5 text-center text-navy-900 font-bold rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all disabled:cursor-not-allowed disabled:bg-white/50 placeholder-navy-900/30"
+                        placeholder="0"
+                      />
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
